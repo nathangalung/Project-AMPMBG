@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react"
 import { StepLocationCategory } from "./step-location-category"
 import { StepChronologyEvidence } from "./step-chronology-evidence"
@@ -13,8 +12,10 @@ const steps = [
 
 export interface ReportFormData {
   // Step 1
+  title: string     // <-- TAMBAHAN BARU
   category: string
   date: string
+  time: string      // <-- TAMBAHAN BARU
   province: string
   city: string
   district: string
@@ -29,14 +30,19 @@ export interface ReportFormData {
 }
 
 const initialFormData: ReportFormData = {
+  // Step 1 Defaults
+  title: "",        // <-- TAMBAHAN BARU
   category: "",
   date: "",
+  time: "",         // <-- TAMBAHAN BARU
   province: "",
   city: "",
   district: "",
   location: "",
+  // Step 2 Defaults
   description: "",
   files: [],
+  // Step 3 Defaults
   relation: "",
   agreement: false,
 }
@@ -50,10 +56,12 @@ export function ReportForm() {
   // --- LOGIKA VALIDASI ---
   const isStepValid = useMemo(() => {
     if (currentStep === 1) {
-      // Cek apakah semua field Step 1 terisi (termasuk district)
+      // Cek apakah semua field Step 1 terisi
       return (
+        formData.title.trim().length > 0 && // Judul wajib
         formData.category &&
         formData.date &&
+        formData.time &&                    // Jam wajib
         formData.province &&
         formData.city &&
         formData.district &&
@@ -61,7 +69,7 @@ export function ReportForm() {
       )
     }
     if (currentStep === 2) {
-      // Validasi Step 2: Deskripsi wajib diisi
+      // Validasi Step 2: Deskripsi minimal 50 karakter
       return formData.description.trim().length >= 50
     }
     if (currentStep === 3) {
@@ -190,7 +198,7 @@ export function ReportForm() {
             <button
               type="button"
               onClick={nextStep}
-              disabled={!isStepValid} // <-- VALIDASI TOMBOL NEXT
+              disabled={!isStepValid} // Validasi Tombol Next
               className="px-5 py-2.5 bg-blue-100 hover:bg-blue-90 text-general-20 font-medium rounded-lg transition-colors body-sm font-heading disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Selanjutnya
@@ -199,7 +207,7 @@ export function ReportForm() {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={isSubmitting || !isStepValid} // <-- VALIDASI TOMBOL SUBMIT
+              disabled={isSubmitting || !isStepValid} // Validasi Tombol Submit
               className="px-8 py-2.5 bg-blue-100 hover:bg-blue-90 text-general-20 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed body-sm font-heading"
             >
               {isSubmitting ? "Mengirim..." : "Kirim Laporan"}

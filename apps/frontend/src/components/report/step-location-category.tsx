@@ -1,5 +1,4 @@
-
-import { ChevronDown, AlertCircle } from "lucide-react" // Tambah icon alert
+import { ChevronDown, AlertCircle, Clock } from "lucide-react"
 import type { ReportFormData } from "./report-form"
 
 interface StepLocationCategoryProps {
@@ -7,7 +6,7 @@ interface StepLocationCategoryProps {
   updateFormData: (data: Partial<ReportFormData>) => void
 }
 
-// --- DATA DUMMY WILAYAH (SAMA SEPERTI SEBELUMNYA) ---
+// ... (DATA DUMMY WILAYAH TETAP SAMA) ...
 const categories = [
   { value: "poisoning", label: "Keracunan dan Masalah Kesehatan" },
   { value: "kitchen", label: "Operasional Dapur" },
@@ -60,10 +59,40 @@ const districts: Record<string, { value: string; label: string }[]> = {
   ],
   other: [],
 }
+// ... (AKHIR DATA DUMMY) ...
 
 export function StepLocationCategory({ formData, updateFormData }: StepLocationCategoryProps) {
   const availableCities = formData.province ? cities[formData.province] || [] : []
   const availableDistricts = formData.city ? districts[formData.city] || [] : []
+
+  // --- LOGIKA HITUNG KATA JUDUL (BARU) ---
+  const maxTitleWords = 10
+  
+  // Hitung jumlah kata saat ini (split berdasarkan spasi, filter string kosong)
+  const currentTitleWords = formData.title 
+    ? formData.title.trim().split(/\s+/).filter(Boolean).length 
+    : 0
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value
+    // Hitung kata input baru
+    const wordCount = inputValue.trim().split(/\s+/).filter(Boolean).length
+    
+    // Update HANYA JIKA jumlah kata <= 10 ATAU user sedang menghapus (backspace)
+    if (wordCount <= maxTitleWords) {
+      updateFormData({ title: inputValue })
+    } else {
+        // Edge case: mencegah ketikan kata ke-11, tapi tetap mengizinkan spasi di akhir kata ke-10
+        // (Logic ini membiarkan input "masuk" hanya jika tidak menambah kata baru melebihi batas)
+        const isTrailingSpace = inputValue.endsWith(" ")
+        if (wordCount === maxTitleWords + 1 && !isTrailingSpace) {
+            // Mencegah input kata ke-11
+            return 
+        }
+        // Fallback update (biasanya tidak terpanggil jika logic di atas benar)
+        updateFormData({ title: inputValue }) 
+    }
+  }
 
   // --- LOGIKA HITUNG KARAKTER LOKASI ---
   const maxLength = 100
@@ -76,21 +105,51 @@ export function StepLocationCategory({ formData, updateFormData }: StepLocationC
     }
   }
 
-  // --- LOGIKA TANGGAL ---
-  const today = new Date().toISOString().split("T")[0] // YYYY-MM-DD hari ini
-  const minDate = "2024-01-01" // Batas paling lampau
+  // --- LOGIKA TANGGAL & WAKTU ---
+  const today = new Date().toISOString().split("T")[0]
+  const now = new Date()
+  const currentTimeString = now.toTimeString().slice(0, 5)
+  const minDate = "2024-01-01"
 
-  // Cek apakah tanggal valid?
   const isDateFuture = formData.date > today
   const isDateTooOld = formData.date < minDate && formData.date !== ""
-  // Cek tahun > 4 digit (misal: 11111)
   const isYearInvalid = formData.date.split("-")[0].length > 4
-
   const isDateError = isDateFuture || isDateTooOld || isYearInvalid
+
+  const isTimeFuture = formData.date === today && formData.time > currentTimeString
+  const isTimeError = isTimeFuture
 
   return (
     <div className="space-y-6">
       
+      {/* JUDUL LAPORAN (Maksimal 10 Kata) */}
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <label htmlFor="title" className="block body-sm font-medium text-general-80">
+            Judul Laporan <span className="text-red-100">*</span>
+          </label>
+          <span className={`text-xs ${currentTitleWords === maxTitleWords ? 'text-red-100 font-bold' : 'text-general-60'}`}>
+            {currentTitleWords}/{maxTitleWords} Kata
+          </span>
+        </div>
+        
+        <input
+          type="text"
+          id="title"
+          value={formData.title || ""}
+          onChange={handleTitleChange}
+          placeholder="Contoh: Keracunan Makanan Siswa SD Harapan Bangsa"
+          className={`w-full px-4 py-3 bg-general-20 border rounded-lg text-general-100 focus:ring-2 transition-colors placeholder:text-general-40 
+            ${currentTitleWords > maxTitleWords // Visual cue jika somehow lewat (defensive)
+              ? 'border-red-100 focus:ring-red-100 focus:border-red-100' 
+              : 'border-general-30 focus:ring-green-100 focus:border-green-100'
+            }`}
+        />
+        {currentTitleWords >= maxTitleWords && (
+           <p className="text-xs text-general-50 mt-1">Maksimal 10 kata.</p>
+        )}
+      </div>
+
       {/* Category */}
       <div>
         <label htmlFor="category" className="block body-sm font-medium text-general-80 mb-2">
@@ -116,51 +175,75 @@ export function StepLocationCategory({ formData, updateFormData }: StepLocationC
         </div>
       </div>
 
-      {/* Date (Bisa Diketik & Validasi) */}
-      <div>
-        <label htmlFor="date" className="block body-sm font-medium text-general-80 mb-2">
-          Tanggal Kejadian <span className="text-red-100">*</span>
-        </label>
-        <div className="relative">
-          <input
-            type="date"
-            id="date"
-            lang="id-ID"
-            value={formData.date}
-            min={minDate}
-            max={today}
-            onChange={(e) => updateFormData({ date: e.target.value })}
-            // class dinamis: Border jadi Merah jika error
-            className={`w-full px-4 py-3 bg-general-20 border rounded-lg text-general-100 focus:ring-2 transition-colors appearance-none relative z-10 
-              ${isDateError 
-                ? 'border-red-100 focus:border-red-100 focus:ring-red-100' 
-                : 'border-general-30 focus:border-green-100 focus:ring-green-100'
-              }`}
-            style={{ colorScheme: "light" }} 
-          />
+      {/* Grid Tanggal & Waktu */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+            <label htmlFor="date" className="block body-sm font-medium text-general-80 mb-2">
+            Tanggal Kejadian <span className="text-red-100">*</span>
+            </label>
+            <div className="relative">
+            <input
+                type="date"
+                id="date"
+                lang="id-ID"
+                value={formData.date}
+                min={minDate}
+                max={today}
+                onChange={(e) => updateFormData({ date: e.target.value })}
+                className={`w-full px-4 py-3 bg-general-20 border rounded-lg text-general-100 focus:ring-2 transition-colors appearance-none relative z-10 
+                ${isDateError 
+                    ? 'border-red-100 focus:border-red-100 focus:ring-red-100' 
+                    : 'border-general-30 focus:border-green-100 focus:ring-green-100'
+                }`}
+                style={{ colorScheme: "light" }} 
+            />
+            </div>
+            {isDateError && (
+                <div className="flex items-center gap-2 mt-2 text-red-100 animate-fadeIn">
+                    <AlertCircle className="w-4 h-4" />
+                    <p className="text-xs font-medium">
+                        {isYearInvalid ? "Tahun tidak valid." : 
+                        isDateFuture ? "Tanggal tidak boleh masa depan." : 
+                        "Tanggal terlalu lampau."}
+                    </p>
+                </div>
+            )}
         </div>
 
-        {/* PESAN ERROR / BANTUAN */}
-        {isDateError ? (
-            <div className="flex items-center gap-2 mt-2 text-red-100 animate-fadeIn">
-                <AlertCircle className="w-4 h-4" />
-                <p className="text-xs font-medium">
-                    {isYearInvalid ? "Tahun tidak valid." : 
-                     isDateFuture ? "Tanggal tidak boleh masa depan." : 
-                     "Tanggal terlalu lampau (min. 2024)."}
-                </p>
+        <div>
+            <label htmlFor="time" className="block body-sm font-medium text-general-80 mb-2">
+            Jam Kejadian <span className="text-red-100">*</span>
+            </label>
+            <div className="relative">
+                <input
+                    type="time"
+                    id="time"
+                    value={formData.time}
+                    onChange={(e) => updateFormData({ time: e.target.value })}
+                    className={`w-full px-4 py-3 bg-general-20 border rounded-lg text-general-100 focus:ring-2 transition-colors appearance-none relative z-10
+                    ${isTimeError 
+                        ? 'border-red-100 focus:border-red-100 focus:ring-red-100' 
+                        : 'border-general-30 focus:border-green-100 focus:ring-green-100'
+                    }`}
+                    style={{ colorScheme: "light" }}
+                />
+                 <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-general-60">
+                    <Clock className="w-5 h-5" />
+                </div>
             </div>
-        ) : (
-            <p className="text-xs text-general-60 mt-1.5">
-                Format: Hari / Bulan / Tahun (Maksimal Hari Ini)
-            </p>
-        )}
+            {isTimeError ? (
+                <div className="flex items-center gap-2 mt-2 text-red-100 animate-fadeIn">
+                    <AlertCircle className="w-4 h-4" />
+                    <p className="text-xs font-medium">Waktu belum terjadi.</p>
+                </div>
+            ) : (
+                <p className="text-xs text-general-60 mt-2">Perkiraan waktu kejadian (WIB/WITA/WIT).</p>
+            )}
+        </div>
       </div>
 
-      {/* Grid Wilayah (Provinsi, Kota, Kecamatan) */}
+      {/* Grid Wilayah */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        
-        {/* Provinsi */}
         <div>
           <label htmlFor="province" className="block body-sm font-medium text-general-80 mb-2">
             Provinsi <span className="text-red-100">*</span>
@@ -185,7 +268,6 @@ export function StepLocationCategory({ formData, updateFormData }: StepLocationC
           </div>
         </div>
 
-        {/* Kota/Kabupaten */}
         <div>
           <label htmlFor="city" className="block body-sm font-medium text-general-80 mb-2">
             Kota/Kabupaten <span className="text-red-100">*</span>
@@ -211,7 +293,6 @@ export function StepLocationCategory({ formData, updateFormData }: StepLocationC
           </div>
         </div>
 
-         {/* Kecamatan */}
          <div className="md:col-span-2">
           <label htmlFor="district" className="block body-sm font-medium text-general-80 mb-2">
             Kecamatan <span className="text-red-100">*</span>
@@ -240,7 +321,6 @@ export function StepLocationCategory({ formData, updateFormData }: StepLocationC
             </div>
           </div>
         </div>
-
       </div>
 
       {/* Specific Location */}

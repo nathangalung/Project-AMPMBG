@@ -18,7 +18,9 @@ function LoginAnggotaPage() {
     localStorage.setItem("currentUser", JSON.stringify({ name: "Anggota Demo", role: "school" }))
     // Trigger event agar Navbar update
     window.dispatchEvent(new Event("user-login"))
-    navigate({ to: "/" })
+    
+    // UBAH DI SINI: Redirect ke Dashboard Anggota
+    navigate({ to: "/dashboard" })
   }
 
   return (
@@ -31,10 +33,10 @@ function LoginAnggotaPage() {
       <form onSubmit={handleLogin} className="space-y-5">
         {/* Email / NIK Field */}
         <fieldset className="border border-general-30 rounded-lg px-3 pb-3 pt-1 focus-within:border-blue-100 focus-within:ring-1 focus-within:ring-blue-100 transition-all">
-          <legend className="body-xs text-general-60 px-2 font-medium bg-general-20">Surel / NIK </legend>
+          <legend className="body-xs text-general-60 px-2 font-medium bg-general-20">Surel / ID Anggota</legend>
           <input
             type="text"
-            placeholder="Masukkan surel atau NIK"
+            placeholder="Masukkan surel atau ID Anggota"
             className="w-full outline-none text-general-100 placeholder:text-general-40 body-sm bg-transparent"
           />
         </fieldset>
@@ -80,7 +82,7 @@ function LoginAnggotaPage() {
       <p className="text-center body-sm text-general-60 mt-6">
         Belum terdaftar sebagai anggota?{" "}
         <Link to="/auth/register-anggota" className="text-blue-100 font-semibold hover:underline">
-          Daftar
+          Daftar di sini
         </Link>
       </p>
 
@@ -94,10 +96,10 @@ function LoginAnggotaPage() {
       {/* Secondary Action Link - Ke Login Masyarakat */}
       <div className="space-y-3">
         <Link
-          to="/auth/register"
+          to="/auth/login"
           className="block w-full py-3 border border-blue-100 text-blue-100 font-heading font-medium rounded-lg text-center hover:bg-blue-100 hover:text-general-20 transition-all body-sm"
         >
-          Daftar sebagai Masyarakat
+          Masuk sebagai Masyarakat
         </Link>
       </div>
     </AuthLayout>
