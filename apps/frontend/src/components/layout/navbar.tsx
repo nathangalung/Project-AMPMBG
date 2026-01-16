@@ -57,10 +57,12 @@ function NavbarComponent() {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
               <img
-                src="/images/logo_putih.png"
+                src="/logo_putih.webp"
                 alt="Logo AMP MBG"
                 loading="eager"
                 decoding="async"
+                width="155"
+                height="40"
                 className="h-10 w-auto object-contain"
               />
             </Link>

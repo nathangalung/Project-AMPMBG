@@ -8,11 +8,13 @@ function HeroSectionComponent() {
       {/* 1. LAYER GAMBAR BACKGROUND (Desktop Only - Posisi Absolut di Kanan) */}
       <div className="hidden lg:block absolute inset-y-0 right-0 w-1/2 h-full">
         <img
-          src="/images/siswa_makan_mbg_1.png"
+          src="/siswa_makan_mbg_1.webp"
           alt="Siswa menikmati makan bergizi gratis"
           loading="eager"
           decoding="async"
           fetchPriority="high"
+          width="1200"
+          height="800"
           className="w-full h-full object-cover object-top"
         />
         {/* Gradient Overlay agar transisi warna halus dari biru ke gambar */}

@@ -25,17 +25,20 @@ export default defineConfig({
     cssMinify: true,
     sourcemap: false,
     modulePreload: { polyfill: false },
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096,
     rollupOptions: {
       output: {
         manualChunks: {
           "vendor-react": ["react", "react-dom", "scheduler"],
           "vendor-router": ["@tanstack/react-router"],
           "vendor-query": ["@tanstack/react-query"],
+          "vendor-ui": ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-select", "@radix-ui/react-tabs", "@radix-ui/react-toast"],
           "vendor-icons": ["lucide-react"],
-          "vendor-ui": ["clsx", "tailwind-merge", "class-variance-authority"],
+          "vendor-date": ["date-fns"],
         },
       },
     },
-    chunkSizeWarningLimit: 520,
+    chunkSizeWarningLimit: 600,
   },
 })

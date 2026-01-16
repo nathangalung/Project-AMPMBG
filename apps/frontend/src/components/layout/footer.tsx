@@ -20,10 +20,12 @@ function FooterComponent() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
           <div className="flex items-center justify-start">
             <img
-              src="/images/logo_putih.png"
+              src="/logo_putih.webp"
               alt="Logo AMP MBG"
               loading="lazy"
               decoding="async"
+              width="372"
+              height="96"
               className="h-24 w-auto object-contain"
             />
           </div>

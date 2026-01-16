@@ -75,9 +75,13 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
         
         {/* LOGO AREA */}
         <div className="h-24 flex items-center justify-center px-6 border-b border-general-30 shrink-0">
-           <img 
-             src="/images/logo_hijau.png" 
-             alt="AMP MBG" 
+           <img
+             src="/logo_hijau.webp"
+             alt="AMP MBG"
+             loading="eager"
+             decoding="async"
+             width="155"
+             height="64"
              className="h-16 w-auto object-contain"
            /> 
         </div>

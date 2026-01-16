@@ -38,10 +38,12 @@ function TentangKamiPage() {
         <section className="bg-blue-70 text-general-20 relative overflow-hidden">
           <div className="absolute top-0 right-0 bottom-0 w-[70%] lg:w-[75%] hidden md:block">
             <img
-              src="/images/tentang_kami.png"
+              src="/tentang_kami.webp"
               alt="Tim AMP MBG"
               loading="eager"
               decoding="async"
+              width="800"
+              height="533"
               className="w-full h-full object-cover object-left"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-blue-70 via-transparent to-transparent opacity-90"></div>
