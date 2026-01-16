@@ -8,23 +8,18 @@ import { DataSummaryCards } from "@/components/dashboard/data-summary-cards"
 import { DataFilters, type FilterValues } from "@/components/dashboard/data-filters"
 import { DataTable, type ReportRow } from "@/components/dashboard/data-table"
 import { reportsService, type ReportsQuery, type ReportCategory } from "@/services/reports"
+import { STATUS_LABELS } from "@/hooks/use-categories"
 
 export const Route = createFileRoute("/data-laporan/")({
   component: DataLaporanPage,
 })
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: "Menunggu",
-  verified: "Terverifikasi",
-  in_progress: "Diproses",
-  resolved: "Selesai",
-  rejected: "Ditolak",
-}
-
 const INITIAL_FILTERS: FilterValues = {
   startDate: "",
   endDate: "",
   province: "",
+  city: "",
+  district: "",
   category: "",
 }
 
@@ -35,6 +30,8 @@ function DataLaporanPage() {
     limit: 50,
     ...(filters.category && { category: filters.category as ReportCategory }),
     ...(filters.province && { provinceId: filters.province }),
+    ...(filters.city && { cityId: filters.city }),
+    ...(filters.district && { districtId: filters.district }),
     ...(filters.startDate && { startDate: filters.startDate }),
     ...(filters.endDate && { endDate: filters.endDate }),
   }), [filters])

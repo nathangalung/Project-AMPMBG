@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { CATEGORY_LABELS } from "@/hooks/use-categories"
 
 export interface ReportRow {
   id: string
@@ -15,15 +16,6 @@ export interface ReportRow {
 
 interface DataTableProps {
   data: ReportRow[]
-}
-
-const CATEGORY_MAP: Record<string, string> = {
-  poisoning: "Keracunan dan Masalah Kesehatan",
-  kitchen: "Operasional Dapur",
-  quality: "Kualitas dan Keamanan Dapur",
-  policy: "Kebijakan dan Anggaran",
-  implementation: "Implementasi Program",
-  social: "Dampak Sosial dan Ekonomi",
 }
 
 const DATE_OPTIONS: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" }
@@ -48,7 +40,7 @@ function DataTableComponent({ data }: DataTableProps) {
     }
   }, [data, currentPage])
 
-  const getCategoryLabel = useCallback((key: string) => CATEGORY_MAP[key] || key, [])
+  const getCategoryLabel = useCallback((key: string) => CATEGORY_LABELS[key] || key, [])
   const formatDate = useCallback((dateString: string) => new Date(dateString).toLocaleDateString("id-ID", DATE_OPTIONS), [])
 
   const handlePrevPage = useCallback(() => setCurrentPage((p) => Math.max(1, p - 1)), [])

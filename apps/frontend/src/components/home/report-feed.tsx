@@ -5,44 +5,17 @@ import { ReportCard, type ReportData } from "@/components/ui/report-card"
 import { cn } from "@/lib/utils"
 import { ArrowRight, Loader2 } from "lucide-react"
 import { reportsService } from "@/services/reports"
+import { CATEGORY_LABELS, CATEGORY_VARIANTS, RELATION_LABELS } from "@/hooks/use-categories"
 
 const CATEGORIES = [
   { id: "all", label: "Semua" },
-  { id: "poisoning", label: "Keracunan dan Masalah Kesehatan" },
-  { id: "kitchen", label: "Operasional Dapur" },
-  { id: "quality", label: "Kualitas dan Keamanan Dapur" },
-  { id: "policy", label: "Kebijakan dan Anggaran" },
-  { id: "implementation", label: "Implementasi Program" },
-  { id: "social", label: "Dampak Sosial dan Ekonomi" },
+  { id: "poisoning", label: CATEGORY_LABELS.poisoning },
+  { id: "kitchen", label: CATEGORY_LABELS.kitchen },
+  { id: "quality", label: CATEGORY_LABELS.quality },
+  { id: "policy", label: CATEGORY_LABELS.policy },
+  { id: "implementation", label: CATEGORY_LABELS.implementation },
+  { id: "social", label: CATEGORY_LABELS.social },
 ] as const
-
-const CATEGORY_LABELS: Record<string, string> = {
-  poisoning: "Keracunan dan Masalah Kesehatan",
-  kitchen: "Operasional Dapur",
-  quality: "Kualitas dan Keamanan Dapur",
-  policy: "Kebijakan dan Anggaran",
-  implementation: "Implementasi Program",
-  social: "Dampak Sosial dan Ekonomi",
-}
-
-const CATEGORY_VARIANT: Record<string, ReportData["categoryVariant"]> = {
-  poisoning: "danger",
-  kitchen: "warning",
-  quality: "warning",
-  policy: "info",
-  implementation: "info",
-  social: "info",
-}
-
-const RELATION_LABELS: Record<string, string> = {
-  parent: "Orang tua siswa",
-  teacher: "Guru",
-  principal: "Kepala Sekolah",
-  supplier: "Penyedia Makanan",
-  student: "Siswa",
-  community: "Masyarakat Umum",
-  other: "Lainnya",
-}
 
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = { day: "2-digit", month: "long", year: "numeric" }
 
@@ -60,11 +33,11 @@ function ReportFeedComponent() {
     return reportsData.data.map((r) => ({
       id: r.id,
       category: CATEGORY_LABELS[r.category] || r.category,
-      categoryVariant: CATEGORY_VARIANT[r.category] || "info",
+      categoryVariant: CATEGORY_VARIANTS[r.category] || "info",
       title: r.title,
       location: r.location,
       date: new Date(r.incidentDate).toLocaleDateString("id-ID", DATE_FORMAT_OPTIONS),
-      reporter: RELATION_LABELS[r.relation as keyof typeof RELATION_LABELS] || "Pelapor",
+      reporter: RELATION_LABELS[r.relation] || "Pelapor",
     }))
   }, [reportsData])
 

@@ -3,23 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { profileService } from "@/services/profile"
-
-const CATEGORY_LABELS: Record<string, string> = {
-  poisoning: "Keracunan",
-  kitchen: "Operasional Dapur",
-  quality: "Kualitas Makanan",
-  policy: "Kebijakan",
-  implementation: "Implementasi",
-  social: "Dampak Sosial",
-}
-
-const STATUS_CONFIG: Record<string, { label: string; variant: "neutral" | "danger" | "success" | "warning" }> = {
-  pending: { label: "Belum Diverifikasi", variant: "neutral" },
-  verified: { label: "Terverifikasi", variant: "success" },
-  in_progress: { label: "Sedang Diproses", variant: "warning" },
-  resolved: { label: "Selesai", variant: "success" },
-  rejected: { label: "Ditolak", variant: "danger" },
-}
+import { CATEGORY_LABELS_SHORT, STATUS_LABELS, STATUS_VARIANTS } from "@/hooks/use-categories"
 
 const DATE_OPTIONS: Intl.DateTimeFormatOptions = { day: "2-digit", month: "2-digit", year: "numeric" }
 
@@ -77,48 +61,42 @@ function ReportHistoryComponent() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {reports.map((report, index) => {
-              const status = STATUS_CONFIG[report.status] || STATUS_CONFIG.pending
-              return (
-                <tr key={report.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 text-sm text-gray-600">{index + 1}</td>
-                  <td className="px-4 py-4 text-sm text-gray-600">{formatDate(report.createdAt)}</td>
-                  <td className="px-4 py-4 text-sm text-gray-600">{report.location}</td>
-                  <td className="px-4 py-4 text-sm text-gray-600">
-                    {CATEGORY_LABELS[report.category] || report.category}
-                  </td>
-                  <td className="px-4 py-4">
-                    <StatusBadge variant={status.variant}>
-                      {status.label}
-                    </StatusBadge>
-                  </td>
-                </tr>
-              )
-            })}
+            {reports.map((report, index) => (
+              <tr key={report.id} className="hover:bg-gray-50">
+                <td className="px-4 py-4 text-sm text-gray-600">{index + 1}</td>
+                <td className="px-4 py-4 text-sm text-gray-600">{formatDate(report.createdAt)}</td>
+                <td className="px-4 py-4 text-sm text-gray-600">{report.location}</td>
+                <td className="px-4 py-4 text-sm text-gray-600">
+                  {CATEGORY_LABELS_SHORT[report.category] || report.category}
+                </td>
+                <td className="px-4 py-4">
+                  <StatusBadge variant={STATUS_VARIANTS[report.status] || "neutral"}>
+                    {STATUS_LABELS[report.status] || report.status}
+                  </StatusBadge>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
       {/* Mobile Cards */}
       <div className="md:hidden divide-y divide-gray-200">
-        {reports.map((report, index) => {
-          const status = STATUS_CONFIG[report.status] || STATUS_CONFIG.pending
-          return (
-            <div key={report.id} className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-800">Laporan #{index + 1}</span>
-                <StatusBadge variant={status.variant}>
-                  {status.label}
-                </StatusBadge>
-              </div>
-              <p className="text-sm text-gray-600 mb-1">{report.location}</p>
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>{CATEGORY_LABELS[report.category] || report.category}</span>
-                <span>{formatDate(report.createdAt)}</span>
-              </div>
+        {reports.map((report, index) => (
+          <div key={report.id} className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-800">Laporan #{index + 1}</span>
+              <StatusBadge variant={STATUS_VARIANTS[report.status] || "neutral"}>
+                {STATUS_LABELS[report.status] || report.status}
+              </StatusBadge>
             </div>
-          )
-        })}
+            <p className="text-sm text-gray-600 mb-1">{report.location}</p>
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>{CATEGORY_LABELS_SHORT[report.category] || report.category}</span>
+              <span>{formatDate(report.createdAt)}</span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

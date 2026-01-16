@@ -1,0 +1,6 @@
+[2026-01-16 22:44:10] cd /home/nathangalung/documents/project/AMP-MBG/apps/frontend && bun run tsc --noEmit 2>&1 | head -50
+[2026-01-16 22:45:43] bun run tsc --noEmit 2>&1 | head -30
+[2026-01-16 22:45:53] bun run tsc --noEmit 2>&1 | head -30
+[2026-01-16 22:46:03] cd /home/nathangalung/documents/project/AMP-MBG/apps/backend && bun run tsc --noEmit 2>&1 | head -30
+[2026-01-16 22:46:10] cd /home/nathangalung/documents/project/AMP-MBG/apps/frontend && bun run build 2>&1 | tail -20
+[2026-01-16 22:46:55] bun run build 2>&1 | tail -15

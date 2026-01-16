@@ -84,9 +84,14 @@ export interface PaginatedResponse<T> {
 
 export interface ReportStats {
   total: number
+  verified: number
   uniqueCities: number
   highRisk: number
+  mediumRisk: number
+  lowRisk: number
   topCategory: { category: ReportCategory; count: number } | null
+  totalCommunityUsers: number
+  totalAmpMbgUsers: number
   byStatus?: { status: ReportStatus; count: number }[]
   byCategory?: { category: ReportCategory; count: number }[]
 }

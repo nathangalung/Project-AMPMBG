@@ -1,22 +1,14 @@
 import { memo, useMemo } from "react"
-import { 
-  ClipboardCheck, 
-  AlertTriangle, 
-  AlertCircle, 
+import {
+  ClipboardCheck,
+  AlertTriangle,
+  AlertCircle,
   Info,
   Tag
 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { reportsService } from "@/services/reports"
-
-const CATEGORY_LABELS: Record<string, string> = {
-  poisoning: "Keracunan & Kesehatan",
-  kitchen: "Operasional Dapur",
-  quality: "Kualitas & Keamanan",
-  policy: "Kebijakan & Anggaran",
-  implementation: "Implementasi Program",
-  social: "Dampak Sosial",
-}
+import { CATEGORY_LABELS_SHORT } from "@/hooks/use-categories"
 
 function DataSummaryCardsComponent() {
   const { data: stats } = useQuery({
@@ -25,10 +17,9 @@ function DataSummaryCardsComponent() {
     staleTime: 30000,
   })
 
-  // Kita pisahkan data menjadi 2 bagian (Row 1 dan Row 2)
   const { row1Data, row2Data } = useMemo(() => {
-    const topCategoryLabel = stats?.topCategory 
-      ? CATEGORY_LABELS[stats.topCategory.category] || stats.topCategory.category 
+    const topCategoryLabel = stats?.topCategory
+      ? CATEGORY_LABELS_SHORT[stats.topCategory.category] || stats.topCategory.category
       : "-"
 
     const total = stats?.total || 0

@@ -165,12 +165,14 @@ reports.get("/stats", async (c) => {
 reports.get("/summary", async (c) => {
   const verifiedCondition = getVerifiedCondition()
 
-  // Optimized: Single query for all aggregates
-  const [aggregates, topCategoryResult] = await Promise.all([
+  const [aggregates, topCategoryResult, userAggregates] = await Promise.all([
     db.select({
       total: sql<number>`count(*)`,
+      verified: sql<number>`count(*) filter (where ${schema.reports.status} in ('verified', 'in_progress', 'resolved'))`,
       uniqueCities: sql<number>`count(distinct ${schema.reports.cityId})`,
-      highRisk: sql<number>`count(*) filter (where ${schema.reports.category} = 'poisoning')`,
+      highRisk: sql<number>`count(*) filter (where ${schema.reports.credibilityLevel} = 'high')`,
+      mediumRisk: sql<number>`count(*) filter (where ${schema.reports.credibilityLevel} = 'medium')`,
+      lowRisk: sql<number>`count(*) filter (where ${schema.reports.credibilityLevel} = 'low')`,
     }).from(schema.reports).where(verifiedCondition),
     db.select({ category: schema.reports.category, count: sql<number>`count(*)` })
       .from(schema.reports)
@@ -178,16 +180,25 @@ reports.get("/summary", async (c) => {
       .groupBy(schema.reports.category)
       .orderBy(desc(sql`count(*)`))
       .limit(1),
+    db.select({
+      totalCommunityUsers: sql<number>`count(*) filter (where ${schema.users.role} = 'public')`,
+      totalAmpMbgUsers: sql<number>`count(*) filter (where ${schema.users.role} = 'admin')`,
+    }).from(schema.users),
   ])
 
   return c.json({
     total: Number(aggregates[0]?.total || 0),
+    verified: Number(aggregates[0]?.verified || 0),
     uniqueCities: Number(aggregates[0]?.uniqueCities || 0),
     highRisk: Number(aggregates[0]?.highRisk || 0),
+    mediumRisk: Number(aggregates[0]?.mediumRisk || 0),
+    lowRisk: Number(aggregates[0]?.lowRisk || 0),
     topCategory: topCategoryResult[0] ? {
       category: topCategoryResult[0].category,
       count: Number(topCategoryResult[0].count),
     } : null,
+    totalCommunityUsers: Number(userAggregates[0]?.totalCommunityUsers || 0),
+    totalAmpMbgUsers: Number(userAggregates[0]?.totalAmpMbgUsers || 0),
   })
 })
 
@@ -195,7 +206,7 @@ reports.get("/recent", async (c) => {
   const data = await db.query.reports.findMany({
     columns: {
       id: true, category: true, title: true, location: true,
-      incidentDate: true, status: true, createdAt: true,
+      incidentDate: true, status: true, relation: true, createdAt: true,
     },
     limit: 6,
     orderBy: [desc(schema.reports.createdAt)],
@@ -213,6 +224,7 @@ reports.get("/recent", async (c) => {
       city: r.city?.name || "",
       incidentDate: r.incidentDate,
       status: r.status,
+      relation: r.relation,
       createdAt: r.createdAt,
     })),
   })

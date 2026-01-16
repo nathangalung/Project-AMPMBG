@@ -3,21 +3,15 @@ import { DashboardAnggotaLayout } from "@/components/dashboard/dashboard-anggota
 import { useQuery } from "@tanstack/react-query"
 import { adminService } from "@/services/admin"
 import { Loader2 } from "lucide-react"
+import { useCategories } from "@/hooks/use-categories"
 
 export const Route = createFileRoute("/dashboard/")({
   component: DashboardAnggota,
 })
 
-const CATEGORY_LABELS: Record<string, string> = {
-  poisoning: "Keracunan dan Masalah Kesehatan",
-  kitchen: "Operasional Dapur",
-  quality: "Kualitas dan Keamanan Dapur",
-  policy: "Kebijakan dan Anggaran",
-  implementation: "Implementasi Program",
-  social: "Dampak Sosial dan Ekonomi",
-}
-
 function DashboardAnggota() {
+  const { getCategoryLabel } = useCategories()
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: () => adminService.getDashboard(),
@@ -27,7 +21,7 @@ function DashboardAnggota() {
   const verifiedCount = stats?.reports.byStatus?.find(s => s.status === "verified")?.count || 0
 
   const topCategory = stats?.reports.byCategory?.sort((a, b) => b.count - a.count)[0]
-  const topCategoryLabel = topCategory ? CATEGORY_LABELS[topCategory.category] || topCategory.category : "-"
+  const topCategoryLabel = topCategory ? getCategoryLabel(topCategory.category) : "-"
 
   return (
     <DashboardAnggotaLayout>
