@@ -21,10 +21,8 @@ import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginAnggotaRouteImport } from './routes/auth/login-anggota'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
-import { Route as DashboardLaporanLamaIndexRouteImport } from './routes/dashboard/laporan-lama.index'
-import { Route as DashboardLaporanBaruIndexRouteImport } from './routes/dashboard/laporan-baru.index'
-import { Route as DashboardLaporanLamaIdRouteImport } from './routes/dashboard/laporan-lama.$id'
-import { Route as DashboardLaporanBaruIdRouteImport } from './routes/dashboard/laporan-baru.$id'
+import { Route as DashboardLaporanIndexRouteImport } from './routes/dashboard/laporan.index'
+import { Route as DashboardLaporanIdRouteImport } from './routes/dashboard/laporan.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -86,26 +84,14 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/auth/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardLaporanLamaIndexRoute =
-  DashboardLaporanLamaIndexRouteImport.update({
-    id: '/dashboard/laporan-lama/',
-    path: '/dashboard/laporan-lama/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const DashboardLaporanBaruIndexRoute =
-  DashboardLaporanBaruIndexRouteImport.update({
-    id: '/dashboard/laporan-baru/',
-    path: '/dashboard/laporan-baru/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const DashboardLaporanLamaIdRoute = DashboardLaporanLamaIdRouteImport.update({
-  id: '/dashboard/laporan-lama/$id',
-  path: '/dashboard/laporan-lama/$id',
+const DashboardLaporanIndexRoute = DashboardLaporanIndexRouteImport.update({
+  id: '/dashboard/laporan/',
+  path: '/dashboard/laporan/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardLaporanBaruIdRoute = DashboardLaporanBaruIdRouteImport.update({
-  id: '/dashboard/laporan-baru/$id',
-  path: '/dashboard/laporan-baru/$id',
+const DashboardLaporanIdRoute = DashboardLaporanIdRouteImport.update({
+  id: '/dashboard/laporan/$id',
+  path: '/dashboard/laporan/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -122,10 +108,8 @@ export interface FileRoutesByFullPath {
   '/lapor': typeof LaporIndexRoute
   '/profil': typeof ProfilIndexRoute
   '/tentang-kami': typeof TentangKamiIndexRoute
-  '/dashboard/laporan-baru/$id': typeof DashboardLaporanBaruIdRoute
-  '/dashboard/laporan-lama/$id': typeof DashboardLaporanLamaIdRoute
-  '/dashboard/laporan-baru': typeof DashboardLaporanBaruIndexRoute
-  '/dashboard/laporan-lama': typeof DashboardLaporanLamaIndexRoute
+  '/dashboard/laporan/$id': typeof DashboardLaporanIdRoute
+  '/dashboard/laporan': typeof DashboardLaporanIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,10 +124,8 @@ export interface FileRoutesByTo {
   '/lapor': typeof LaporIndexRoute
   '/profil': typeof ProfilIndexRoute
   '/tentang-kami': typeof TentangKamiIndexRoute
-  '/dashboard/laporan-baru/$id': typeof DashboardLaporanBaruIdRoute
-  '/dashboard/laporan-lama/$id': typeof DashboardLaporanLamaIdRoute
-  '/dashboard/laporan-baru': typeof DashboardLaporanBaruIndexRoute
-  '/dashboard/laporan-lama': typeof DashboardLaporanLamaIndexRoute
+  '/dashboard/laporan/$id': typeof DashboardLaporanIdRoute
+  '/dashboard/laporan': typeof DashboardLaporanIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,10 +141,8 @@ export interface FileRoutesById {
   '/lapor/': typeof LaporIndexRoute
   '/profil/': typeof ProfilIndexRoute
   '/tentang-kami/': typeof TentangKamiIndexRoute
-  '/dashboard/laporan-baru/$id': typeof DashboardLaporanBaruIdRoute
-  '/dashboard/laporan-lama/$id': typeof DashboardLaporanLamaIdRoute
-  '/dashboard/laporan-baru/': typeof DashboardLaporanBaruIndexRoute
-  '/dashboard/laporan-lama/': typeof DashboardLaporanLamaIndexRoute
+  '/dashboard/laporan/$id': typeof DashboardLaporanIdRoute
+  '/dashboard/laporan/': typeof DashboardLaporanIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -179,10 +159,8 @@ export interface FileRouteTypes {
     | '/lapor'
     | '/profil'
     | '/tentang-kami'
-    | '/dashboard/laporan-baru/$id'
-    | '/dashboard/laporan-lama/$id'
-    | '/dashboard/laporan-baru'
-    | '/dashboard/laporan-lama'
+    | '/dashboard/laporan/$id'
+    | '/dashboard/laporan'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -197,10 +175,8 @@ export interface FileRouteTypes {
     | '/lapor'
     | '/profil'
     | '/tentang-kami'
-    | '/dashboard/laporan-baru/$id'
-    | '/dashboard/laporan-lama/$id'
-    | '/dashboard/laporan-baru'
-    | '/dashboard/laporan-lama'
+    | '/dashboard/laporan/$id'
+    | '/dashboard/laporan'
   id:
     | '__root__'
     | '/'
@@ -215,10 +191,8 @@ export interface FileRouteTypes {
     | '/lapor/'
     | '/profil/'
     | '/tentang-kami/'
-    | '/dashboard/laporan-baru/$id'
-    | '/dashboard/laporan-lama/$id'
-    | '/dashboard/laporan-baru/'
-    | '/dashboard/laporan-lama/'
+    | '/dashboard/laporan/$id'
+    | '/dashboard/laporan/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -234,10 +208,8 @@ export interface RootRouteChildren {
   LaporIndexRoute: typeof LaporIndexRoute
   ProfilIndexRoute: typeof ProfilIndexRoute
   TentangKamiIndexRoute: typeof TentangKamiIndexRoute
-  DashboardLaporanBaruIdRoute: typeof DashboardLaporanBaruIdRoute
-  DashboardLaporanLamaIdRoute: typeof DashboardLaporanLamaIdRoute
-  DashboardLaporanBaruIndexRoute: typeof DashboardLaporanBaruIndexRoute
-  DashboardLaporanLamaIndexRoute: typeof DashboardLaporanLamaIndexRoute
+  DashboardLaporanIdRoute: typeof DashboardLaporanIdRoute
+  DashboardLaporanIndexRoute: typeof DashboardLaporanIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -326,32 +298,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/laporan-lama/': {
-      id: '/dashboard/laporan-lama/'
-      path: '/dashboard/laporan-lama'
-      fullPath: '/dashboard/laporan-lama'
-      preLoaderRoute: typeof DashboardLaporanLamaIndexRouteImport
+    '/dashboard/laporan/': {
+      id: '/dashboard/laporan/'
+      path: '/dashboard/laporan'
+      fullPath: '/dashboard/laporan'
+      preLoaderRoute: typeof DashboardLaporanIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/laporan-baru/': {
-      id: '/dashboard/laporan-baru/'
-      path: '/dashboard/laporan-baru'
-      fullPath: '/dashboard/laporan-baru'
-      preLoaderRoute: typeof DashboardLaporanBaruIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/laporan-lama/$id': {
-      id: '/dashboard/laporan-lama/$id'
-      path: '/dashboard/laporan-lama/$id'
-      fullPath: '/dashboard/laporan-lama/$id'
-      preLoaderRoute: typeof DashboardLaporanLamaIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/laporan-baru/$id': {
-      id: '/dashboard/laporan-baru/$id'
-      path: '/dashboard/laporan-baru/$id'
-      fullPath: '/dashboard/laporan-baru/$id'
-      preLoaderRoute: typeof DashboardLaporanBaruIdRouteImport
+    '/dashboard/laporan/$id': {
+      id: '/dashboard/laporan/$id'
+      path: '/dashboard/laporan/$id'
+      fullPath: '/dashboard/laporan/$id'
+      preLoaderRoute: typeof DashboardLaporanIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -370,10 +328,8 @@ const rootRouteChildren: RootRouteChildren = {
   LaporIndexRoute: LaporIndexRoute,
   ProfilIndexRoute: ProfilIndexRoute,
   TentangKamiIndexRoute: TentangKamiIndexRoute,
-  DashboardLaporanBaruIdRoute: DashboardLaporanBaruIdRoute,
-  DashboardLaporanLamaIdRoute: DashboardLaporanLamaIdRoute,
-  DashboardLaporanBaruIndexRoute: DashboardLaporanBaruIndexRoute,
-  DashboardLaporanLamaIndexRoute: DashboardLaporanLamaIndexRoute,
+  DashboardLaporanIdRoute: DashboardLaporanIdRoute,
+  DashboardLaporanIndexRoute: DashboardLaporanIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

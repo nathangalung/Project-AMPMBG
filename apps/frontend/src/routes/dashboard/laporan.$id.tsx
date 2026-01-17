@@ -8,14 +8,15 @@ import {
   ChevronDown,
   CheckCircle,
   Loader2,
-  Clock
+  Clock,
+  Save // Tambah icon Save
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { adminService } from "@/services/admin"
 import type { ReportStatus } from "@/services/reports"
 
-export const Route = createFileRoute("/dashboard/laporan-lama/$id")({
+export const Route = createFileRoute("/dashboard/laporan/$id")({
   component: LaporanLamaDetail,
 })
 
@@ -39,6 +40,7 @@ const RELATION_LABELS: Record<string, string> = {
 }
 
 const STATUS_OPTIONS = [
+  { value: "pending", label: "Menunggu Verifikasi" },
   { value: "verified", label: "Terverifikasi" },
   { value: "in_progress", label: "Sedang Ditindaklanjuti" },
   { value: "resolved", label: "Selesai" },
@@ -51,6 +53,13 @@ const CREDIBILITY_LABELS: Record<string, string> = {
   low: "Rendah",
 }
 
+// 1. TAMBAHKAN OPSI TINGKAT MASALAH
+const RISK_OPTIONS = [
+  { value: "high", label: "Tinggi" },
+  { value: "medium", label: "Sedang" },
+  { value: "low", label: "Rendah" },
+]
+
 function LaporanLamaDetail() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
@@ -58,31 +67,33 @@ function LaporanLamaDetail() {
   
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  
   const [newStatus, setNewStatus] = useState<ReportStatus | "">("")
+  // 2. STATE BARU UNTUK TINGKAT RISIKO
+  const [newRisk, setNewRisk] = useState<string>("") 
   const [notes, setNotes] = useState("")
 
-  // Fetch report detail
   const { data: reportData, isLoading } = useQuery({
     queryKey: ["admin", "report", id],
     queryFn: () => adminService.getReport(id),
   })
 
-  // Set initial values when data loads
+  // 3. SET INITIAL VALUE SAAT LOAD
   useEffect(() => {
     if (reportData?.data) {
       setNewStatus(reportData.data.status as ReportStatus)
+      // Set nilai awal risiko, default kosong jika null
+      setNewRisk(reportData.data.credibilityLevel || "") 
       setNotes(reportData.data.adminNotes || "")
     }
   }, [reportData])
 
-  // Fetch scoring details
   const { data: scoringData } = useQuery({
     queryKey: ["admin", "report", id, "scoring"],
     queryFn: () => adminService.getReportScoring(id),
     enabled: !!reportData,
   })
 
-  // Fetch status history
   const { data: historyData } = useQuery({
     queryKey: ["admin", "report", id, "history"],
     queryFn: () => adminService.getReportHistory(id),
@@ -93,10 +104,14 @@ function LaporanLamaDetail() {
   const scoring = scoringData?.data
   const history = historyData?.data || []
 
-  // Mutation for status update
+  // 4. UPDATE MUTATION AGAR MENGIRIM TINGKAT RISIKO
   const updateStatus = useMutation({
-    mutationFn: (data: { status: ReportStatus; notes?: string }) => 
-      adminService.updateReportStatus(id, data),
+    mutationFn: (data: { status: ReportStatus; credibilityLevel: string; notes?: string }) => 
+      adminService.updateReportStatus(id, {
+        status: data.status,
+        credibilityLevel: data.credibilityLevel, // Kirim data ini ke backend
+        notes: data.notes
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "reports"] })
       queryClient.invalidateQueries({ queryKey: ["admin", "report", id] })
@@ -108,13 +123,14 @@ function LaporanLamaDetail() {
     if (!newStatus) return
     updateStatus.mutate({
       status: newStatus,
+      credibilityLevel: newRisk, // Masukkan state ke mutation
       notes: notes || undefined,
     })
   }
 
   const handleCloseSuccessModal = () => {
     setShowSuccessModal(false)
-    navigate({ to: "/dashboard/laporan-lama" })
+    navigate({ to: "/dashboard/laporan" })
   }
 
   if (isLoading) {
@@ -132,7 +148,7 @@ function LaporanLamaDetail() {
       <DashboardAnggotaLayout>
         <div className="p-8 text-center">
           <p className="body-sm text-general-60">Laporan tidak ditemukan</p>
-          <Link to="/dashboard/laporan-lama" className="text-blue-100 hover:underline mt-2 inline-block">
+          <Link to="/dashboard/laporan" className="text-blue-100 hover:underline mt-2 inline-block">
             Kembali ke daftar
           </Link>
         </div>
@@ -142,11 +158,7 @@ function LaporanLamaDetail() {
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
     })
   }
 
@@ -154,10 +166,9 @@ function LaporanLamaDetail() {
     <DashboardAnggotaLayout>
       <div className="p-8 max-w-4xl mx-auto font-sans relative">
         
-        {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Link 
-            to="/dashboard/laporan-lama" 
+            to="/dashboard/laporan" 
             className="p-2 rounded-full hover:bg-general-30 text-general-60 hover:text-general-100 transition-colors"
           >
             <ArrowLeft className="w-6 h-6" />
@@ -168,10 +179,8 @@ function LaporanLamaDetail() {
           </div>
         </div>
 
-        {/* Main Card */}
         <div className="bg-general-20 border border-general-30 rounded-xl p-6 md:p-8 shadow-sm relative overflow-hidden">
-            
-            <div className="absolute top-0 left-0 w-full h-2 bg-blue-100/10"></div>
+            <div className={`absolute top-0 left-0 w-full h-2 ${newStatus === 'pending' ? 'bg-orange-400' : 'bg-blue-100/10'}`}></div>
 
             <div className="mb-6 pb-6 border-b border-general-30">
                 <h2 className="h5 font-heading text-general-100 mb-1">{report.title}</h2>
@@ -179,7 +188,7 @@ function LaporanLamaDetail() {
             </div>
 
             <div className="space-y-6">
-                {/* Reporter Info */}
+                {/* Data Pelapor */}
                 {report.reporter && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -211,118 +220,84 @@ function LaporanLamaDetail() {
                     </div>
                 </div>
 
-                {/* Evidence Files */}
                 {report.files && report.files.length > 0 && (
                   <div>
-                      <label className="block body-sm font-heading font-bold text-general-100 mb-2">
-                          Bukti Foto ({report.files.length})
-                      </label>
+                      <label className="block body-sm font-heading font-bold text-general-100 mb-2">Bukti Foto ({report.files.length})</label>
                       <div className="space-y-3">
                           {report.files.map((file: any) => (
                               <div key={file.id} className="flex items-center justify-between px-4 py-3 bg-general-30/50 border border-general-30 rounded-lg group hover:border-blue-40 transition-colors">
                                   <div className="flex items-center gap-3 overflow-hidden">
-                                      <div className="p-2 bg-general-20 rounded-md text-general-60 border border-general-30 shrink-0">
-                                          <ImageIcon className="w-5 h-5" />
-                                      </div>
-                                      <span className="body-sm font-medium text-general-80 truncate">
-                                          {file.fileName}
-                                      </span>
+                                      <div className="p-2 bg-general-20 rounded-md text-general-60 border border-general-30 shrink-0"><ImageIcon className="w-5 h-5" /></div>
+                                      <span className="body-sm font-medium text-general-80 truncate">{file.fileName}</span>
                                   </div>
-                                  <button 
-                                      onClick={() => setSelectedImage(file.fileUrl)}
-                                      className="text-xs font-bold text-blue-100 hover:text-blue-90 hover:underline px-3 shrink-0 transition-colors"
-                                  >
-                                      Lihat
-                                  </button>
+                                  <button onClick={() => setSelectedImage(file.fileUrl)} className="text-xs font-bold text-blue-100 hover:text-blue-90 hover:underline px-3 shrink-0 transition-colors">Lihat</button>
                               </div>
                           ))}
                       </div>
                   </div>
                 )}
 
-                <div>
-                    <label className="block body-sm font-heading font-bold text-general-100 mb-2">Relasi dengan MBG</label>
-                    <div className="w-full px-4 py-3 bg-general-30/50 border border-general-30 rounded-lg text-general-80 body-sm flex items-center gap-2">
-                        <User className="w-4 h-4 text-general-60" />
-                        {RELATION_LABELS[report.relation] || report.relation}
-                    </div>
-                </div>
-
-                {/* Scoring Section */}
+                {/* Scoring */}
                 {scoring && (
                   <div>
                     <label className="block body-sm font-heading font-bold text-general-100 mb-2">Skor Kredibilitas</label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      <div className="px-3 py-2 bg-general-30/50 border border-general-30 rounded-lg">
-                        <span className="body-xs text-general-60">Relasi MBG</span>
-                        <p className="body-sm font-bold text-general-100">{scoring.scoreRelation.value}/{scoring.scoreRelation.max}</p>
-                      </div>
-                      <div className="px-3 py-2 bg-general-30/50 border border-general-30 rounded-lg">
-                        <span className="body-xs text-general-60">Lokasi & Waktu</span>
-                        <p className="body-sm font-bold text-general-100">{scoring.scoreLocationTime.value}/{scoring.scoreLocationTime.max}</p>
-                      </div>
-                      <div className="px-3 py-2 bg-general-30/50 border border-general-30 rounded-lg">
-                        <span className="body-xs text-general-60">Bukti</span>
-                        <p className="body-sm font-bold text-general-100">{scoring.scoreEvidence.value}/{scoring.scoreEvidence.max}</p>
-                      </div>
-                      <div className="px-3 py-2 bg-general-30/50 border border-general-30 rounded-lg">
-                        <span className="body-xs text-general-60">Narasi</span>
-                        <p className="body-sm font-bold text-general-100">{scoring.scoreNarrative.value}/{scoring.scoreNarrative.max}</p>
-                      </div>
-                      <div className="px-3 py-2 bg-general-30/50 border border-general-30 rounded-lg">
-                        <span className="body-xs text-general-60">Riwayat Pelapor</span>
-                        <p className="body-sm font-bold text-general-100">{scoring.scoreReporterHistory.value}/{scoring.scoreReporterHistory.max}</p>
-                      </div>
-                      <div className="px-3 py-2 bg-general-30/50 border border-general-30 rounded-lg">
-                        <span className="body-xs text-general-60">Kemiripan</span>
-                        <p className="body-sm font-bold text-general-100">{scoring.scoreSimilarity.value}/{scoring.scoreSimilarity.max}</p>
-                      </div>
-                    </div>
-                    <div className="mt-3 px-4 py-3 bg-blue-20 border border-blue-30 rounded-lg flex items-center justify-between">
-                      <span className="body-sm font-medium text-blue-100">Total Skor</span>
+                    <div className="mt-1 px-4 py-3 bg-blue-20 border border-blue-30 rounded-lg flex items-center justify-between">
+                      <span className="body-sm font-medium text-blue-100">Total Skor Sistem</span>
                       <span className="h5 text-blue-100">{scoring.totalScore}/18 ({CREDIBILITY_LABELS[scoring.credibilityLevel] || scoring.credibilityLevel})</span>
                     </div>
                   </div>
                 )}
 
-                {/* Editable Status */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block body-sm font-heading font-bold text-general-100 mb-2">Status Laporan</label>
-                        <div className="relative">
-                            <select 
-                                value={newStatus}
-                                onChange={(e) => setNewStatus(e.target.value as ReportStatus)}
-                                className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg appearance-none cursor-pointer pr-10 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100"
-                            >
-                                {STATUS_OPTIONS.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-general-60 pointer-events-none" />
+                {/* --- AREA EDIT ADMIN --- */}
+                <div className="p-5 bg-general-30/30 border border-general-30 rounded-xl space-y-4">
+                    <h3 className="body-md font-bold text-general-100 border-b border-general-30 pb-2">Panel Verifikasi Admin</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* 1. Edit Status */}
+                        <div>
+                            <label className="block body-sm font-heading font-bold text-general-100 mb-2">Status Laporan</label>
+                            <div className="relative">
+                                <select 
+                                    value={newStatus}
+                                    onChange={(e) => setNewStatus(e.target.value as ReportStatus)}
+                                    className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg appearance-none cursor-pointer pr-10 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100"
+                                >
+                                    {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-general-60 pointer-events-none" />
+                            </div>
+                        </div>
+
+                        {/* 2. Edit Risk Level (SEKARANG BISA DIEDIT) */}
+                        <div>
+                            <label className="block body-sm font-heading font-bold text-general-100 mb-2">Tingkat Masalah</label>
+                            <div className="relative">
+                                <select 
+                                    value={newRisk}
+                                    onChange={(e) => setNewRisk(e.target.value)}
+                                    className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg appearance-none cursor-pointer pr-10 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100"
+                                >
+                                    <option value="" disabled>-- Pilih Tingkat Masalah --</option>
+                                    {RISK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-general-60 pointer-events-none" />
+                            </div>
                         </div>
                     </div>
 
+                    {/* 3. Notes */}
                     <div>
-                        <label className="block body-sm font-heading font-bold text-general-100 mb-2">Tingkat Risiko</label>
-                        <div className="w-full px-4 py-3 bg-general-30/50 border border-general-30 rounded-lg text-general-80 body-sm font-semibold">
-                            {CREDIBILITY_LABELS[report.credibilityLevel] || report.credibilityLevel}
-                        </div>
+                        <label className="block body-sm font-heading font-bold text-general-100 mb-2">Catatan Admin</label>
+                        <textarea
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          placeholder="Tambahkan alasan perubahan status atau tingkat masalah..."
+                          className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg text-general-80 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 min-h-[80px]"
+                        />
                     </div>
                 </div>
 
-                {/* Admin Notes */}
-                <div>
-                    <label className="block body-sm font-heading font-bold text-general-100 mb-2">Catatan Admin</label>
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Tambahkan catatan (opsional)"
-                      className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg text-general-80 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 min-h-[80px]"
-                    />
-                </div>
-
-                {/* Status History */}
+                {/* Riwayat Status */}
                 {history.length > 0 && (
                   <div>
                     <label className="block body-sm font-heading font-bold text-general-100 mb-2">Riwayat Status</label>
@@ -344,14 +319,14 @@ function LaporanLamaDetail() {
                 )}
             </div>
 
-            {/* Action Button */}
+            {/* Tombol Simpan */}
             <div className="mt-10 pt-6 border-t border-general-30 flex justify-end">
                 <button 
                     onClick={handleSaveChanges}
                     disabled={updateStatus.isPending}
                     className="px-8 py-3 bg-blue-100 hover:bg-blue-90 text-general-20 font-heading font-semibold rounded-lg shadow-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 body-sm"
                 >
-                    {updateStatus.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Simpan Perubahan"}
+                    {updateStatus.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-4 h-4" /> Simpan Perubahan</>}
                 </button>
             </div>
         </div>
@@ -376,7 +351,6 @@ function LaporanLamaDetail() {
         </div>
       )}
 
-      {/* Image Modal */}
       {selectedImage && (
         <div 
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200 p-4"

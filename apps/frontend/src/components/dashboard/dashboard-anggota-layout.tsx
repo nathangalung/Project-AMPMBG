@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { 
   LayoutDashboard, 
   FileText, 
-  ShieldCheck, 
+  User, // Icon baru untuk Akun Anggota
   LogOut, 
   AlertCircle 
 } from "lucide-react"
@@ -26,7 +26,6 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
     if (userStr) {
       setCurrentUser(JSON.parse(userStr))
     } else {
-      // Jika belum login, lempar ke login anggota
       navigate({ to: "/auth/login-anggota" })
     }
   }, [navigate])
@@ -39,7 +38,7 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
     navigate({ to: "/" })
   }
 
-  // Definisi Menu Navigasi
+  // --- UPDATE MENU DI SINI ---
   const navItems = [
     { 
       to: "/dashboard", 
@@ -48,16 +47,16 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
       exact: true 
     },
     { 
-      to: "/dashboard/laporan-baru", 
-      label: "Laporan Baru", 
+      to: "/dashboard/laporan", // Mengarah ke halaman utama laporan
+      label: "Laporan", 
       icon: FileText,
-      exact: false
+      exact: false // Supaya tetap aktif saat membuka detail laporan
     },
     { 
-      to: "/dashboard/laporan-lama", 
-      label: "Laporan Lama", 
-      icon: ShieldCheck,
-      exact: false
+      to: "/dashboard/akun", // Mengarah ke halaman akun
+      label: "Akun Anggota", 
+      icon: User,
+      exact: true
     },
   ]
 
@@ -97,8 +96,8 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
                   active 
-                    ? "bg-blue-100 text-general-20 shadow-sm" // Style Aktif (Biru)
-                    : "text-general-60 hover:bg-general-30 hover:text-general-100" // Style Inaktif
+                    ? "bg-blue-100 text-general-20 shadow-sm"
+                    : "text-general-60 hover:bg-general-30 hover:text-general-100"
                 )}
               >
                 <item.icon className="w-5 h-5" />
@@ -108,7 +107,7 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
           })}
         </nav>
 
-        {/* USER PROFILE (Tanpa Avatar) */}
+        {/* USER PROFILE */}
         <div className="p-4 border-t border-general-30 shrink-0">
           <div className="flex items-center gap-3 px-2">
             <div className="flex-1 min-w-0">

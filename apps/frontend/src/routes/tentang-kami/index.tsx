@@ -66,32 +66,35 @@ function TentangKamiPage() {
         <section className="py-20 md:py-28 bg-general-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-2 gap-8 items-stretch">
-              <div className="bg-general-20 rounded-xl p-8 md:p-10 shadow-sm border border-general-30 hover:border-blue-30 transition-all h-full flex flex-col">
-                <h2 className="h3 text-blue-100 mb-6">Visi</h2>
-                <p className="body-md text-general-70 leading-relaxed">
+              
+              {/* KARTU VISI */}
+              <div className="bg-general-20 rounded-xl p-8 md:p-10 shadow-sm border border-general-30 hover:border-blue-30 transition-all h-full flex flex-col justify-center">
+                <h2 className="h3 text-blue-100 mb-6 text-center">Visi</h2>
+                <p className="body-md text-general-70 leading-relaxed text-justify">
                   Mewujudkan Indonesia yang sehat dan cerdas melalui program makan bergizi yang transparan, akuntabel,
                   dan berkualitas tinggi untuk seluruh anak bangsa.
                 </p>
               </div>
 
-              <div className="bg-general-20 rounded-xl p-8 md:p-10 shadow-sm border border-general-30 hover:border-blue-30 transition-all h-full flex flex-col">
-                <h2 className="h3 text-blue-100 mb-6">Misi</h2>
+              {/* KARTU MISI */}
+              <div className="bg-general-20 rounded-xl p-8 md:p-10 shadow-sm border border-general-30 hover:border-blue-30 transition-all h-full flex flex-col justify-center">
+                <h2 className="h3 text-blue-100 mb-6 text-center">Misi</h2>
                 <ul className="space-y-5 body-md text-general-70">
-                  <li className="flex items-start gap-3">
+                  <li className="flex items-start gap-3 text-justify">
                     <span className="w-2 h-2 bg-blue-100 rounded-full mt-2.5 shrink-0" />
                     <span>
                       <strong className="block text-general-100 mb-1">Meningkatkan Kolaborasi</strong>
                       Membangun kerjasama dengan berbagai pemangku kepentingan untuk pengawasan yang efektif.
                     </span>
                   </li>
-                  <li className="flex items-start gap-3">
+                  <li className="flex items-start gap-3 text-justify">
                     <span className="w-2 h-2 bg-blue-100 rounded-full mt-2.5 shrink-0" />
                     <span>
                       <strong className="block text-general-100 mb-1">Meningkatkan Kapasitas</strong>
                       Memberdayakan masyarakat untuk berpartisipasi aktif dalam pengawasan program.
                     </span>
                   </li>
-                  <li className="flex items-start gap-3">
+                  <li className="flex items-start gap-3 text-justify">
                     <span className="w-2 h-2 bg-blue-100 rounded-full mt-2.5 shrink-0" />
                     <span>
                       <strong className="block text-general-100 mb-1">Advokasi dan Aspirasi</strong>
@@ -100,6 +103,7 @@ function TentangKamiPage() {
                   </li>
                 </ul>
               </div>
+
             </div>
           </div>
         </section>
@@ -108,7 +112,7 @@ function TentangKamiPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12 md:mb-16">
               <h2 className="h3 text-general-100 mb-4">Nilai-Nilai Inti</h2>
-              <p className="body-sm text-general-70 max-w-2xl mx-auto">
+              <p className="body-md text-general-70 max-w-2xl mx-auto">
                 Prinsip-prinsip yang menjadi landasan setiap langkah kami dalam mengawal program MBG.
               </p>
             </div>
@@ -135,22 +139,33 @@ function TentangKamiPage() {
         </section>
 
         <section className="py-16 md:py-24 bg-general-20">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="h3 text-general-100 mb-6">Mari, Masyarakat!</h2>
-            <p className="body-md text-general-70 mb-10 leading-relaxed">
-              Bergabunglah bersama kami dalam mengawal Program Makan Bergizi Gratis. Setiap laporan Anda adalah langkah
-              nyata untuk memastikan anak-anak Indonesia mendapatkan makanan bergizi yang layak.
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="h3 text-general-100 mb-6">Mari Berkontribusi!</h2>
+            <p className="body-md text-general-70 mb-10 leading-relaxed max-w-2xl mx-auto">
+              Anda bisa berperan sebagai <strong>Masyarakat</strong> untuk melaporkan temuan, atau bergabung sebagai <strong>Anggota Resmi</strong> (Organisasi/Vendor) untuk kolaborasi yang lebih erat.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              {/* Tombol Lapor (Masyarakat) */}
               <Link
                 to="/lapor"
-                className="inline-flex items-center justify-center px-8 py-3 bg-blue-100 hover:bg-blue-90 text-general-20 font-medium rounded-lg transition-colors body-sm font-heading shadow-sm"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 bg-blue-100 hover:bg-blue-90 text-general-20 font-medium rounded-lg transition-colors body-sm font-heading shadow-sm"
               >
                 Mulai Melapor
               </Link>
+
+              {/* Tombol Daftar Anggota (Baru Ditambahkan) */}
+              <Link
+                to="/auth/register-anggota"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 bg-blue-50 hover:bg-general-80 text-general-20 border border-blue-50 font-medium rounded-lg transition-all body-sm font-heading shadow-sm"
+              >
+                Daftar Jadi Anggota
+              </Link>
+
+              {/* Tombol Cara Kerja */}
               <Link
                 to="/cara-kerja"
-                className="inline-flex items-center justify-center px-8 py-3 border-2 border-blue-100 text-blue-100 hover:bg-blue-100 hover:text-general-20 font-medium rounded-lg transition-all body-sm font-heading"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 border-2 border-blue-100 text-blue-100 hover:bg-blue-100 hover:text-general-20 font-medium rounded-lg transition-all body-sm font-heading"
               >
                 Pelajari Cara Kerjanya
               </Link>

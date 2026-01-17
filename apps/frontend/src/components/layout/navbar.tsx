@@ -2,12 +2,14 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router"
 import { useState, useEffect, useCallback, memo } from "react"
 import { Menu, X, User, LogOut, AlertCircle } from "lucide-react"
 
+// Konfigurasi Link Navigasi
+// protected: true artinya link ini hanya bisa diakses jika sudah login
 const NAV_LINKS = [
-  { to: "/", label: "Beranda" },
-  { to: "/cara-kerja", label: "Cara Kerja" },
-  { to: "/lapor", label: "Lapor" },
-  { to: "/data-laporan", label: "Data Laporan" },
-  { to: "/tentang-kami", label: "Tentang Kami" },
+  { to: "/", label: "Beranda", protected: false },
+  { to: "/cara-kerja", label: "Cara Kerja", protected: false },
+  { to: "/lapor", label: "Lapor", protected: true }, 
+  { to: "/data-laporan", label: "Data Laporan", protected: false },
+  { to: "/tentang-kami", label: "Tentang Kami", protected: false },
 ] as const
 
 function NavbarComponent() {
@@ -15,35 +17,56 @@ function NavbarComponent() {
   const location = useLocation()
   const pathname = location.pathname
   const navigate = useNavigate()
+  
+  // State User
   const [currentUser, setCurrentUser] = useState<{ name: string } | null>(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
+  // --- 1. FUNGSI CEK LOGIN USER ---
   const checkUser = useCallback(() => {
     const userStr = localStorage.getItem("currentUser")
     setCurrentUser(userStr ? JSON.parse(userStr) : null)
   }, [])
 
+  // Effect untuk memantau perubahan login secara realtime
   useEffect(() => {
     checkUser()
+    // Event listener custom "user-login" dipicu saat register/login berhasil
     window.addEventListener("user-login", checkUser)
     return () => window.removeEventListener("user-login", checkUser)
   }, [checkUser])
 
+  // --- 2. LOGIKA PROTEKSI LINK (PENTING) ---
+  // Fungsi ini mencegat klik pada link yang protected
+  const handleProtectedNavigation = (e: React.MouseEvent, to: string, isProtected: boolean) => {
+    // Jika link dilindungi DAN user belum login
+    if (isProtected && !currentUser) {
+      e.preventDefault() // Batalkan navigasi asli
+      setMobileMenuOpen(false) // Tutup menu mobile jika sedang terbuka
+      navigate({ to: "/auth/register" }) // Paksa pindah ke halaman Register
+    } else {
+      // Jika aman, tutup menu mobile (untuk UX yang baik) dan biarkan navigasi terjadi
+      setMobileMenuOpen(false) 
+    }
+  }
+
+  // --- UTILS ---
+  // Mengambil nama depan saja agar tidak kepanjangan di navbar
   const getFirstName = useCallback((fullName: string) => fullName.split(" ")[0], [])
-
+  
   const toggleMobileMenu = useCallback(() => setMobileMenuOpen((prev) => !prev), [])
-  const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), [])
-
+  
+  // --- 3. LOGIKA LOGOUT ---
   const handleLogoutClick = useCallback(() => {
     setMobileMenuOpen(false)
-    setShowLogoutConfirm(true)
+    setShowLogoutConfirm(true) // Tampilkan modal konfirmasi
   }, [])
 
   const confirmLogout = useCallback(() => {
-    localStorage.removeItem("currentUser")
-    setCurrentUser(null)
-    setShowLogoutConfirm(false)
-    navigate({ to: "/" })
+    localStorage.removeItem("currentUser") // Hapus sesi
+    setCurrentUser(null) // Reset state lokal
+    setShowLogoutConfirm(false) // Tutup modal
+    navigate({ to: "/" }) // Kembali ke beranda
   }, [navigate])
 
   const cancelLogout = useCallback(() => setShowLogoutConfirm(false), [])
@@ -67,12 +90,14 @@ function NavbarComponent() {
               />
             </Link>
 
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation Links */}
             <div className="hidden lg:flex items-center gap-8">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
+                  // Pasang handler proteksi di sini
+                  onClick={(e) => handleProtectedNavigation(e, link.to, link.protected)}
                   className={`body-sm font-medium transition-colors ${
                     pathname === link.to ? "text-white border-b-2 border-white pb-1" : "text-white/80 hover:text-white"
                   }`}
@@ -82,7 +107,7 @@ function NavbarComponent() {
               ))}
             </div>
 
-            {/* Auth Button / User Profile (Desktop) */}
+            {/* Desktop Auth Button / User Profile */}
             <div className="hidden lg:flex items-center gap-3">
               {currentUser ? (
                 // Tampilan SUDAH LOGIN
@@ -116,7 +141,7 @@ function NavbarComponent() {
               )}
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Toggle Button */}
             <button
               className="lg:hidden p-2 text-white"
               onClick={toggleMobileMenu}
@@ -126,30 +151,32 @@ function NavbarComponent() {
             </button>
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu Dropdown */}
           {mobileMenuOpen && (
-            <div className="lg:hidden pb-4 border-t border-white/20">
+            <div className="lg:hidden pb-4 border-t border-white/20 animate-in slide-in-from-top-2 duration-200">
               <div className="flex flex-col gap-2 pt-4">
                 {NAV_LINKS.map((link) => (
                   <Link
                     key={link.to}
                     to={link.to}
+                    // Pasang handler proteksi juga di menu mobile
+                    onClick={(e) => handleProtectedNavigation(e, link.to, link.protected)}
                     className={`body-md font-medium py-2 transition-colors ${
                       pathname === link.to ? "text-white" : "text-white/80 hover:text-white"
                     }`}
-                    onClick={closeMobileMenu}
                   >
                     {link.label}
                   </Link>
                 ))}
 
+                {/* Mobile Auth Section */}
                 <div className="border-t border-white/20 mt-2 pt-2">
                    {currentUser ? (
                       <div className="flex items-center justify-between py-2">
                          <Link
                             to="/profil"
                             className="flex items-center gap-2 text-white hover:text-white/80"
-                            onClick={closeMobileMenu}
+                            onClick={() => setMobileMenuOpen(false)}
                          >
                             <User className="w-5 h-5" />
                             <span className="body-md font-medium">Halo, {getFirstName(currentUser.name)}</span>
@@ -167,7 +194,7 @@ function NavbarComponent() {
                       <Link
                         to="/auth/register"
                         className="block w-full body-md bg-blue-20 text-blue-100 px-4 py-2 rounded-lg font-medium text-center mt-2 hover:bg-general-20 transition-colors"
-                        onClick={closeMobileMenu}
+                        onClick={() => setMobileMenuOpen(false)}
                       >
                         Masuk/Daftar
                       </Link>
@@ -186,9 +213,9 @@ function NavbarComponent() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-general-20 rounded-xl shadow-xl w-full max-w-sm p-6 transform transition-all scale-100">
             
-            {/* Icon & Title */}
+            {/* Header Modal */}
             <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-12 h-12 bg-red-10 rounded-full flex items-center justify-center mb-4 bg-red-50">
+              <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
                 <AlertCircle className="w-6 h-6 text-red-600" />
               </div>
               <h3 className="h4 text-general-100 mb-2">Konfirmasi Keluar</h3>
@@ -197,7 +224,7 @@ function NavbarComponent() {
               </p>
             </div>
 
-            {/* Buttons */}
+            {/* Action Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={cancelLogout}
