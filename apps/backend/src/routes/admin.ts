@@ -198,22 +198,26 @@ const adminReportsQuerySchema = z.object({
   limit: z.string().optional().transform((val) => parseInt(val || "10")),
   status: z.enum(["pending", "verified", "in_progress", "resolved", "rejected"]).optional(),
   category: z.enum(["poisoning", "kitchen", "quality", "policy", "implementation", "social"]).optional(),
+  credibilityLevel: z.enum(["high", "medium", "low"]).optional(),
   provinceId: z.string().optional(),
   cityId: z.string().optional(),
+  districtId: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   search: z.string().optional(),
 })
 
 admin.get("/reports", zValidator("query", adminReportsQuerySchema), async (c) => {
-  const { page, limit, status, category, provinceId, cityId, startDate, endDate, search } = c.req.valid("query")
+  const { page, limit, status, category, credibilityLevel, provinceId, cityId, districtId, startDate, endDate, search } = c.req.valid("query")
   const offset = (page - 1) * limit
 
   const conditions = []
   if (status) conditions.push(eq(schema.reports.status, status))
   if (category) conditions.push(eq(schema.reports.category, category))
+  if (credibilityLevel) conditions.push(eq(schema.reports.credibilityLevel, credibilityLevel))
   if (provinceId) conditions.push(eq(schema.reports.provinceId, provinceId))
   if (cityId) conditions.push(eq(schema.reports.cityId, cityId))
+  if (districtId) conditions.push(eq(schema.reports.districtId, districtId))
   if (startDate) conditions.push(gte(schema.reports.incidentDate, new Date(startDate)))
   if (endDate) conditions.push(lte(schema.reports.incidentDate, new Date(endDate + "T23:59:59")))
   if (search) {
@@ -255,6 +259,8 @@ admin.get("/reports", zValidator("query", adminReportsQuerySchema), async (c) =>
       description: r.description,
       category: r.category,
       status: r.status,
+      credibilityLevel: r.credibilityLevel,
+      totalScore: r.totalScore,
       provinceId: r.provinceId,
       province: r.province?.name,
       cityId: r.cityId,
@@ -332,12 +338,13 @@ admin.get("/reports/:id", async (c) => {
 // Update report status
 const updateReportStatusSchema = z.object({
   status: z.enum(["pending", "verified", "in_progress", "resolved", "rejected"]),
+  credibilityLevel: z.enum(["high", "medium", "low"]).optional(),
   notes: z.string().max(1000).optional(),
 })
 
 admin.patch("/reports/:id/status", zValidator("json", updateReportStatusSchema), async (c) => {
   const id = c.req.param("id")
-  const { status, notes } = c.req.valid("json")
+  const { status, credibilityLevel, notes } = c.req.valid("json")
   const user = c.get("user")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
@@ -347,6 +354,7 @@ admin.patch("/reports/:id/status", zValidator("json", updateReportStatusSchema),
 
   const updateData: Record<string, unknown> = { status, updatedAt: new Date() }
   if (notes) updateData.adminNotes = notes
+  if (credibilityLevel) updateData.credibilityLevel = credibilityLevel
 
   if (status === "verified" && previousStatus !== "verified") {
     updateData.verifiedBy = user.id
@@ -358,7 +366,6 @@ admin.patch("/reports/:id/status", zValidator("json", updateReportStatusSchema),
     .where(eq(schema.reports.id, id))
     .returning()
 
-  // Record status change in parallel (fire and forget)
   db.insert(schema.reportStatusHistory).values({
     reportId: id,
     fromStatus: previousStatus,
@@ -433,36 +440,55 @@ admin.delete("/reports/:id", async (c) => {
 })
 
 // Analytics endpoint
-admin.get("/analytics", async (c) => {
-  const now = new Date()
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+const analyticsQuerySchema = z.object({
+  year: z.string().optional().transform((val) => val ? parseInt(val) : new Date().getFullYear()),
+  month: z.string().optional().transform((val) => val ? parseInt(val) : 0),
+})
 
-  // Optimized: Combine counts into single queries
+admin.get("/analytics", zValidator("query", analyticsQuerySchema), async (c) => {
+  const { year, month } = c.req.valid("query")
+
+  // Build trend query based on month filter
+  const trendQuery = month > 0
+    ? db.select({
+        day: sql<number>`extract(day from ${schema.reports.createdAt})`,
+        count: sql<number>`count(*)`,
+      })
+        .from(schema.reports)
+        .where(sql`extract(year from ${schema.reports.createdAt}) = ${year} AND extract(month from ${schema.reports.createdAt}) = ${month}`)
+        .groupBy(sql`extract(day from ${schema.reports.createdAt})`)
+        .orderBy(sql`extract(day from ${schema.reports.createdAt})`)
+    : db.select({
+        month: sql<string>`to_char(${schema.reports.createdAt}, 'Mon')`,
+        monthNum: sql<number>`extract(month from ${schema.reports.createdAt})`,
+        count: sql<number>`count(*)`,
+      })
+        .from(schema.reports)
+        .where(sql`extract(year from ${schema.reports.createdAt}) = ${year}`)
+        .groupBy(sql`to_char(${schema.reports.createdAt}, 'Mon')`, sql`extract(month from ${schema.reports.createdAt})`)
+        .orderBy(sql`extract(month from ${schema.reports.createdAt})`)
+
   const [
     reportAggregates,
     userAggregates,
-    reportsByMonth,
+    trendData,
     topProvinces,
+    topCities,
+    topDistricts,
   ] = await Promise.all([
     db.select({
       total: sql<number>`count(*)`,
-      last30Days: sql<number>`count(*) filter (where ${schema.reports.createdAt} >= ${thirtyDaysAgo})`,
-      last7Days: sql<number>`count(*) filter (where ${schema.reports.createdAt} >= ${sevenDaysAgo})`,
-      highRisk: sql<number>`count(*) filter (where ${schema.reports.category} = 'poisoning')`,
+      last30Days: sql<number>`count(*) filter (where ${schema.reports.createdAt} >= now() - interval '30 days')`,
+      last7Days: sql<number>`count(*) filter (where ${schema.reports.createdAt} >= now() - interval '7 days')`,
+      highRisk: sql<number>`count(*) filter (where ${schema.reports.credibilityLevel} = 'high')`,
+      mediumRisk: sql<number>`count(*) filter (where ${schema.reports.credibilityLevel} = 'medium')`,
+      lowRisk: sql<number>`count(*) filter (where ${schema.reports.credibilityLevel} = 'low')`,
     }).from(schema.reports),
     db.select({
       total: sql<number>`count(*)`,
       active: sql<number>`count(*) filter (where ${schema.users.isActive} = true)`,
     }).from(schema.users),
-    db.select({
-      month: sql<string>`to_char(${schema.reports.createdAt}, 'YYYY-MM')`,
-      count: sql<number>`count(*)`,
-    })
-      .from(schema.reports)
-      .groupBy(sql`to_char(${schema.reports.createdAt}, 'YYYY-MM')`)
-      .orderBy(desc(sql`to_char(${schema.reports.createdAt}, 'YYYY-MM')`))
-      .limit(12),
+    trendQuery,
     db.select({
       provinceId: schema.reports.provinceId,
       count: sql<number>`count(*)`,
@@ -471,17 +497,73 @@ admin.get("/analytics", async (c) => {
       .groupBy(schema.reports.provinceId)
       .orderBy(desc(sql`count(*)`))
       .limit(5),
+    db.select({
+      cityId: schema.reports.cityId,
+      provinceId: schema.reports.provinceId,
+      count: sql<number>`count(*)`,
+    })
+      .from(schema.reports)
+      .groupBy(schema.reports.cityId, schema.reports.provinceId)
+      .orderBy(desc(sql`count(*)`))
+      .limit(5),
+    db.select({
+      districtId: schema.reports.districtId,
+      cityId: schema.reports.cityId,
+      count: sql<number>`count(*)`,
+    })
+      .from(schema.reports)
+      .where(sql`${schema.reports.districtId} is not null`)
+      .groupBy(schema.reports.districtId, schema.reports.cityId)
+      .orderBy(desc(sql`count(*)`))
+      .limit(5),
   ])
 
-  // Get province names
-  const provinceIds = topProvinces.map((p) => p.provinceId).filter(Boolean) as string[]
-  const provinces = provinceIds.length > 0
-    ? await db.query.provinces.findMany({
-        where: inArray(schema.provinces.id, provinceIds),
-        columns: { id: true, name: true },
-      })
-    : []
+  // Get location names
+  const provinceIds = [...new Set([
+    ...topProvinces.map((p) => p.provinceId),
+    ...topCities.map((c) => c.provinceId),
+  ])].filter(Boolean) as string[]
+  const cityIds = [...new Set([
+    ...topCities.map((c) => c.cityId),
+    ...topDistricts.map((d) => d.cityId),
+  ])].filter(Boolean) as string[]
+  const districtIds = topDistricts.map((d) => d.districtId).filter(Boolean) as string[]
+
+  const [provinces, cities, districts] = await Promise.all([
+    provinceIds.length > 0
+      ? db.query.provinces.findMany({ where: inArray(schema.provinces.id, provinceIds), columns: { id: true, name: true } })
+      : [],
+    cityIds.length > 0
+      ? db.query.cities.findMany({ where: inArray(schema.cities.id, cityIds), columns: { id: true, name: true } })
+      : [],
+    districtIds.length > 0
+      ? db.query.districts.findMany({ where: inArray(schema.districts.id, districtIds), columns: { id: true, name: true } })
+      : [],
+  ])
+
   const provinceMap = new Map(provinces.map((p) => [p.id, p.name]))
+  const cityMap = new Map(cities.map((c) => [c.id, c.name]))
+  const districtMap = new Map(districts.map((d) => [d.id, d.name]))
+
+  // Build trend data based on filter type
+  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"]
+
+  let formattedTrends: { label: string; count: number }[]
+  if (month > 0) {
+    // Daily data for specific month
+    const daysInMonth = new Date(year, month, 0).getDate()
+    formattedTrends = Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1
+      const found = trendData.find((r: { day?: number }) => Number(r.day) === day)
+      return { label: String(day), count: Number(found?.count || 0) }
+    })
+  } else {
+    // Monthly data for whole year
+    formattedTrends = monthLabels.map((label, idx) => {
+      const found = trendData.find((r: { monthNum?: number }) => Number(r.monthNum) === idx + 1)
+      return { label, count: Number(found?.count || 0) }
+    })
+  }
 
   return c.json({
     overview: {
@@ -491,17 +573,29 @@ admin.get("/analytics", async (c) => {
       totalUsers: Number(userAggregates[0]?.total || 0),
       activeUsers: Number(userAggregates[0]?.active || 0),
       highRiskReports: Number(reportAggregates[0]?.highRisk || 0),
+      mediumRiskReports: Number(reportAggregates[0]?.mediumRisk || 0),
+      lowRiskReports: Number(reportAggregates[0]?.lowRisk || 0),
     },
     trends: {
-      reportsByMonth: reportsByMonth.map((r) => ({
-        month: r.month,
-        count: Number(r.count),
-      })),
+      data: formattedTrends,
+      isMonthly: month === 0,
     },
     topProvinces: topProvinces.map((p) => ({
       provinceId: p.provinceId,
       province: provinceMap.get(p.provinceId || "") || "",
       count: Number(p.count),
+    })),
+    topCities: topCities.map((c) => ({
+      cityId: c.cityId,
+      city: cityMap.get(c.cityId || "") || "",
+      province: provinceMap.get(c.provinceId || "") || "",
+      count: Number(c.count),
+    })),
+    topDistricts: topDistricts.map((d) => ({
+      districtId: d.districtId,
+      district: districtMap.get(d.districtId || "") || "",
+      city: cityMap.get(d.cityId || "") || "",
+      count: Number(d.count),
     })),
   })
 })
@@ -740,6 +834,169 @@ admin.get("/reports/:id/scoring", async (c) => {
       credibilityLevel: report.credibilityLevel,
     },
   })
+})
+
+// Admin accounts management
+const adminQuerySchema = z.object({
+  status: z.enum(["verified", "pending", "all"]).optional().default("all"),
+})
+
+admin.get("/admins", zValidator("query", adminQuerySchema), async (c) => {
+  const { status } = c.req.valid("query")
+
+  const conditions = [eq(schema.users.role, "admin")]
+  if (status === "verified") conditions.push(eq(schema.users.isVerified, true))
+  if (status === "pending") conditions.push(eq(schema.users.isVerified, false))
+
+  const data = await db.select({
+    id: schema.users.id,
+    name: schema.users.name,
+    email: schema.users.email,
+    phone: schema.users.phone,
+    role: schema.users.role,
+    adminRole: schema.users.adminRole,
+    isVerified: schema.users.isVerified,
+    createdAt: schema.users.createdAt,
+  }).from(schema.users).where(and(...conditions)).orderBy(desc(schema.users.createdAt))
+
+  return c.json({ data })
+})
+
+const createAdminSchema = z.object({
+  name: z.string().min(3).max(255),
+  email: z.string().email().max(255),
+  password: z.string().min(8).max(100),
+  adminRole: z.string().min(2).max(100),
+})
+
+admin.post("/admins", zValidator("json", createAdminSchema), async (c) => {
+  const { name, email, password, adminRole } = c.req.valid("json")
+
+  const existing = await db.query.users.findFirst({ where: eq(schema.users.email, email) })
+  if (existing) return c.json({ error: "Email sudah terdaftar" }, 400)
+
+  const hashedPassword = await Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 })
+
+  const [newAdmin] = await db.insert(schema.users).values({
+    name,
+    email,
+    password: hashedPassword,
+    role: "admin",
+    adminRole,
+    isVerified: true,
+    isActive: true,
+  }).returning()
+
+  return c.json({ data: newAdmin, message: "Admin berhasil ditambahkan" }, 201)
+})
+
+admin.delete("/admins/:id", async (c) => {
+  const id = c.req.param("id")
+  const currentUser = c.get("user")
+
+  if (currentUser.id === id) return c.json({ error: "Tidak dapat menghapus akun sendiri" }, 400)
+
+  const user = await db.query.users.findFirst({
+    where: and(eq(schema.users.id, id), eq(schema.users.role, "admin")),
+  })
+  if (!user) return c.json({ error: "Admin tidak ditemukan" }, 404)
+
+  await db.delete(schema.users).where(eq(schema.users.id, id))
+  return c.json({ message: "Admin berhasil dihapus" })
+})
+
+// Associate accounts management
+const associateQuerySchema = z.object({
+  status: z.enum(["verified", "pending", "all"]).optional().default("all"),
+})
+
+admin.get("/associates", zValidator("query", associateQuerySchema), async (c) => {
+  const { status } = c.req.valid("query")
+
+  const conditions = [eq(schema.users.role, "associate")]
+  if (status === "verified") conditions.push(eq(schema.users.isVerified, true))
+  if (status === "pending") conditions.push(eq(schema.users.isVerified, false))
+
+  const data = await db.select({
+    id: schema.users.id,
+    nik: schema.users.nik,
+    name: schema.users.name,
+    email: schema.users.email,
+    phone: schema.users.phone,
+    role: schema.users.role,
+    memberType: schema.users.memberType,
+    isVerified: schema.users.isVerified,
+    isActive: schema.users.isActive,
+    createdAt: schema.users.createdAt,
+  }).from(schema.users).where(and(...conditions)).orderBy(desc(schema.users.createdAt))
+
+  return c.json({ data })
+})
+
+const createAssociateSchema = z.object({
+  nik: z.string().length(16),
+  name: z.string().min(3).max(255),
+  email: z.string().email().max(255),
+  phone: z.string().regex(/^\+62\d{9,12}$/),
+  password: z.string().min(8).max(100),
+  memberType: z.enum(["supplier", "caterer", "school", "government", "ngo", "farmer", "other"]),
+})
+
+admin.post("/associates", zValidator("json", createAssociateSchema), async (c) => {
+  const { nik, name, email, phone, password, memberType } = c.req.valid("json")
+
+  const existingEmail = await db.query.users.findFirst({ where: eq(schema.users.email, email) })
+  if (existingEmail) return c.json({ error: "Email sudah terdaftar" }, 400)
+
+  const existingNik = await db.query.users.findFirst({ where: eq(schema.users.nik, nik) })
+  if (existingNik) return c.json({ error: "NIK sudah terdaftar" }, 400)
+
+  const existingPhone = await db.query.users.findFirst({ where: eq(schema.users.phone, phone) })
+  if (existingPhone) return c.json({ error: "Nomor telepon sudah terdaftar" }, 400)
+
+  const hashedPassword = await Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 })
+
+  const [newAssociate] = await db.insert(schema.users).values({
+    nik,
+    name,
+    email,
+    phone,
+    password: hashedPassword,
+    role: "associate",
+    memberType,
+    isVerified: true,
+    isActive: true,
+  }).returning()
+
+  return c.json({ data: newAssociate, message: "Asosiasi berhasil ditambahkan" }, 201)
+})
+
+admin.patch("/associates/:id/verify", async (c) => {
+  const id = c.req.param("id")
+
+  const user = await db.query.users.findFirst({
+    where: and(eq(schema.users.id, id), eq(schema.users.role, "associate")),
+  })
+  if (!user) return c.json({ error: "Asosiasi tidak ditemukan" }, 404)
+
+  await db.update(schema.users)
+    .set({ isVerified: true, updatedAt: new Date() })
+    .where(eq(schema.users.id, id))
+
+  return c.json({ message: "Asosiasi berhasil diverifikasi" })
+})
+
+admin.delete("/associates/:id", async (c) => {
+  const id = c.req.param("id")
+
+  const user = await db.query.users.findFirst({
+    where: and(eq(schema.users.id, id), eq(schema.users.role, "associate")),
+  })
+  if (!user) return c.json({ error: "Member tidak ditemukan" }, 404)
+
+  await db.delete(schema.users).where(eq(schema.users.id, id))
+
+  return c.json({ message: "Member berhasil dihapus" })
 })
 
 export default admin

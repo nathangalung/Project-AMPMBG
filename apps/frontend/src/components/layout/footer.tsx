@@ -77,7 +77,7 @@ function FooterComponent() {
 
         <div className="border-t border-blue-90/50 mt-8 pt-6 text-center">
           <p className="body-xs text-blue-30">
-            &copy; 2026 AMP MBG. All Rights Reserved.
+            &copy; {new Date().getFullYear()} AMP MBG. All Rights Reserved.
           </p>
         </div>
       </div>

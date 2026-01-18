@@ -1,8 +1,11 @@
 import { pgTable, text, timestamp, varchar, pgEnum, uuid, boolean, index, integer, smallint } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
-// User role enum (admin for dashboard, public for reporting)
-export const roleEnum = pgEnum("role", ["admin", "public"])
+// User role enum (admin for dashboard, associate for MBG partners, public for reporting)
+export const roleEnum = pgEnum("role", ["admin", "associate", "public"])
+
+// Associate member type enum
+export const memberTypeEnum = pgEnum("member_type", ["supplier", "caterer", "school", "government", "ngo", "farmer", "other"])
 
 // Credibility level for reports
 export const credibilityLevelEnum = pgEnum("credibility_level", ["high", "medium", "low"])
@@ -56,12 +59,14 @@ export const mbgSchedules = pgTable("mbg_schedules", {
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
-  nik: varchar("nik", { length: 16 }).unique().notNull(),
+  nik: varchar("nik", { length: 16 }).unique(),
   email: varchar("email", { length: 255 }).unique().notNull(),
-  phone: varchar("phone", { length: 15 }).unique().notNull(), // +62 + 9-12 digits
+  phone: varchar("phone", { length: 15 }).unique(),
   password: text("password").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   role: roleEnum("role").default("public").notNull(),
+  memberType: memberTypeEnum("member_type"),
+  adminRole: varchar("admin_role", { length: 100 }),
   isVerified: boolean("is_verified").default(false).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   reportCount: integer("report_count").default(0).notNull(),

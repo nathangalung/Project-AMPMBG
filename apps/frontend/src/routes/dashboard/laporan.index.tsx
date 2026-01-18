@@ -1,14 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { DashboardAnggotaLayout } from "@/components/dashboard/dashboard-anggota-layout"
-import { 
-  ChevronDown, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
-  ChevronsRight, 
-  Search, 
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Search,
   AlertCircle,
-  XCircle,
   Loader2
 } from "lucide-react"
 import { useState, useEffect, useCallback, memo } from "react"

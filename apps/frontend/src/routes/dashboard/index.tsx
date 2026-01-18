@@ -2,16 +2,17 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { DashboardAnggotaLayout } from "@/components/dashboard/dashboard-anggota-layout"
 import { useQuery } from "@tanstack/react-query"
 import { adminService } from "@/services/admin"
-import { 
-  Loader2, 
-  TrendingUp, 
-  MapPin, 
-  AlertTriangle, 
-  ChevronDown, 
-  FileText, 
-  ClipboardList 
+import {
+  Loader2,
+  TrendingUp,
+  MapPin,
+  AlertTriangle,
+  ChevronDown,
+  FileText,
+  ClipboardList
 } from "lucide-react"
 import { useState, useMemo } from "react"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 export const Route = createFileRoute("/dashboard/")({
   component: DashboardAnggota,
@@ -26,35 +27,25 @@ const CATEGORY_LABELS: Record<string, string> = {
   social: "Dampak Sosial",
 }
 
-// --- MOCK CHART COMPONENT ---
-const SimpleBarChart = ({ data, year }: { data: { month: string; count: number }[], year: number }) => {
-  const maxVal = Math.max(...data.map(d => d.count), 10) 
-
-  return (
-    <div className="w-full h-52 flex items-end gap-2 sm:gap-3 mt-4">
-      {data.map((item, idx) => {
-        const heightPercentage = (item.count / maxVal) * 100
-        return (
-          <div key={idx} className="group relative flex-1 flex flex-col items-center justify-end h-full">
-            <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-general-90 text-general-20 text-[10px] py-1 px-2 rounded mb-2 whitespace-nowrap z-10 pointer-events-none">
-              {item.count} Laporan
-            </div>
-            <div 
-              className="w-full bg-blue-100/20 group-hover:bg-blue-100 transition-all rounded-t-sm relative"
-              style={{ height: `${heightPercentage}%` }}
-            ></div>
-            <span className="text-[10px] text-general-50 mt-2 font-medium truncate w-full text-center">
-              {item.month.slice(0, 3)}
-            </span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
+const MONTH_OPTIONS = [
+  { value: 0, label: "Tahunan" },
+  { value: 1, label: "Januari" },
+  { value: 2, label: "Februari" },
+  { value: 3, label: "Maret" },
+  { value: 4, label: "April" },
+  { value: 5, label: "Mei" },
+  { value: 6, label: "Juni" },
+  { value: 7, label: "Juli" },
+  { value: 8, label: "Agustus" },
+  { value: 9, label: "September" },
+  { value: 10, label: "Oktober" },
+  { value: 11, label: "November" },
+  { value: 12, label: "Desember" },
+]
 
 function DashboardAnggota() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
+  const [selectedMonth, setSelectedMonth] = useState<number>(0)
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["admin", "dashboard"],
@@ -62,17 +53,16 @@ function DashboardAnggota() {
   })
 
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
-    queryKey: ["admin", "analytics"],
-    queryFn: () => adminService.getAnalytics(),
+    queryKey: ["admin", "analytics", selectedYear, selectedMonth],
+    queryFn: () => adminService.getAnalytics(selectedYear, selectedMonth),
   })
 
   const isLoading = statsLoading || analyticsLoading
 
-  // --- DERIVED DATA ---
   const riskCounts = {
     high: analytics?.overview.highRiskReports || 0,
-    medium: Math.floor((stats?.reports.total || 0) * 0.3), 
-    low: Math.floor((stats?.reports.total || 0) * 0.5),    
+    medium: analytics?.overview.mediumRiskReports || 0,
+    low: analytics?.overview.lowRiskReports || 0,
   }
 
   const pendingCount = stats?.reports.pending || 0
@@ -81,36 +71,16 @@ function DashboardAnggota() {
     if (!stats?.reports.byCategory) return []
     return [...stats.reports.byCategory]
       .sort((a, b) => b.count - a.count)
-      .slice(0, 4) // Ambil top 4
+      .slice(0, 4)
   }, [stats])
 
   const chartData = useMemo(() => {
-    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"]
-    
-    if (analytics?.trends?.reportsByMonth) {
-        return analytics.trends.reportsByMonth
+    if (analytics?.trends?.data) {
+      return analytics.trends.data
     }
+    return []
+  }, [analytics])
 
-    return months.map((m, i) => ({
-      month: m,
-      count: selectedYear === 2025 ? [12, 19, 3, 5, 2, 3, 10, 15, 20, 25, 30, 10][i] : [5, 8, 12, 15, 20, 18, 15, 12, 10, 8, 5, 2][i] 
-    }))
-  }, [analytics, selectedYear])
-
-  // Mock Location Data
-  const topCities = [
-    { name: "Kota Bandung", count: 45, prov: "Jawa Barat" },
-    { name: "Kab. Bogor", count: 32, prov: "Jawa Barat" },
-    { name: "Jakarta Selatan", count: 28, prov: "DKI Jakarta" },
-    { name: "Surabaya", count: 20, prov: "Jawa Timur" },
-  ]
-
-  const topDistricts = [
-    { name: "Cicendo", city: "Kota Bandung", count: 12 },
-    { name: "Cibinong", city: "Kab. Bogor", count: 10 },
-    { name: "Tebet", city: "Jakarta Selatan", count: 8 },
-    { name: "Coblong", city: "Kota Bandung", count: 5 },
-  ]
 
   return (
     <DashboardAnggotaLayout>
@@ -187,28 +157,73 @@ function DashboardAnggota() {
 
             {/* --- SECTION 2: CHART & CATEGORIES (Grid Split) --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
+
                 {/* Left: Chart (2 Cols) */}
                 <div className="lg:col-span-2 bg-general-20 border border-general-30 rounded-xl p-6 shadow-sm">
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                         <h3 className="h6 text-general-100 flex items-center gap-2">
                             <TrendingUp className="w-5 h-5 text-blue-100" />
-                            Tren Laporan Bulanan
+                            Tren Laporan {selectedMonth === 0 ? "Bulanan" : "Harian"}
                         </h3>
-                        <div className="relative">
-                            <select 
-                                value={selectedYear}
-                                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                className="appearance-none bg-general-20 border border-general-30 text-general-80 py-1 pl-3 pr-8 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 outline-none cursor-pointer hover:bg-general-30/30 transition-colors"
-                            >
-                                <option value={2026}>2026</option>
-                                <option value={2025}>2025</option>
-                                <option value={2024}>2024</option>
-                            </select>
-                            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-general-60 pointer-events-none" />
+                        <div className="flex gap-2">
+                            <div className="relative">
+                                <select
+                                    value={selectedYear}
+                                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                    className="appearance-none bg-general-20 border border-general-30 text-general-80 py-1.5 pl-3 pr-8 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 outline-none cursor-pointer hover:bg-general-30/30 transition-colors"
+                                >
+                                    {[2024, 2025, 2026].map((y) => (
+                                        <option key={y} value={y}>{y}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-general-60 pointer-events-none" />
+                            </div>
+                            <div className="relative">
+                                <select
+                                    value={selectedMonth}
+                                    onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                                    className="appearance-none bg-general-20 border border-general-30 text-general-80 py-1.5 pl-3 pr-8 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 outline-none cursor-pointer hover:bg-general-30/30 transition-colors"
+                                >
+                                    {MONTH_OPTIONS.map((m) => (
+                                        <option key={m.value} value={m.value}>{m.label}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-general-60 pointer-events-none" />
+                            </div>
                         </div>
                     </div>
-                    <SimpleBarChart data={chartData} year={selectedYear} />
+                    <div className="h-64 mt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                <XAxis
+                                    dataKey="label"
+                                    tick={{ fontSize: 10, fill: "#6b7280" }}
+                                    tickLine={false}
+                                    axisLine={{ stroke: "#e5e7eb" }}
+                                />
+                                <YAxis
+                                    tick={{ fontSize: 10, fill: "#6b7280" }}
+                                    tickLine={false}
+                                    axisLine={{ stroke: "#e5e7eb" }}
+                                    allowDecimals={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e7eb" }}
+                                    labelFormatter={(label) => selectedMonth === 0 ? `Bulan: ${label}` : `Tanggal: ${label}`}
+                                    formatter={(value: number) => [`${value} Laporan`, "Jumlah"]}
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="count"
+                                    stroke="#3b82f6"
+                                    strokeWidth={2}
+                                    dot={{ fill: "#3b82f6", strokeWidth: 2, r: 3 }}
+                                    activeDot={{ r: 5, fill: "#3b82f6" }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
 
                 {/* Right: Top Categories (1 Col) */}
@@ -261,23 +276,23 @@ function DashboardAnggota() {
                     />
 
                     {/* Top Kabupaten/Kota */}
-                    <LocationCard 
-                        title="Kabupaten/Kota" 
-                        data={topCities.map(i => ({ 
-                            name: i.name, 
-                            sub: i.prov, 
-                            count: i.count 
-                        }))} 
+                    <LocationCard
+                        title="Kabupaten/Kota"
+                        data={analytics?.topCities?.slice(0, 5).map(i => ({
+                            name: i.city,
+                            sub: i.province,
+                            count: i.count
+                        })) || []}
                     />
 
                     {/* Top Kecamatan */}
-                    <LocationCard 
-                        title="Kecamatan" 
-                        data={topDistricts.map(i => ({ 
-                            name: i.name, 
-                            sub: i.city, 
-                            count: i.count 
-                        }))} 
+                    <LocationCard
+                        title="Kecamatan"
+                        data={analytics?.topDistricts?.slice(0, 5).map(i => ({
+                            name: i.district,
+                            sub: i.city,
+                            count: i.count
+                        })) || []}
                     />
 
                 </div>

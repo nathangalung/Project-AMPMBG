@@ -89,7 +89,7 @@ export const adminService = {
     return api.get(`/admin/reports/${id}`)
   },
 
-  async updateReportStatus(id: string, data: { status: ReportStatus; notes?: string }): Promise<{ data: Report; message: string }> {
+  async updateReportStatus(id: string, data: { status: ReportStatus; credibilityLevel?: string; notes?: string }): Promise<{ data: Report; message: string }> {
     return api.patch(`/admin/reports/${id}/status`, data)
   },
 
@@ -122,7 +122,7 @@ export const adminService = {
     return api.delete(`/admin/reports/${id}`)
   },
 
-  async getAnalytics(): Promise<{
+  async getAnalytics(year?: number, month?: number): Promise<{
     overview: {
       totalReports: number
       last30Days: number
@@ -130,12 +130,21 @@ export const adminService = {
       totalUsers: number
       activeUsers: number
       highRiskReports: number
+      mediumRiskReports: number
+      lowRiskReports: number
     }
     trends: {
-      reportsByMonth: { month: string; count: number }[]
+      data: { label: string; count: number }[]
+      isMonthly: boolean
     }
     topProvinces: { provinceId: string; province: string; count: number }[]
+    topCities: { cityId: string; city: string; province: string; count: number }[]
+    topDistricts: { districtId: string; district: string; city: string; count: number }[]
   }> {
-    return api.get("/admin/analytics")
+    const params = new URLSearchParams()
+    if (year) params.append("year", String(year))
+    if (month !== undefined) params.append("month", String(month))
+    const query = params.toString() ? `?${params.toString()}` : ""
+    return api.get(`/admin/analytics${query}`)
   },
 }

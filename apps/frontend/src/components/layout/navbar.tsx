@@ -37,8 +37,7 @@ function NavbarComponent() {
   }, [checkUser])
 
   // --- 2. LOGIKA PROTEKSI LINK (PENTING) ---
-  // Fungsi ini mencegat klik pada link yang protected
-  const handleProtectedNavigation = (e: React.MouseEvent, to: string, isProtected: boolean) => {
+  const handleProtectedNavigation = (e: React.MouseEvent, _to: string, isProtected: boolean) => {
     // Jika link dilindungi DAN user belum login
     if (isProtected && !currentUser) {
       e.preventDefault() // Batalkan navigasi asli

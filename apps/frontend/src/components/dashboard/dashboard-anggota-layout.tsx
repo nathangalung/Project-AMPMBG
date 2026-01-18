@@ -1,12 +1,13 @@
 import type React from "react"
 import { Link, useNavigate, useLocation } from "@tanstack/react-router"
 import { useState, useEffect } from "react"
-import { 
-  LayoutDashboard, 
-  FileText, 
-  User, // Icon baru untuk Akun Anggota
-  LogOut, 
-  AlertCircle 
+import {
+  LayoutDashboard,
+  FileText,
+  UserCog,
+  Users,
+  LogOut,
+  AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -38,26 +39,11 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
     navigate({ to: "/" })
   }
 
-  // --- UPDATE MENU DI SINI ---
   const navItems = [
-    { 
-      to: "/dashboard", 
-      label: "Beranda", 
-      icon: LayoutDashboard,
-      exact: true 
-    },
-    { 
-      to: "/dashboard/laporan", // Mengarah ke halaman utama laporan
-      label: "Laporan", 
-      icon: FileText,
-      exact: false // Supaya tetap aktif saat membuka detail laporan
-    },
-    { 
-      to: "/dashboard/akun-anggota", // Mengarah ke halaman akun
-      label: "Akun Anggota", 
-      icon: User,
-      exact: true
-    },
+    { to: "/dashboard", label: "Beranda", icon: LayoutDashboard, exact: true },
+    { to: "/dashboard/laporan", label: "Laporan", icon: FileText, exact: false },
+    { to: "/dashboard/akun-admin", label: "Akun Admin", icon: UserCog, exact: true },
+    { to: "/dashboard/akun-asosiasi", label: "Akun Asosiasi", icon: Users, exact: true },
   ]
 
   // Helper cek active link

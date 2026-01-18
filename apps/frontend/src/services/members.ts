@@ -1,31 +1,73 @@
-// src/services/members.ts
 import { api } from "@/lib/api"
 
-export interface Member {
+export interface Admin {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  role: string
+  adminRole: string | null
+  isVerified: boolean
+  createdAt: string
+}
+
+export interface Associate {
   id: string
   name: string
   email: string
   phone: string
   nik: string
   role: string
+  memberType: string | null
   isVerified: boolean
+  isActive: boolean
   createdAt: string
 }
 
-export const memberService = {
-  // Ambil semua member (bisa difilter status verifikasinya)
-  getMembers: async (status: 'verified' | 'pending' | 'all' = 'all') => {
-    // Anggap backend menerima query param ?status=pending
-    return api.get(`/admin/members?status=${status}`)
+export interface CreateAdminData {
+  name: string
+  email: string
+  password: string
+  adminRole: string
+}
+
+export interface CreateAssociateData {
+  nik: string
+  name: string
+  email: string
+  phone: string
+  password: string
+  memberType: "supplier" | "caterer" | "school" | "government" | "ngo" | "farmer" | "other"
+}
+
+export const adminAccountService = {
+  getAdmins: async (status: "verified" | "pending" | "all" = "all"): Promise<{ data: Admin[] }> => {
+    return api.get(`/admin/admins?status=${status}`)
   },
 
-  // Verifikasi member
-  verifyMember: async (id: string) => {
-    return api.patch(`/admin/members/${id}/verify`)
+  createAdmin: async (data: CreateAdminData): Promise<{ data: Admin; message: string }> => {
+    return api.post("/admin/admins", data)
   },
 
-  // Tolak/Hapus member (jika data palsu)
-  rejectMember: async (id: string) => {
-    return api.delete(`/admin/members/${id}`)
-  }
+  deleteAdmin: async (id: string): Promise<{ message: string }> => {
+    return api.delete(`/admin/admins/${id}`)
+  },
+}
+
+export const associateService = {
+  getAssociates: async (status: "verified" | "pending" | "all" = "all"): Promise<{ data: Associate[] }> => {
+    return api.get(`/admin/associates?status=${status}`)
+  },
+
+  createAssociate: async (data: CreateAssociateData): Promise<{ data: Associate; message: string }> => {
+    return api.post("/admin/associates", data)
+  },
+
+  verifyAssociate: async (id: string): Promise<{ message: string }> => {
+    return api.patch(`/admin/associates/${id}/verify`)
+  },
+
+  deleteAssociate: async (id: string): Promise<{ message: string }> => {
+    return api.delete(`/admin/associates/${id}`)
+  },
 }

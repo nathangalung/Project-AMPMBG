@@ -22,7 +22,8 @@ import { Route as AuthLoginAnggotaRouteImport } from './routes/auth/login-anggot
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as DashboardLaporanIndexRouteImport } from './routes/dashboard/laporan.index'
-import { Route as DashboardAkunAnggotaIndexRouteImport } from './routes/dashboard/akun-anggota.index'
+import { Route as DashboardAkunAsosiasiIndexRouteImport } from './routes/dashboard/akun-asosiasi.index'
+import { Route as DashboardAkunAdminIndexRouteImport } from './routes/dashboard/akun-admin.index'
 import { Route as DashboardLaporanIdRouteImport } from './routes/dashboard/laporan.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -90,12 +91,17 @@ const DashboardLaporanIndexRoute = DashboardLaporanIndexRouteImport.update({
   path: '/dashboard/laporan/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardAkunAnggotaIndexRoute =
-  DashboardAkunAnggotaIndexRouteImport.update({
-    id: '/dashboard/akun-anggota/',
-    path: '/dashboard/akun-anggota/',
+const DashboardAkunAsosiasiIndexRoute =
+  DashboardAkunAsosiasiIndexRouteImport.update({
+    id: '/dashboard/akun-asosiasi/',
+    path: '/dashboard/akun-asosiasi/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DashboardAkunAdminIndexRoute = DashboardAkunAdminIndexRouteImport.update({
+  id: '/dashboard/akun-admin/',
+  path: '/dashboard/akun-admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardLaporanIdRoute = DashboardLaporanIdRouteImport.update({
   id: '/dashboard/laporan/$id',
   path: '/dashboard/laporan/$id',
@@ -116,7 +122,8 @@ export interface FileRoutesByFullPath {
   '/profil': typeof ProfilIndexRoute
   '/tentang-kami': typeof TentangKamiIndexRoute
   '/dashboard/laporan/$id': typeof DashboardLaporanIdRoute
-  '/dashboard/akun-anggota': typeof DashboardAkunAnggotaIndexRoute
+  '/dashboard/akun-admin': typeof DashboardAkunAdminIndexRoute
+  '/dashboard/akun-asosiasi': typeof DashboardAkunAsosiasiIndexRoute
   '/dashboard/laporan': typeof DashboardLaporanIndexRoute
 }
 export interface FileRoutesByTo {
@@ -133,7 +140,8 @@ export interface FileRoutesByTo {
   '/profil': typeof ProfilIndexRoute
   '/tentang-kami': typeof TentangKamiIndexRoute
   '/dashboard/laporan/$id': typeof DashboardLaporanIdRoute
-  '/dashboard/akun-anggota': typeof DashboardAkunAnggotaIndexRoute
+  '/dashboard/akun-admin': typeof DashboardAkunAdminIndexRoute
+  '/dashboard/akun-asosiasi': typeof DashboardAkunAsosiasiIndexRoute
   '/dashboard/laporan': typeof DashboardLaporanIndexRoute
 }
 export interface FileRoutesById {
@@ -151,7 +159,8 @@ export interface FileRoutesById {
   '/profil/': typeof ProfilIndexRoute
   '/tentang-kami/': typeof TentangKamiIndexRoute
   '/dashboard/laporan/$id': typeof DashboardLaporanIdRoute
-  '/dashboard/akun-anggota/': typeof DashboardAkunAnggotaIndexRoute
+  '/dashboard/akun-admin/': typeof DashboardAkunAdminIndexRoute
+  '/dashboard/akun-asosiasi/': typeof DashboardAkunAsosiasiIndexRoute
   '/dashboard/laporan/': typeof DashboardLaporanIndexRoute
 }
 export interface FileRouteTypes {
@@ -170,7 +179,8 @@ export interface FileRouteTypes {
     | '/profil'
     | '/tentang-kami'
     | '/dashboard/laporan/$id'
-    | '/dashboard/akun-anggota'
+    | '/dashboard/akun-admin'
+    | '/dashboard/akun-asosiasi'
     | '/dashboard/laporan'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -187,7 +197,8 @@ export interface FileRouteTypes {
     | '/profil'
     | '/tentang-kami'
     | '/dashboard/laporan/$id'
-    | '/dashboard/akun-anggota'
+    | '/dashboard/akun-admin'
+    | '/dashboard/akun-asosiasi'
     | '/dashboard/laporan'
   id:
     | '__root__'
@@ -204,7 +215,8 @@ export interface FileRouteTypes {
     | '/profil/'
     | '/tentang-kami/'
     | '/dashboard/laporan/$id'
-    | '/dashboard/akun-anggota/'
+    | '/dashboard/akun-admin/'
+    | '/dashboard/akun-asosiasi/'
     | '/dashboard/laporan/'
   fileRoutesById: FileRoutesById
 }
@@ -222,7 +234,8 @@ export interface RootRouteChildren {
   ProfilIndexRoute: typeof ProfilIndexRoute
   TentangKamiIndexRoute: typeof TentangKamiIndexRoute
   DashboardLaporanIdRoute: typeof DashboardLaporanIdRoute
-  DashboardAkunAnggotaIndexRoute: typeof DashboardAkunAnggotaIndexRoute
+  DashboardAkunAdminIndexRoute: typeof DashboardAkunAdminIndexRoute
+  DashboardAkunAsosiasiIndexRoute: typeof DashboardAkunAsosiasiIndexRoute
   DashboardLaporanIndexRoute: typeof DashboardLaporanIndexRoute
 }
 
@@ -319,11 +332,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLaporanIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/akun-anggota/': {
-      id: '/dashboard/akun-anggota/'
-      path: '/dashboard/akun-anggota'
-      fullPath: '/dashboard/akun-anggota'
-      preLoaderRoute: typeof DashboardAkunAnggotaIndexRouteImport
+    '/dashboard/akun-asosiasi/': {
+      id: '/dashboard/akun-asosiasi/'
+      path: '/dashboard/akun-asosiasi'
+      fullPath: '/dashboard/akun-asosiasi'
+      preLoaderRoute: typeof DashboardAkunAsosiasiIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/akun-admin/': {
+      id: '/dashboard/akun-admin/'
+      path: '/dashboard/akun-admin'
+      fullPath: '/dashboard/akun-admin'
+      preLoaderRoute: typeof DashboardAkunAdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/laporan/$id': {
@@ -350,7 +370,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProfilIndexRoute: ProfilIndexRoute,
   TentangKamiIndexRoute: TentangKamiIndexRoute,
   DashboardLaporanIdRoute: DashboardLaporanIdRoute,
-  DashboardAkunAnggotaIndexRoute: DashboardAkunAnggotaIndexRoute,
+  DashboardAkunAdminIndexRoute: DashboardAkunAdminIndexRoute,
+  DashboardAkunAsosiasiIndexRoute: DashboardAkunAsosiasiIndexRoute,
   DashboardLaporanIndexRoute: DashboardLaporanIndexRoute,
 }
 export const routeTree = rootRouteImport
