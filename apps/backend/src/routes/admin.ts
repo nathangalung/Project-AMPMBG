@@ -905,15 +905,15 @@ admin.delete("/admins/:id", async (c) => {
   return c.json({ message: "Admin berhasil dihapus" })
 })
 
-// Associate accounts management
-const associateQuerySchema = z.object({
+// Member accounts management (anggota MBG)
+const memberQuerySchema = z.object({
   status: z.enum(["verified", "pending", "all"]).optional().default("all"),
 })
 
-admin.get("/associates", zValidator("query", associateQuerySchema), async (c) => {
+admin.get("/members", zValidator("query", memberQuerySchema), async (c) => {
   const { status } = c.req.valid("query")
 
-  const conditions = [eq(schema.users.role, "associate")]
+  const conditions = [eq(schema.users.role, "member")]
   if (status === "verified") conditions.push(eq(schema.users.isVerified, true))
   if (status === "pending") conditions.push(eq(schema.users.isVerified, false))
 
@@ -925,15 +925,63 @@ admin.get("/associates", zValidator("query", associateQuerySchema), async (c) =>
     phone: schema.users.phone,
     role: schema.users.role,
     memberType: schema.users.memberType,
+    organizationName: schema.users.organizationName,
+    organizationEmail: schema.users.organizationEmail,
+    organizationPhone: schema.users.organizationPhone,
+    roleInOrganization: schema.users.roleInOrganization,
+    organizationMbgRole: schema.users.organizationMbgRole,
+    appliedAt: schema.users.appliedAt,
+    verifiedAt: schema.users.verifiedAt,
     isVerified: schema.users.isVerified,
     isActive: schema.users.isActive,
     createdAt: schema.users.createdAt,
+    updatedAt: schema.users.updatedAt,
   }).from(schema.users).where(and(...conditions)).orderBy(desc(schema.users.createdAt))
 
-  return c.json({ data })
+  // Format data with organizationInfo
+  const formattedData = data.map((user) => ({
+    ...user,
+    organizationInfo: {
+      name: user.organizationName || "",
+      email: user.organizationEmail || "",
+      phone: user.organizationPhone || "",
+      roleDescription: user.roleInOrganization || "",
+      mbgDescription: user.organizationMbgRole || "",
+    }
+  }))
+
+  return c.json({ data: formattedData })
 })
 
-const createAssociateSchema = z.object({
+// Get single member detail
+admin.get("/members/:id", async (c) => {
+  const id = c.req.param("id")
+
+  const user = await db.query.users.findFirst({
+    where: and(eq(schema.users.id, id), eq(schema.users.role, "member")),
+    columns: { password: false },
+  })
+
+  if (!user) return c.json({ error: "Anggota tidak ditemukan" }, 404)
+
+  const organizationInfo = {
+    name: user.organizationName || "",
+    email: user.organizationEmail || "",
+    phone: user.organizationPhone || "",
+    roleDescription: user.roleInOrganization || "",
+    mbgDescription: user.organizationMbgRole || "",
+  }
+
+  return c.json({
+    data: {
+      ...user,
+      organizationInfo,
+      appliedAt: user.appliedAt,
+    }
+  })
+})
+
+const createMemberSchema = z.object({
   nik: z.string().length(16),
   name: z.string().min(3).max(255),
   email: z.string().email().max(255),
@@ -942,7 +990,7 @@ const createAssociateSchema = z.object({
   memberType: z.enum(["supplier", "caterer", "school", "government", "ngo", "farmer", "other"]),
 })
 
-admin.post("/associates", zValidator("json", createAssociateSchema), async (c) => {
+admin.post("/members", zValidator("json", createMemberSchema), async (c) => {
   const { nik, name, email, phone, password, memberType } = c.req.valid("json")
 
   const existingEmail = await db.query.users.findFirst({ where: eq(schema.users.email, email) })
@@ -956,47 +1004,85 @@ admin.post("/associates", zValidator("json", createAssociateSchema), async (c) =
 
   const hashedPassword = await Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 })
 
-  const [newAssociate] = await db.insert(schema.users).values({
+  const [newMember] = await db.insert(schema.users).values({
     nik,
     name,
     email,
     phone,
     password: hashedPassword,
-    role: "associate",
+    role: "member",
     memberType,
     isVerified: true,
     isActive: true,
   }).returning()
 
-  return c.json({ data: newAssociate, message: "Asosiasi berhasil ditambahkan" }, 201)
+  return c.json({ data: newMember, message: "Anggota berhasil ditambahkan" }, 201)
 })
 
-admin.patch("/associates/:id/verify", async (c) => {
+admin.patch("/members/:id/verify", async (c) => {
   const id = c.req.param("id")
 
   const user = await db.query.users.findFirst({
-    where: and(eq(schema.users.id, id), eq(schema.users.role, "associate")),
+    where: and(eq(schema.users.id, id), eq(schema.users.role, "member")),
   })
-  if (!user) return c.json({ error: "Asosiasi tidak ditemukan" }, 404)
+  if (!user) return c.json({ error: "Anggota tidak ditemukan" }, 404)
 
+  const now = new Date()
   await db.update(schema.users)
-    .set({ isVerified: true, updatedAt: new Date() })
+    .set({ isVerified: true, verifiedAt: now, updatedAt: now })
     .where(eq(schema.users.id, id))
 
-  return c.json({ message: "Asosiasi berhasil diverifikasi" })
+  return c.json({ message: "Anggota berhasil diverifikasi" })
 })
 
-admin.delete("/associates/:id", async (c) => {
+// Update member status (verify/reject)
+const updateMemberStatusSchema = z.object({
+  isVerified: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+})
+
+admin.patch("/members/:id/status", zValidator("json", updateMemberStatusSchema), async (c) => {
+  const id = c.req.param("id")
+  const { isVerified, isActive } = c.req.valid("json")
+
+  const user = await db.query.users.findFirst({
+    where: and(eq(schema.users.id, id), eq(schema.users.role, "member")),
+  })
+  if (!user) return c.json({ error: "Anggota tidak ditemukan" }, 404)
+
+  const now = new Date()
+  const updateData: Record<string, unknown> = { updatedAt: now }
+  if (isVerified !== undefined) {
+    updateData.isVerified = isVerified
+    if (isVerified) updateData.verifiedAt = now
+  }
+  if (isActive !== undefined) updateData.isActive = isActive
+
+  const [updated] = await db.update(schema.users)
+    .set(updateData)
+    .where(eq(schema.users.id, id))
+    .returning({
+      id: schema.users.id,
+      isVerified: schema.users.isVerified,
+      isActive: schema.users.isActive,
+      verifiedAt: schema.users.verifiedAt,
+      updatedAt: schema.users.updatedAt,
+    })
+
+  return c.json({ data: updated, message: "Status anggota berhasil diperbarui" })
+})
+
+admin.delete("/members/:id", async (c) => {
   const id = c.req.param("id")
 
   const user = await db.query.users.findFirst({
-    where: and(eq(schema.users.id, id), eq(schema.users.role, "associate")),
+    where: and(eq(schema.users.id, id), eq(schema.users.role, "member")),
   })
-  if (!user) return c.json({ error: "Member tidak ditemukan" }, 404)
+  if (!user) return c.json({ error: "Anggota tidak ditemukan" }, 404)
 
   await db.delete(schema.users).where(eq(schema.users.id, id))
 
-  return c.json({ message: "Member berhasil dihapus" })
+  return c.json({ message: "Anggota berhasil dihapus" })
 })
 
 export default admin

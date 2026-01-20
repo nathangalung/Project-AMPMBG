@@ -1,10 +1,10 @@
 import { pgTable, text, timestamp, varchar, pgEnum, uuid, boolean, index, integer, smallint } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
-// User role enum (admin for dashboard, associate for MBG partners, public for reporting)
-export const roleEnum = pgEnum("role", ["admin", "associate", "public"])
+// User role enum: admin=dashboard, member=anggota MBG, public=masyarakat
+export const roleEnum = pgEnum("role", ["admin", "member", "public"])
 
-// Associate member type enum
+// Member type enum for anggota MBG
 export const memberTypeEnum = pgEnum("member_type", ["supplier", "caterer", "school", "government", "ngo", "farmer", "other"])
 
 // Credibility level for reports
@@ -67,6 +67,14 @@ export const users = pgTable("users", {
   role: roleEnum("role").default("public").notNull(),
   memberType: memberTypeEnum("member_type"),
   adminRole: varchar("admin_role", { length: 100 }),
+  // Organization info for member applications
+  organizationName: varchar("organization_name", { length: 255 }),
+  organizationEmail: varchar("organization_email", { length: 255 }),
+  organizationPhone: varchar("organization_phone", { length: 20 }),
+  roleInOrganization: text("role_in_organization"),
+  organizationMbgRole: text("organization_mbg_role"),
+  appliedAt: timestamp("applied_at"),
+  verifiedAt: timestamp("verified_at"),
   isVerified: boolean("is_verified").default(false).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   reportCount: integer("report_count").default(0).notNull(),

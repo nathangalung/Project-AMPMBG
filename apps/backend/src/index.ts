@@ -17,11 +17,16 @@ if (process.env.NODE_ENV !== "production") {
   app.use("*", logger())
 }
 
+// CORS: Support multiple origins
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:5174").split(",")
+
 app.use(
   "*",
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
   })
 )
 

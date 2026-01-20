@@ -406,4 +406,45 @@ auth.get("/check", authMiddleware, async (c) => {
   return c.json({ authenticated: true, user: authUser })
 })
 
+// Apply as MBG member (anggota)
+const applyMemberSchema = z.object({
+  memberType: z.enum(["supplier", "caterer", "school", "government", "ngo", "farmer", "other"]),
+  organizationName: z.string().min(3, "Nama organisasi minimal 3 karakter").max(255),
+  organizationEmail: z.string().email("Email organisasi tidak valid"),
+  organizationPhone: z.string().min(9, "Nomor telepon minimal 9 digit").max(15),
+  roleDescription: z.string().min(10, "Deskripsi peran minimal 10 karakter").max(500),
+  mbgDescription: z.string().min(10, "Deskripsi peran MBG minimal 10 karakter").max(500),
+})
+
+auth.post("/apply-member", authMiddleware, zValidator("json", applyMemberSchema), async (c) => {
+  const authUser = c.get("user")
+  const data = c.req.valid("json")
+
+  const user = await db.query.users.findFirst({
+    where: eq(schema.users.id, authUser.id),
+  })
+
+  if (!user) return c.json({ error: "User tidak ditemukan" }, 404)
+  if (user.role !== "public") return c.json({ error: "Hanya pengguna publik yang dapat mendaftar" }, 400)
+
+  await db.update(schema.users)
+    .set({
+      memberType: data.memberType,
+      organizationName: data.organizationName,
+      organizationEmail: data.organizationEmail,
+      organizationPhone: data.organizationPhone,
+      roleInOrganization: data.roleDescription,
+      organizationMbgRole: data.mbgDescription,
+      appliedAt: new Date(),
+      role: "member",
+      isVerified: false,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.users.id, authUser.id))
+
+  return c.json({
+    message: "Pendaftaran sebagai anggota AMP MBG sedang diproses. Silakan tunggu verifikasi dari admin.",
+  })
+})
+
 export default auth
