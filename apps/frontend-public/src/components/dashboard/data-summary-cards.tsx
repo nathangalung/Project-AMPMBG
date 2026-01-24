@@ -6,38 +6,49 @@ import {
   Info,
   Tag,
   X,
-  HelpCircle
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  Lightbulb
 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { reportsService } from "@/services/reports"
 import { CATEGORY_LABELS_SHORT } from "@/hooks/use-categories"
 
-// Data Legenda disesuaikan dengan Matriks Skoring
 const RISK_LEGEND = [
-  { 
-    label: "Tingkat Tinggi", 
-    color: "bg-red-100", 
-    text: "text-red-100",
-    desc: "Skor ≥ 12. Relasi jelas, validitas tinggi, bukti lengkap & narasi konsisten." 
+  {
+    label: "Tingkat Tinggi",
+    className: "bg-red-100 text-general-20 border-red-100", 
+    indicator: "bg-general-20", 
+    desc: "Total Skor ≥ 12. Data sangat lengkap, valid, dan konsisten."
   },
-  { 
-    label: "Tingkat Sedang", 
-    color: "bg-orange-500", 
-    text: "text-orange-500",
-    desc: "Skor 7-11. Informasi cukup jelas namun bukti/narasi parsial atau butuh verifikasi." 
+  {
+    label: "Tingkat Sedang",
+    className: "bg-orange-40 text-orange-100 border-orange-40",
+    indicator: "bg-orange-100",
+    desc: "Total Skor 7 - 11. Data cukup jelas namun butuh verifikasi tambahan."
   },
-  { 
-    label: "Tingkat Rendah", 
-    color: "bg-green-100", 
-    text: "text-green-100",
-    desc: "Skor ≤ 6. Informasi tidak spesifik, minim bukti, atau narasi kontradiktif." 
+  {
+    label: "Tingkat Rendah",
+    className: "bg-green-60 text-general-100 border-green-60",
+    indicator: "bg-green-100",
+    desc: "Total Skor ≤ 6. Informasi minim atau indikasi tidak valid."
   }
+]
+
+const SCORING_INDICATORS = [
+  "Relasi Pelapor dengan MBG",
+  "Validitas Lokasi & Waktu",
+  "Kelengkapan Bukti Pendukung",
+  "Konsistensi Narasi & Bahasa",
+  "Riwayat Laporan Pelapor",
+  "Kesesuaian dengan Laporan Lain"
 ]
 
 function DataSummaryCardsComponent() {
   const [showLegend, setShowLegend] = useState(false)
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ["reports", "summary"],
     queryFn: () => reportsService.getSummary(),
     staleTime: 30000,
@@ -49,80 +60,82 @@ function DataSummaryCardsComponent() {
       : "-"
 
     const total = stats?.total || 0
-    const verified = stats?.verified || 0 
+    const verified = stats?.verified || 0
     const high = stats?.highRisk || 0
-    const medium = stats?.mediumRisk || 0 
-    const low = stats?.lowRisk || 0       
+    const medium = stats?.mediumRisk || 0
+    const low = stats?.lowRisk || 0
 
-    // BARIS 1: Status & Kategori
     const row1 = [
       {
         icon: ClipboardCheck,
-        value: `${verified} / ${total}`, 
+        value: `${verified} / ${total}`,
         label: "Laporan Terverifikasi",
-        desc: "Dari total laporan masuk", 
-        color: "bg-blue-100 text-general-20",
+        desc: "Dari total laporan masuk",
+        iconBg: "bg-blue-20",
+        iconColor: "text-blue-100",
+        borderColor: "hover:border-blue-30"
       },
       {
         icon: Tag,
         value: topCategoryLabel,
         label: "Kategori Terbanyak",
-        desc: "Isu paling sering dilaporkan", 
-        color: "bg-purple-600 text-general-20",
+        desc: "Isu paling sering dilaporkan",
+        iconBg: "bg-purple-20", // Variasi warna agar tidak monoton
+        iconColor: "text-purple-600",
+        borderColor: "hover:border-purple-30"
       }
     ]
 
-    // BARIS 2: Detail Tingkat Kepercayaan
     const row2 = [
       {
         icon: AlertTriangle,
         value: high.toLocaleString(),
-        label: "Tingkat Tinggi", 
-        color: "bg-red-100 text-general-20",
+        label: "Tingkat Tinggi",
+        iconBg: "bg-red-20",
+        iconColor: "text-red-100",
+        borderColor: "hover:border-red-30"
       },
       {
         icon: AlertCircle,
         value: medium.toLocaleString(),
-        label: "Tingkat Sedang", 
-        color: "bg-orange-500 text-general-20",
+        label: "Tingkat Sedang",
+        iconBg: "bg-orange-20",
+        iconColor: "text-orange-100",
+        borderColor: "hover:border-orange-30"
       },
       {
         icon: Info,
         value: low.toLocaleString(),
-        label: "Tingkat Rendah", 
-        color: "bg-green-100 text-general-20",
+        label: "Tingkat Rendah",
+        iconBg: "bg-green-20",
+        iconColor: "text-green-100",
+        borderColor: "hover:border-green-30"
       }
     ]
 
     return { row1Data: row1, row2Data: row2 }
   }, [stats])
 
-  // Helper render card (Responsive Styles)
   const renderCard = (item: any, index: number) => (
-    <div 
-      key={index} 
-      className="bg-general-20 rounded-lg p-4 md:p-5 shadow-sm border border-general-30 hover:border-orange-30 transition-colors h-full flex items-center group"
+    <div
+      key={index}
+      className={`group relative overflow-hidden rounded-2xl bg-white p-5 transition-all duration-300 border border-general-30 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] ${item.borderColor}`}
     >
-      <div className="flex items-center gap-3 md:gap-4 w-full">
-        {/* Icon Container: Resize on Mobile vs Desktop */}
-        <div className={`p-2.5 md:p-3 rounded-lg shadow-sm shrink-0 transition-transform group-hover:scale-105 ${item.color}`}>
-          <item.icon className="w-5 h-5 md:w-6 md:h-6" />
+      <div className="flex items-center gap-4">
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${item.iconBg} transition-transform group-hover:scale-105 duration-300`}>
+          <item.icon className={`h-6 w-6 ${item.iconColor}`} />
         </div>
-        
-        <div className="overflow-hidden min-w-0">
-          {/* Value Text: Responsive Font Size */}
-          <p className="text-lg md:text-xl font-bold font-heading text-general-100 leading-tight truncate">
-            {item.value}
-          </p>
-          {/* Label Text */}
-          <p className="text-xs md:text-sm font-medium text-general-80 mt-0.5 truncate">
+        <div className="flex flex-col min-w-0">
+          <span className="h4 font-bold text-blue-100 leading-none mb-1">
+            {isLoading ? "..." : item.value}
+          </span>
+          <span className="text-xs font-semibold text-general-80 truncate uppercase tracking-wide">
             {item.label}
-          </p>
-          {/* Desc Text */}
+          </span>
           {item.desc && (
-             <p className="text-[10px] text-general-60 mt-0.5 truncate">
-               {item.desc}
-             </p>
+            <span className="text-[10px] text-general-60 truncate mt-0.5">
+              {item.desc}
+            </span>
           )}
         </div>
       </div>
@@ -130,99 +143,93 @@ function DataSummaryCardsComponent() {
   )
 
   return (
-    <div className="mb-6 md:mb-8">
+    <div className="mb-8">
       
-      {/* HEADER + TOMBOL INFO */}
-      {/* Flex-col di mobile agar judul & tombol tidak dempetan, sm:flex-row di tablet+ */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-5">
-        <h3 className="h5 text-general-100">Ringkasan Statistik</h3>
-        
+      {/* HEADER + TOMBOL TOGGLE (Blue Theme) */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+        <div>
+          <h3 className="text-lg font-bold text-blue-100">Ringkasan Statistik</h3>
+          <p className="text-xs text-general-60 mt-0.5">Gambaran umum data laporan yang masuk.</p>
+        </div>
+
         <button
           onClick={() => setShowLegend(!showLegend)}
-          className={`w-full sm:w-auto flex items-center justify-center gap-2 px-3 py-2 sm:py-1.5 rounded-full text-xs font-medium transition-all ${
-            showLegend 
-              ? "bg-orange-100 text-general-20 ring-2 ring-orange-30" 
-              : "bg-general-20 text-general-60 border border-general-30 hover:bg-general-30"
+          className={`group flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 border ${
+            showLegend
+              ? "bg-blue-100 text-white border-blue-100 shadow-md"
+              : "bg-white text-general-60 border-general-30 hover:border-blue-30 hover:text-blue-100"
           }`}
         >
           {showLegend ? <X className="w-3.5 h-3.5" /> : <HelpCircle className="w-3.5 h-3.5" />}
-          <span>{showLegend ? "Tutup Info" : "Keterangan Data"}</span>
+          <span>{showLegend ? "Tutup Keterangan" : "Lihat Matriks Penilaian"}</span>
+          {showLegend ? <ChevronUp className="w-3.5 h-3.5 opacity-70" /> : <ChevronDown className="w-3.5 h-3.5 opacity-70" />}
         </button>
       </div>
 
-      {/* PANEL LEGENDA (COLLAPSIBLE) */}
-      {showLegend && (
-        <div className="bg-orange-50/50 border border-orange-20 rounded-lg p-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Kolom 1: Penjelasan Tingkat Kepercayaan */}
-            <div>
-              <h4 className="text-xs font-bold text-general-60 mb-3 tracking-wider">
-                Klasifikasi Tingkat Kepercayaan
-              </h4>
-              <div className="space-y-2">
+      {/* PANEL LEGENDA (Clean White & Blue Borders) */}
+      <div 
+        className={`overflow-hidden transition-all duration-500 ease-in-out ${
+          showLegend ? 'max-h-[800px] opacity-100 mb-8' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="bg-white rounded-2xl p-6 border border-blue-30/50 shadow-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+
+            {/* KOLOM KIRI */}
+            <div className="flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-general-30">
+                <AlertTriangle className="w-4 h-4 text-blue-100" />
+                <h6 className="text-blue-100 uppercase tracking-wider font-heading font-bold text-xs">
+                  Klasifikasi Kepercayaan
+                </h6>
+              </div>
+              <div className="flex flex-col gap-3 flex-1">
                 {RISK_LEGEND.map((risk, idx) => (
-                  <div key={idx} className="flex gap-3 items-start p-2 bg-white rounded border border-general-30/50">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${risk.color}`} />
-                    <div>
-                      <span className={`text-xs font-bold block ${risk.text}`}>
-                        {risk.label}
-                      </span>
-                      <span className="text-[11px] text-general-70 leading-tight block">
-                        {risk.desc}
-                      </span>
+                  <div key={idx} className={`p-3.5 rounded-xl border flex-1 flex flex-col justify-center ${risk.className}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className={`w-2.5 h-2.5 rounded-full ${risk.indicator} ring-2 ring-white/20`} />
+                      <span className="font-heading font-bold text-sm leading-tight">{risk.label}</span>
                     </div>
+                    <span className="text-xs font-medium opacity-90 leading-tight">{risk.desc}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Kolom 2: Penjelasan Data Lain */}
-            <div>
-              <h4 className="text-xs font-bold text-general-60 mb-3 tracking-wider">
-                Definisi Data
-              </h4>
-              <div className="space-y-2 text-xs text-general-80">
-                <div className="p-2 bg-white rounded border border-general-30/50">
-                  <span className="font-bold text-blue-100">Laporan Terverifikasi:</span>
-                  <p className="mt-1 text-general-70 leading-relaxed">
-                    Jumlah laporan yang telah divalidasi oleh admin sebagai data yang benar dan lengkap (Skoring total cukup), dibandingkan total masuk.
-                  </p>
-                </div>
-                <div className="p-2 bg-white rounded border border-general-30/50">
-                  <span className="font-bold text-purple-600">Kategori Terbanyak:</span>
-                  <p className="mt-1 text-general-70 leading-relaxed">
-                    Jenis permasalahan yang paling sering dilaporkan oleh masyarakat dalam periode waktu saat ini.
-                  </p>
-                </div>
+            {/* KOLOM KANAN */}
+            <div className="flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-general-30">
+                <ClipboardCheck className="w-4 h-4 text-blue-100" />
+                <h6 className="text-blue-100 uppercase tracking-wider font-heading font-bold text-xs">
+                  Komponen Matriks Penilaian
+                </h6>
+              </div>
+              <div className="bg-blue-20/50 border border-blue-30/50 rounded-xl p-3 mb-4 text-center">
+                <div className="flex justify-center mb-1"><Lightbulb className="w-4 h-4 text-blue-100" /></div>
+                <p className="text-xs text-blue-100 font-medium">Total skor dihitung dari penjumlahan poin 6 indikator (skala 0-3).</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 content-start">
+                {SCORING_INDICATORS.map((indicator, idx) => (
+                  <div key={idx} className="flex items-center gap-3 p-3 bg-general-20/30 rounded-xl border border-general-30 shadow-sm hover:border-blue-30 transition-colors">
+                    <span className="flex items-center justify-center w-6 h-6 bg-blue-100 text-white rounded text-xs font-bold shrink-0">{idx + 1}</span>
+                    <span className="text-xs font-medium text-general-100 leading-tight">{indicator}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
           </div>
         </div>
-      )}
+      </div>
 
-      {/* CONTAINER KARTU */}
       <div className="space-y-4">
-        
-        {/* BARIS PERTAMA: Status & Kategori
-            - Mobile: Stacked (1 kolom)
-            - Tablet/Desktop: 2 Kolom Sejajar
-        */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {row1Data.map(renderCard)}
         </div>
-
-        {/* BARIS KEDUA: Tingkat Kepercayaan
-            - Mobile: Stacked (1 kolom)
-            - Tablet/Desktop: 3 Kolom Sejajar
-            - (sm:grid-cols-3 akan otomatis mengisi layar iPad/Laptop/Monitor dengan proporsional)
-        */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {row2Data.map(renderCard)}
         </div>
       </div>
-
     </div>
   )
 }

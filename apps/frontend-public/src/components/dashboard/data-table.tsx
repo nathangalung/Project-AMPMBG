@@ -20,19 +20,18 @@ interface DataTableProps {
 
 const DATE_OPTIONS: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" }
 
-// 1. UPDATE: Konfigurasi Status sesuai Referensi Dashboard Laporan
 const STATUS_LABELS: Record<string, { label: string; variant: string }> = {
   pending: { label: "Menunggu Verifikasi", variant: "orange" },
   verified: { label: "Terverifikasi", variant: "green" },
   in_progress: { label: "Sedang Ditindaklanjuti", variant: "yellow" },
-  resolved: { label: "Selesai", variant: "blue" }, // Perhatikan key di DB mungkin 'resolved' atau 'completed'
-  completed: { label: "Selesai", variant: "blue" }, // Handle kedua kemungkinan key
+  resolved: { label: "Selesai", variant: "blue" },
+  completed: { label: "Selesai", variant: "blue" },
   rejected: { label: "Ditolak", variant: "red" },
 }
 
-// 2. UPDATE: Helper Function untuk Style Status (Background & Border khusus)
 const getStatusStyle = (status: string) => {
-  const statusInfo = STATUS_LABELS[status] || { label: status, variant: "gray" }
+  const normalizedStatus = status ? status.toLowerCase() : "";
+  const statusInfo = STATUS_LABELS[normalizedStatus] || { label: status, variant: "gray" }
   
   const variantStyles: Record<string, string> = {
     orange: "bg-orange-50 text-orange-700 border-orange-200",
@@ -81,72 +80,49 @@ function DataTableComponent({ data }: DataTableProps) {
   }
 
   return (
-    <div className="bg-general-20 rounded-lg shadow-md border border-general-30 overflow-hidden">
-      <div className="p-4 md:p-6 border-b border-general-30">
-        <h2 className="h5 text-general-100">Daftar Laporan</h2>
+    <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-blue-30/30 overflow-hidden">
+      
+      {/* HEADER: PADDING SAMA DENGAN FILTER (p-6 md:p-10) */}
+      <div className="p-6 md:p-8 border-b border-general-30">
+        <h2 className="h5 text-blue-100">Daftar Laporan</h2>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-general-20 border-b border-general-30">
+          {/* THEAD: Background Biru Muda Halus */}
+          <thead className="bg-blue-20/40 border-b border-blue-30/50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-general-60 uppercase tracking-wider font-heading w-12">
-                No
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-general-60 uppercase tracking-wider font-heading w-32">
-                Tanggal
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-general-60 uppercase tracking-wider font-heading w-48">
-                Lokasi
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-general-60 uppercase tracking-wider font-heading w-40">
-                Status
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-general-60 uppercase tracking-wider font-heading w-1/4">
-                Kategori
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-general-60 uppercase tracking-wider font-heading">
-                Deskripsi
-              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-blue-100 uppercase tracking-wider font-heading w-16">No</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-blue-100 uppercase tracking-wider font-heading w-40">Tanggal</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-blue-100 uppercase tracking-wider font-heading w-56">Lokasi</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-blue-100 uppercase tracking-wider font-heading w-48">Status</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-blue-100 uppercase tracking-wider font-heading w-1/4">Kategori</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-blue-100 uppercase tracking-wider font-heading">Deskripsi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-general-30">
             {currentData.map((row, index) => {
-              // 3. APPLY: Menggunakan helper function baru untuk mendapatkan class dan label
               const statusStyle = getStatusStyle(row.status)
-
               return (
-                <tr key={row.id} className="hover:bg-blue-20/30 transition-colors">
-                  <td className="px-4 py-4 body-sm text-general-70">
-                    {startIndex + index + 1}
-                  </td>
-                  <td className="px-4 py-4 body-sm text-general-70 whitespace-nowrap">
-                    {formatDate(row.date)}
-                  </td>
-                  <td className="px-4 py-4 body-sm text-general-70">
-                    <div>
-                      {row.district && <p className="font-medium text-general-100">{row.district}</p>}
-                      <p className={row.district ? "text-general-60 text-xs" : "font-medium text-general-100"}>{row.city}</p>
-                      <p className="text-general-60 text-xs">{row.province}</p>
+                <tr key={row.id} className="hover:bg-blue-20/20 transition-colors">
+                  <td className="px-6 py-5 body-sm text-general-70">{startIndex + index + 1}</td>
+                  <td className="px-6 py-5 body-sm text-general-70 whitespace-nowrap">{formatDate(row.date)}</td>
+                  <td className="px-6 py-5 body-sm text-general-70">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-general-100">{row.district || "-"}</span>
+                      <span className="text-xs text-general-60">{row.city}, {row.province}</span>
                     </div>
                   </td>
-                  
-                  {/* 4. RENDER: Menggunakan span dengan class dinamis (Pill Style) */}
-                  <td className="px-4 py-4">
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap ${statusStyle.className}`}>
+                  <td className="px-6 py-5">
+                    <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap uppercase tracking-wide ${statusStyle.className}`}>
                       {statusStyle.label}
                     </span>
                   </td>
-
-                  <td className="px-4 py-4">
-                    {/* Kategori tetap menggunakan StatusBadge merah sesuai kode sebelumnya */}
-                    <StatusBadge variant="danger">
-                      {getCategoryLabel(row.category)}
-                    </StatusBadge>
+                  <td className="px-6 py-5">
+                    {/* Menggunakan variant danger (Merah) agar kontras */}
+                    <StatusBadge variant="danger">{getCategoryLabel(row.category)}</StatusBadge>
                   </td>
-                  <td className="px-4 py-4 body-sm text-general-70 max-w-xs truncate">
-                    {row.description}
-                  </td>
+                  <td className="px-6 py-5 body-sm text-general-70 max-w-xs truncate">{row.description}</td>
                 </tr>
               )
             })}
@@ -154,10 +130,9 @@ function DataTableComponent({ data }: DataTableProps) {
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="px-4 py-4 border-t border-general-30 flex items-center justify-between">
-        <p className="body-sm text-general-60">
-          Menampilkan <span className="font-medium text-general-100">{data.length > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, data.length)}</span> dari <span className="font-medium text-general-100">{data.length}</span> laporan
+      <div className="px-6 py-6 border-t border-general-30 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p className="body-sm text-general-60 text-center sm:text-left">
+          Menampilkan <span className="font-bold text-blue-100">{data.length > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, data.length)}</span> dari <span className="font-bold text-blue-100">{data.length}</span> laporan
         </p>
         
         {totalPages > 1 && (
@@ -165,32 +140,40 @@ function DataTableComponent({ data }: DataTableProps) {
             <button
               onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className="p-2 border border-general-30 rounded-lg hover:bg-general-30 disabled:opacity-50 disabled:cursor-not-allowed text-general-70"
+              className="p-2 border border-general-30 rounded-lg hover:bg-general-20 hover:text-blue-100 disabled:opacity-50 disabled:cursor-not-allowed text-general-60 transition-colors"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-              (page) =>
-                (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) && (
-                  <button
-                    key={page}
-                    onClick={() => handlePageClick(page)}
-                    className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                      currentPage === page ? "bg-blue-100 text-general-20" : "border border-general-30 hover:bg-general-30 text-general-70"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                )
-            )}
+            <div className="hidden sm:flex gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) =>
+                  (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) && (
+                    <button
+                      key={page}
+                      onClick={() => handlePageClick(page)}
+                      className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${
+                        currentPage === page 
+                          ? "bg-blue-100 text-white shadow-md" 
+                          : "border border-general-30 hover:border-blue-30 hover:text-blue-100 text-general-60"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
+              )}
+            </div>
+            
+            <span className="sm:hidden text-sm font-bold text-blue-100">
+                Halaman {currentPage}
+            </span>
 
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className="p-2 border border-general-30 rounded-lg hover:bg-general-30 disabled:opacity-50 disabled:cursor-not-allowed text-general-70"
+              className="p-2 border border-general-30 rounded-lg hover:bg-general-20 hover:text-blue-100 disabled:opacity-50 disabled:cursor-not-allowed text-general-60 transition-colors"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         )}

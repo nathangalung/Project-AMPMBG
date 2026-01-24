@@ -4,13 +4,14 @@ import { useQuery } from "@tanstack/react-query"
 import { reportsService } from "@/services/reports"
 
 function QuickStatsComponent() {
-  // 1. Query Data Laporan & User Summary
+  // Data Fetching
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["reports", "summary"],
     queryFn: () => reportsService.getSummary(),
     staleTime: 30000,
   })
 
+  // Data Formatting
   const statsItems = useMemo(() => {
     return [
       {
@@ -32,50 +33,36 @@ function QuickStatsComponent() {
   }, [stats])
 
   return (
-    // Responsive Vertical Padding (py-10 di mobile, py-16 di desktop)
-    <section className="bg-blue-100 py-10 md:py-16">
+    // Section Container
+    <section className="bg-blue-90 py-12 md:py-20 relative overflow-hidden">
       
-      {/* CONTAINER FLUID:
-          - Mobile: px-5
-          - Tablet: px-8
-          - Laptop: px-16
-          - Monitor Besar: px-24
-      */}
-      <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24">
-        
-        {/* GRID SYSTEM:
-            - grid-cols-1: Mobile (HP) -> Susun ke bawah
-            - md:grid-cols-3: Tablet & Desktop -> Langsung 3 kolom sejajar
-              (Menghindari grid-cols-2 agar tidak ada item gantung sendirian)
-        */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+      <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
+        <FileText className="w-64 h-64 text-white rotate-12" />
+      </div>
+
+      <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 divide-y md:divide-y-0 md:divide-x divide-blue-80/50">
           {statsItems.map((stat, index) => (
             <div 
               key={index} 
-              // Alignment:
-              // Mobile: justify-start (Rata kiri biar rapih kayak list) + pl-4 (padding kiri)
-              // Tablet/Desktop: justify-center (Rata tengah) + pl-0 (reset padding)
-              className="flex flex-row items-center justify-start md:justify-center gap-4 pl-4 md:pl-0"
+              className="flex flex-col items-center justify-center text-center pt-8 md:pt-0 first:pt-0"
             >
-              
-              {/* Icon Container: Responsive Size (w-12 mobile, w-14 desktop) */}
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-white/10 border border-white/20 rounded-full flex items-center justify-center shadow-sm shrink-0 backdrop-blur-sm transition-transform hover:scale-105">
+              <div className="mb-4 p-3 bg-blue-80 rounded-2xl shadow-inner inline-flex">
                 {statsLoading ? (
-                    <Loader2 className="w-5 h-5 md:w-6 md:h-6 text-white animate-spin" />
+                    <Loader2 className="w-6 h-6 text-orange-40 animate-spin" />
                 ) : (
-                    <stat.icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                    <stat.icon className="w-6 h-6 text-orange-40" />
                 )}
               </div>
               
-              <div className="text-left">
-                {/* Text Value: Responsive Font Size */}
-                <p className="h3 text-white mb-0 leading-none text-2xl md:text-3xl">
-                    {stat.value}
-                </p>
-                <p className="body-sm text-white/90 font-bold mt-1 whitespace-nowrap">
-                    {stat.label}
-                </p>
-              </div>
+              {/* Stat Value Display */}
+              <p className="font-heading font-bold text-3xl md:text-4xl lg:text-5xl text-general-20 mb-2">
+                  {stat.value}
+              </p>
+              {/* Stat Label Display */}
+              <p className="body-sm text-blue-20 font-medium tracking-wide uppercase">
+                  {stat.label}
+              </p>
             </div>
           ))}
         </div>

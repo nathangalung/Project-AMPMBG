@@ -1,9 +1,9 @@
 import { ShieldCheck, LineChart, Megaphone } from "lucide-react"
 
 export function KeyBenefits() {
+  // Configuration data for the benefits section
   const benefits = [
     {
-      // UPDATE: Icon size responsive (w-8 di mobile, w-10 di desktop)
       icon: <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-orange-100" />,
       title: "Identitas Tetap Rahasia",
       desc: "Lapor tanpa rasa khawatir karena identitas Anda kami lindungi sepenuhnya.", 
@@ -21,47 +21,35 @@ export function KeyBenefits() {
   ]
 
   return (
-    <section className="py-12 md:py-20 bg-general-20">
-      
-      {/* CONTAINER FLUID:
-          - Mobile: px-5
-          - Tablet: px-8
-          - Laptop: px-16
-          - Monitor Besar: px-24
-      */}
+    // Main Section Wrapper
+    <section className="py-16 md:py-24 bg-general-20">
       <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24">
         
-        <div className="text-center mb-8 md:mb-12">
-          {/* Typography: text-2xl (mobile) -> text-3xl (desktop) */}
-          <h2 className="text-2xl md:text-3xl font-bold text-general-100">Mengapa Melapor di Sini?</h2>
+        {/* Section Header */}
+        <div className="text-center mb-10 md:mb-14">
+          <h2 className="font-heading text-2xl md:text-3xl font-bold text-blue-100">
+            Mengapa Melapor di Sini?
+          </h2>
+          <div className="w-20 h-1 bg-orange-100 mx-auto mt-4 rounded-full"></div>
         </div>
         
-        {/* GRID SYSTEM:
-            - grid-cols-1: Mobile (Stacked)
-            - md:grid-cols-3: Tablet/Desktop (3 kolom sejajar)
-            - gap-6 (mobile) -> gap-8 (desktop)
-        */}
+        {/* Responsive Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {benefits.map((item, idx) => (
             <div 
               key={idx} 
-              // Card Styling:
-              // - p-6 (mobile) -> p-8 (desktop)
-              // - h-full agar semua kartu tingginya sama
-              className="flex flex-col items-center text-center p-6 md:p-8 rounded-2xl bg-orange-20 shadow-sm border border-general-30/50 hover:border-orange-40 transition-colors duration-300 h-full"
+              className="flex flex-col items-center text-center p-6 md:p-8 rounded-2xl bg-white border border-general-30 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:border-orange-30 transition-all duration-300 h-full hover:-translate-y-1"
             >
-              {/* Icon Container: p-3 (mobile) -> p-4 (desktop) */}
-              <div className="mb-4 md:mb-6 p-3 md:p-4 bg-orange-40 rounded-full shrink-0">
+              {/* Icon Container */}
+              <div className="mb-5 md:mb-6 p-4 bg-orange-20 rounded-2xl shrink-0">
                 {item.icon}
               </div>
               
-              {/* Title: text-lg (mobile) -> text-xl (desktop) */}
-              <h3 className="text-lg md:text-xl font-bold mb-2 md:mb-3 text-general-100">
+              <h3 className="text-lg md:text-xl font-heading font-bold mb-3 text-general-100">
                 {item.title}
               </h3>
               
-              {/* Desc: text-sm (mobile) -> text-base (desktop) */}
-              <p className="text-general-70 leading-relaxed text-sm md:text-base">
+              <p className="text-general-60 leading-relaxed text-sm md:text-base">
                 {item.desc}
               </p>
             </div>
