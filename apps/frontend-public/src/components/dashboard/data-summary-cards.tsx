@@ -80,7 +80,7 @@ function DataSummaryCardsComponent() {
         value: topCategoryLabel,
         label: "Kategori Terbanyak",
         desc: "Isu paling sering dilaporkan",
-        iconBg: "bg-purple-20", // Variasi warna agar tidak monoton
+        iconBg: "bg-purple-20",
         iconColor: "text-purple-600",
         borderColor: "hover:border-purple-30"
       }

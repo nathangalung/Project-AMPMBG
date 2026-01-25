@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useState, useMemo, useCallback } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Loader2 } from "lucide-react"
+import { Loader2, FileSearch } from "lucide-react"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { DataSummaryCards } from "@/components/dashboard/data-summary-cards"
@@ -63,39 +63,53 @@ function DataLaporanPage() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col bg-general-20">
+    <div className="min-h-screen flex flex-col bg-general-20 font-sans">
       <Navbar />
       
-      <main className="flex-1 py-12 md:py-16">
+      <main className="flex-1 py-10 md:py-14">
         
-        {/* FLUID CONTAINER: Padding Konsisten */}
-        <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24">
+        <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24 max-w-[2400px]">
           
-          <div className="mb-10 md:mb-12">
-            {/* Typography: Blue-100 untuk judul agar terlihat formal */}
-            <h1 className="h3 font-heading text-blue-100 mb-3">Data dan Statistik Laporan MBG</h1>
-            <p className="body-md text-general-60 max-w-3xl">
-              Pantau perkembangan laporan masyarakat secara transparan. Data ini diperbarui secara berkala untuk memastikan akuntabilitas program.
+          {/* Header Section */}
+          <div className="mb-10 md:mb-12 relative">
+            <div className="absolute -top-10 -left-10 w-32 h-32 bg-blue-100/5 rounded-full blur-3xl -z-10" />
+            
+            <h1 className="font-heading text-2xl md:text-3xl font-bold text-general-100 mb-3">
+              Data & Statistik <span className="text-blue-100">Laporan MBG</span>
+            </h1>
+            
+            {/* UPDATED: Menghapus 'max-w-3xl' dan menggabungkan kalimat */}
+            <p className="body-md text-general-60 w-full leading-relaxed">
+              Pantau perkembangan laporan masyarakat secara transparan, data ini diperbarui secara berkala untuk memastikan akuntabilitas program.
             </p>
           </div>
           
           <div className="space-y-8">
+            {/* Summary Cards */}
             <DataSummaryCards />
             
+            {/* Filter Section */}
             <DataFilters onFilter={handleFilterChange} />
             
+            {/* Table Content */}
             {isLoading ? (
-              <div className="flex items-center justify-center py-24 bg-white/50 border border-dashed border-blue-20 rounded-2xl">
-                <Loader2 className="w-10 h-10 animate-spin text-blue-100" />
+              <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-general-30 shadow-sm">
+                <Loader2 className="w-10 h-10 animate-spin text-blue-100 mb-4" />
+                <p className="body-sm text-general-60 font-medium">Memuat data laporan...</p>
               </div>
             ) : (
               <>
                 <DataTable data={tableData} />
                 
                 {tableData.length === 0 && (
-                  <div className="text-center py-16 bg-white border border-general-30 border-dashed rounded-2xl">
-                    <p className="text-general-80 body-md font-medium">Tidak ada laporan yang sesuai dengan filter Anda.</p>
-                    <p className="text-general-50 text-sm mt-1">Coba atur ulang tanggal atau kategori pencarian.</p>
+                  <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-general-30 text-center">
+                    <div className="w-16 h-16 bg-general-20 rounded-full flex items-center justify-center mb-4 text-general-40">
+                      <FileSearch className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-general-100 font-bold mb-1">Tidak ada laporan ditemukan</h3>
+                    <p className="text-general-60 body-sm max-w-md mx-auto">
+                      Coba sesuaikan filter tanggal, lokasi, atau kategori untuk menemukan data yang Anda cari.
+                    </p>
                   </div>
                 )}
               </>

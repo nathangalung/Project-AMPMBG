@@ -34,10 +34,10 @@ const getStatusStyle = (status: string) => {
   const statusInfo = STATUS_LABELS[normalizedStatus] || { label: status, variant: "gray" }
   
   const variantStyles: Record<string, string> = {
-    orange: "bg-orange-50 text-orange-700 border-orange-200",
+    orange: "bg-orange-20 text-orange-100 border-orange-30",
     green: "bg-green-20 text-green-100 border-green-30",
     red: "bg-red-20 text-red-100 border-red-30",
-    yellow: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    yellow: "bg-orange-20 text-orange-100 border-orange-30", 
     blue: "bg-blue-20 text-blue-100 border-blue-30",
     gray: "bg-general-30 text-general-70 border-general-40",
   }
@@ -82,14 +82,14 @@ function DataTableComponent({ data }: DataTableProps) {
   return (
     <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-blue-30/30 overflow-hidden">
       
-      {/* HEADER: PADDING SAMA DENGAN FILTER (p-6 md:p-10) */}
+      {/* HEADER: Font disamakan dengan Profile (text-general-100 font-bold) */}
       <div className="p-6 md:p-8 border-b border-general-30">
-        <h2 className="h5 text-blue-100">Daftar Laporan</h2>
+        <h2 className="text-lg font-bold text-general-100">Daftar Laporan</h2>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full">
-          {/* THEAD: Background Biru Muda Halus */}
+          {/* THEAD: Menggunakan font-heading */}
           <thead className="bg-blue-20/40 border-b border-blue-30/50">
             <tr>
               <th className="px-6 py-4 text-left text-xs font-bold text-blue-100 uppercase tracking-wider font-heading w-16">No</th>
@@ -105,24 +105,24 @@ function DataTableComponent({ data }: DataTableProps) {
               const statusStyle = getStatusStyle(row.status)
               return (
                 <tr key={row.id} className="hover:bg-blue-20/20 transition-colors">
-                  <td className="px-6 py-5 body-sm text-general-70">{startIndex + index + 1}</td>
-                  <td className="px-6 py-5 body-sm text-general-70 whitespace-nowrap">{formatDate(row.date)}</td>
-                  <td className="px-6 py-5 body-sm text-general-70">
+                  {/* ISI TABEL: Menggunakan text-general-80 agar sama dengan Profile */}
+                  <td className="px-6 py-5 body-sm text-general-80 font-medium">{startIndex + index + 1}</td>
+                  <td className="px-6 py-5 body-sm text-general-80 whitespace-nowrap">{formatDate(row.date)}</td>
+                  <td className="px-6 py-5 body-sm text-general-80">
                     <div className="flex flex-col">
                       <span className="font-bold text-general-100">{row.district || "-"}</span>
                       <span className="text-xs text-general-60">{row.city}, {row.province}</span>
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap uppercase tracking-wide ${statusStyle.className}`}>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap ${statusStyle.className}`}>
                       {statusStyle.label}
                     </span>
                   </td>
                   <td className="px-6 py-5">
-                    {/* Menggunakan variant danger (Merah) agar kontras */}
                     <StatusBadge variant="danger">{getCategoryLabel(row.category)}</StatusBadge>
                   </td>
-                  <td className="px-6 py-5 body-sm text-general-70 max-w-xs truncate">{row.description}</td>
+                  <td className="px-6 py-5 body-sm text-general-80 max-w-xs truncate">{row.description}</td>
                 </tr>
               )
             })}
@@ -130,6 +130,7 @@ function DataTableComponent({ data }: DataTableProps) {
         </table>
       </div>
 
+      {/* PAGINATION */}
       <div className="px-6 py-6 border-t border-general-30 flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="body-sm text-general-60 text-center sm:text-left">
           Menampilkan <span className="font-bold text-blue-100">{data.length > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, data.length)}</span> dari <span className="font-bold text-blue-100">{data.length}</span> laporan

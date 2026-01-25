@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { DashboardAnggotaLayout } from "@/components/dashboard/dashboard-anggota-layout"
+import { DashboardAnggotaLayout } from "@/components/dashboard/dashboard-admin-layout"
 import {
   ArrowLeft,
   User,
@@ -15,7 +15,9 @@ import {
   FileText,
   BarChart3,
   Calendar,
-  CheckCircle2
+  CheckCircle2,
+  Building2, 
+  Utensils
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -266,275 +268,305 @@ function LaporanDetail() {
     )
   }
 
+  // --- HELPER UNTUK MENGGABUNGKAN NAMA ---
+  const relatedParties = [
+    (report as any).schoolName || report.location, 
+    (report as any).kitchenName                   
+  ].filter(Boolean).join(", ") || "-"
+
   return (
     <DashboardAnggotaLayout>
-      <div className="p-4 md:p-8 max-w-4xl mx-auto">
+      {/* FLUID CONTAINER: Responsif 100% mengikuti standar Dashboard utama */}
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6 lg:py-8 max-w-[2400px]">
 
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link to="/dashboard/laporan" className="p-2 rounded-full hover:bg-general-30 text-general-60 hover:text-general-100 transition-colors">
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <div className="flex-1">
-            <h1 className="h4 text-general-100 font-heading">Detail Laporan</h1>
-            <p className="body-sm text-general-60 mt-0.5">ID: #{id.slice(0, 8)}</p>
+        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
+          <div className="flex items-center gap-3 flex-1">
+            <Link to="/dashboard/laporan" className="p-2 rounded-full hover:bg-general-30 text-general-60 hover:text-general-100 transition-colors">
+                <ArrowLeft className="w-6 h-6" />
+            </Link>
+            <div>
+                <h1 className="h4 text-general-100 font-heading">Detail Laporan</h1>
+                <p className="body-sm text-general-60 mt-0.5">ID: #{id.slice(0, 8)}</p>
+            </div>
           </div>
-          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold border ${currentStatus?.style}`}>{currentStatus?.label}</span>
+          <div>
+             <span className={`inline-flex px-4 py-2 rounded-full text-xs font-bold border shadow-sm ${currentStatus?.style}`}>
+                {currentStatus?.label}
+             </span>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="space-y-6">
+        {/* Content Wrapper */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            
+            {/* Left Column (Detail Info) */}
+            <div className="xl:col-span-2 space-y-6">
 
-          {/* Informasi Pelapor */}
-          <div className="bg-general-20 border border-general-30 rounded-xl p-5">
-            <h4 className="body-sm font-bold text-general-100 mb-4 flex items-center gap-2">
-              <User className="w-4 h-4 text-blue-100" />
-              Informasi Pelapor
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Nama Lengkap</label>
-                <p className="body-sm font-medium text-general-100">{report.reporter?.name || "Anonim"}</p>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-1">NIK</label>
-                <p className="body-sm font-medium text-general-100">{report.reporter?.nik || "-"}</p>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Email</label>
-                <p className="body-sm font-medium text-general-100">{report.reporter?.email || "-"}</p>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Nomor Telepon</label>
-                <p className="body-sm font-medium text-general-100">{report.reporter?.phone || "-"}</p>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Hubungan dengan MBG</label>
-                <p className="body-sm font-medium text-general-100">{RELATION_LABELS[report.relation] || report.relation}</p>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Detail Hubungan</label>
-                <p className="body-sm font-medium text-general-100">{report.relationDetail || "-"}</p>
-              </div>
-            </div>
-            {report.reporter && (
-              <button
-                onClick={() => setViewingUserHistory({ name: report.reporter!.name, email: report.reporter!.email })}
-                className="mt-4 px-4 py-2 bg-blue-20 hover:bg-blue-30 border border-blue-30 rounded-lg text-blue-100 body-sm font-medium flex items-center gap-2 transition-colors"
-              >
-                <History className="w-4 h-4" />
-                Lihat Riwayat Laporan Pelapor
-              </button>
-            )}
-          </div>
-
-          {/* Informasi Laporan */}
-          <div className="bg-blue-20/30 border border-blue-30 rounded-xl p-5">
-            <h4 className="body-sm font-bold text-general-100 mb-4 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-blue-100" />
-              Informasi Laporan
-            </h4>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Judul Laporan</label>
-                <p className="body-sm font-bold text-general-100">{report.title}</p>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Kategori</label>
-                <span className="inline-flex items-center px-3 py-1 rounded-full border bg-blue-20 text-blue-100 border-blue-30 text-xs font-semibold">
-                  {CATEGORY_LABELS[report.category] || report.category}
-                </span>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Lokasi Kejadian</label>
-                <p className="body-sm font-medium text-general-100">{report.location}</p>
-                <p className="body-sm text-general-60">{report.district && `${report.district}, `}{report.city}, {report.province}</p>
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${report.location}, ${report.district || ""}, ${report.city}, ${report.province}, Indonesia`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-20 hover:bg-blue-30 border border-blue-30 rounded-lg text-blue-100 text-xs font-medium transition-colors"
-                >
-                  <MapPin className="w-3 h-3" />
-                  Buka di Google Maps
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Kronologi Kejadian</label>
-                <p className="body-sm text-general-80 bg-general-20 p-3 rounded-lg border border-general-30 leading-relaxed">{report.description}</p>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-2">Bukti Foto</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {(report.files && report.files.length > 0 ? report.files : DUMMY_IMAGES).map((file: any, idx: number) => {
-                    const imageUrl = typeof file === 'string' ? file : file.fileUrl
-                    return (
-                      <div
-                        key={idx}
-                        className="group relative aspect-square bg-general-30 rounded-lg overflow-hidden border border-general-30 cursor-pointer hover:shadow-md transition-all"
-                        onClick={() => setSelectedImage(imageUrl)}
-                      >
-                        <img src={imageUrl} alt="Bukti Laporan" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <div className="bg-general-20/20 backdrop-blur-sm p-2 rounded-full text-general-20"><ExternalLink className="w-4 h-4" /></div>
+                {/* 1. Informasi Pelapor (Blue Accents) */}
+                <div className="bg-general-20 border border-blue-20 rounded-xl p-6 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-20/50 rounded-bl-full -mr-6 -mt-6 pointer-events-none" />
+                    <h4 className="h4 text-general-100 mb-5 flex items-center gap-2 relative z-10">
+                        <User className="w-5 h-5 text-blue-100" />
+                        Informasi Pelapor
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8 relative z-10">
+                        <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-general-50 font-bold mb-1">Nama Lengkap</label>
+                            <p className="body-sm font-semibold text-general-100">{report.reporter?.name || "Anonim"}</p>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Informasi Waktu */}
-          <div className="bg-general-20 border border-general-30 rounded-xl p-5">
-            <h4 className="body-sm font-bold text-general-100 mb-4 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-blue-100" />
-              Informasi Waktu
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Tanggal Kejadian</label>
-                <p className="body-sm font-medium text-general-100">{formatDate(report.incidentDate)}</p>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Tanggal Dilaporkan</label>
-                <p className="body-sm font-medium text-general-100">{formatDateTime(report.createdAt)}</p>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-1">Tanggal Verifikasi Terakhir</label>
-                <p className="body-sm font-medium text-general-100">{report.verifiedAt ? formatDateTime(report.verifiedAt) : "Belum diverifikasi"}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Matriks Penilaian */}
-          {scoring && (
-            <div className="bg-general-20 border border-general-30 rounded-xl p-5">
-              <h4 className="body-sm font-bold text-general-100 mb-4 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-blue-100" />
-                Matriks Penilaian Kredibilitas
-              </h4>
-              <div className="space-y-3">
-                {Object.entries(SCORING_LABELS).map(([key, label]) => {
-                  const scoreData = scoring[key as keyof typeof scoring]
-                  const value = typeof scoreData === 'object' ? scoreData.value : (typeof scoreData === 'number' ? scoreData : 0)
-                  const max = typeof scoreData === 'object' ? scoreData.max : 3
-                  const percentage = (Number(value) / Number(max)) * 100
-                  return (
-                    <div key={key} className="flex items-center gap-4">
-                      <div className="w-40 text-xs text-general-60">{label}</div>
-                      <div className="flex-1 h-2 bg-general-30 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${percentage >= 66 ? 'bg-green-100' : percentage >= 33 ? 'bg-yellow-500' : 'bg-red-100'}`}
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <div className="w-12 text-right text-xs font-semibold text-general-100">{value}/{max}</div>
+                        <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-general-50 font-bold mb-1">Hubungan</label>
+                            <p className="body-sm font-semibold text-general-100">{RELATION_LABELS[report.relation] || report.relation}</p>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-general-50 font-bold mb-1">Email</label>
+                            <p className="body-sm font-medium text-general-100">{report.reporter?.email || "-"}</p>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-general-50 font-bold mb-1">Nomor Telepon</label>
+                            <p className="body-sm font-medium text-general-100">{report.reporter?.phone || "-"}</p>
+                        </div>
                     </div>
-                  )
-                })}
-              </div>
-              <div className="mt-4 pt-4 border-t border-general-30 flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-general-60">Total Skor</span>
-                  <p className="h5 text-general-100">{scoring.totalScore}/18</p>
+                    {report.reporter && (
+                        <div className="mt-6 pt-4 border-t border-general-30 relative z-10">
+                            <button
+                                onClick={() => setViewingUserHistory({ name: report.reporter!.name, email: report.reporter!.email })}
+                                className="text-xs font-bold text-blue-100 hover:text-blue-80 hover:underline flex items-center gap-1.5 transition-colors"
+                            >
+                                <History className="w-3.5 h-3.5" />
+                                Lihat Riwayat Laporan Pelapor
+                            </button>
+                        </div>
+                    )}
                 </div>
-                <div className="text-right">
-                  <span className="text-xs text-general-60">Tingkat Kredibilitas</span>
-                  <p className={`inline-flex ml-2 px-3 py-1 rounded-full text-xs font-semibold border ${CREDIBILITY_LABELS[scoring.credibilityLevel]?.style || ''}`}>
-                    {CREDIBILITY_LABELS[scoring.credibilityLevel]?.label || scoring.credibilityLevel}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
-          {/* Panel Verifikasi Admin */}
-          <div className="bg-general-30/30 border border-general-30 rounded-xl p-5">
-            <h4 className="body-sm font-bold text-general-100 mb-4 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-blue-100" />
-              Panel Verifikasi Admin
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-general-60 mb-2">Status Laporan</label>
-                <div className="relative">
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value as ReportStatus)}
-                    className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg appearance-none cursor-pointer pr-10 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 text-general-100"
-                  >
-                    {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-general-60 pointer-events-none" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs text-general-60 mb-2">Tingkat Kredibilitas</label>
-                <div className="relative">
-                  <select
-                    value={newRisk}
-                    onChange={(e) => setNewRisk(e.target.value)}
-                    className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg appearance-none cursor-pointer pr-10 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 text-general-100"
-                  >
-                    <option value="" disabled>-- Pilih Tingkat --</option>
-                    {RISK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-general-60 pointer-events-none" />
-                </div>
-              </div>
-            </div>
-            <div className="mt-4">
-              <label className="block text-xs text-general-60 mb-2">Catatan Admin</label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Tambahkan catatan atau alasan perubahan status..."
-                className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg text-general-100 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 min-h-[80px] resize-none"
-              />
-            </div>
-          </div>
-
-          {/* Riwayat Status */}
-          {history.length > 0 && (
-            <div className="bg-general-20 border border-general-30 rounded-xl p-5">
-              <h4 className="body-sm font-bold text-general-100 mb-4 flex items-center gap-2">
-                <History className="w-4 h-4 text-blue-100" />
-                Riwayat Perubahan Status
-              </h4>
-              <div className="space-y-2">
-                {history.map((h: any) => (
-                  <div key={h.id} className="flex items-start gap-3 px-4 py-3 bg-general-30/30 border border-general-30 rounded-lg">
-                    <Clock className="w-4 h-4 text-general-60 mt-0.5 shrink-0" />
-                    <div className="body-sm flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-general-60">{h.fromStatus || "Baru"}</span>
-                        <span className="text-general-60">→</span>
-                        <span className="font-medium text-general-100">{h.toStatus}</span>
-                      </div>
-                      {h.notes && <p className="text-general-60 mt-1 italic text-xs">"{h.notes}"</p>}
-                      <p className="text-xs text-general-50 mt-1">{formatDateTime(h.createdAt)} oleh {h.changedBy}</p>
+                {/* 2. PIHAK YANG TERKAIT (Orange Accents) - UPDATED: NO EXTRA NOTE */}
+                <div className="bg-general-20 border border-general-30 rounded-xl p-6 shadow-sm relative overflow-hidden">
+                    {/* Decorative Orange element */}
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-warning/10 rounded-bl-full -mr-6 -mt-6 pointer-events-none" />
+                    
+                    <h4 className="h4 text-general-100 mb-5 flex items-center gap-2 relative z-10">
+                        <Building2 className="w-5 h-5 text-warning" />
+                        Pihak Yang Terkait
+                    </h4>
+                    
+                    <div className="space-y-5 relative z-10">
+                        <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-general-50 font-bold mb-2">Entitas Terlibat</label>
+                            <p className="body-sm font-semibold text-general-100 flex items-start gap-2">
+                                <Utensils className="w-4 h-4 text-general-60 mt-0.5 shrink-0" />
+                                {relatedParties}
+                            </p>
+                        </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                </div>
+
+                {/* 3. Detail Kejadian (Neutral) */}
+                <div className="bg-general-20 border border-general-30 rounded-xl p-6 shadow-sm">
+                    <h4 className="h4 text-general-100 mb-5 flex items-center gap-2 border-b border-general-30 pb-3">
+                        <FileText className="w-5 h-5 text-general-100" />
+                        Detail Kejadian
+                    </h4>
+                    <div className="space-y-6">
+                        <div>
+                            <label className="block text-xs font-semibold text-general-60 mb-1">Judul Laporan</label>
+                            <p className="h5 font-bold text-general-100 leading-snug">{report.title}</p>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                            <span className="inline-flex items-center px-3 py-1 rounded-lg bg-general-30/50 text-general-80 text-xs font-medium border border-general-30">
+                                {CATEGORY_LABELS[report.category] || report.category}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-general-30/50 text-general-80 text-xs font-medium border border-general-30">
+                                <Calendar className="w-3 h-3" />
+                                {formatDate(report.incidentDate)}
+                            </span>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold text-general-60 mb-2">Lokasi Kejadian</label>
+                            <div className="flex items-start gap-3 bg-general-30/30 p-3 rounded-lg border border-general-30">
+                                <MapPin className="w-4 h-4 text-general-50 mt-0.5 shrink-0" />
+                                <div>
+                                    <p className="body-sm font-medium text-general-100">{report.location}</p>
+                                    <p className="text-xs text-general-60 mt-0.5">{report.district && `${report.district}, `}{report.city}, {report.province}</p>
+                                    <a
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${report.location}, ${report.district || ""}, ${report.city}, ${report.province}, Indonesia`)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-blue-100 hover:underline"
+                                    >
+                                        Buka Peta <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold text-general-60 mb-2">Kronologi Lengkap</label>
+                            <div className="body-sm text-general-100 leading-relaxed whitespace-pre-wrap bg-general-20 p-0">
+                                {report.description}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold text-general-60 mb-3">Bukti Lampiran</label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            {(report.files && report.files.length > 0 ? report.files : DUMMY_IMAGES).map((file: any, idx: number) => {
+                                const imageUrl = typeof file === 'string' ? file : file.fileUrl
+                                return (
+                                <div
+                                    key={idx}
+                                    className="group relative aspect-square bg-general-30 rounded-xl overflow-hidden border border-general-30 cursor-pointer shadow-sm hover:shadow-md transition-all"
+                                    onClick={() => setSelectedImage(imageUrl)}
+                                >
+                                    <img src={imageUrl} alt="Bukti" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <ExternalLink className="w-5 h-5 text-white" />
+                                    </div>
+                                </div>
+                                )
+                            })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-          )}
 
-          {/* Footer - Save Button Only (No Delete) */}
-          <div className="flex justify-end pt-4">
-            <button
-              onClick={handleSaveChanges}
-              disabled={updateStatus.isPending || !hasChanges}
-              className="px-6 py-2.5 bg-blue-100 text-general-20 font-semibold rounded-lg hover:bg-blue-90 shadow-lg hover:shadow-blue-100/20 transition-all body-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {updateStatus.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Simpan Perubahan
-            </button>
-          </div>
+            {/* Right Column (Actions & Scoring) */}
+            <div className="space-y-6">
 
+                {/* Panel Verifikasi Admin (NO STICKY) */}
+                <div className="bg-general-20 border border-blue-20 shadow-md shadow-blue-20/10 rounded-xl p-6">
+                    <h4 className="h4 text-general-100 mb-5 flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-blue-100" />
+                        Tindak Lanjut Admin
+                    </h4>
+                    
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-general-60 mb-1.5">Update Status</label>
+                            <div className="relative">
+                                <select
+                                    value={newStatus}
+                                    onChange={(e) => setNewStatus(e.target.value as ReportStatus)}
+                                    className="w-full px-4 py-2.5 bg-general-20 border border-general-30 rounded-lg appearance-none cursor-pointer pr-10 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 text-general-100 font-medium"
+                                >
+                                    {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-general-60 pointer-events-none" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-general-60 mb-1.5">Penilaian Risiko</label>
+                            <div className="relative">
+                                <select
+                                    value={newRisk}
+                                    onChange={(e) => setNewRisk(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-general-20 border border-general-30 rounded-lg appearance-none cursor-pointer pr-10 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 text-general-100 font-medium"
+                                >
+                                    <option value="" disabled>-- Pilih Tingkat --</option>
+                                    {RISK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-general-60 pointer-events-none" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-general-60 mb-1.5">Catatan Internal</label>
+                            <textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Tulis alasan perubahan status..."
+                                className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg text-general-100 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 min-h-[100px] resize-none"
+                            />
+                        </div>
+
+                        <button
+                            onClick={handleSaveChanges}
+                            disabled={updateStatus.isPending || !hasChanges}
+                            className="w-full py-3 bg-blue-100 text-general-20 font-bold rounded-xl hover:bg-blue-90 shadow-md hover:shadow-lg transition-all body-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+                        >
+                            {updateStatus.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </div>
+
+                {/* Matriks Penilaian */}
+                {scoring && (
+                    <div className="bg-general-20 border border-general-30 rounded-xl p-5">
+                    <h4 className="h4 text-general-100 mb-4 flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-general-60" />
+                        Skor Kredibilitas
+                    </h4>
+                    <div className="space-y-3">
+                        {Object.entries(SCORING_LABELS).map(([key, label]) => {
+                        const scoreData = scoring[key as keyof typeof scoring]
+                        const value = typeof scoreData === 'object' ? scoreData.value : (typeof scoreData === 'number' ? scoreData : 0)
+                        const max = typeof scoreData === 'object' ? scoreData.max : 3
+                        const percentage = (Number(value) / Number(max)) * 100
+                        return (
+                            <div key={key}>
+                                <div className="flex justify-between text-[10px] uppercase font-bold text-general-60 mb-1">
+                                    <span>{label}</span>
+                                    <span>{value}/{max}</span>
+                                </div>
+                                <div className="w-full h-1.5 bg-general-30 rounded-full overflow-hidden">
+                                    <div
+                                    className={`h-full rounded-full transition-all ${percentage >= 66 ? 'bg-green-100' : percentage >= 33 ? 'bg-warning' : 'bg-red-100'}`}
+                                    style={{ width: `${percentage}%` }}
+                                    />
+                                </div>
+                            </div>
+                        )
+                        })}
+                    </div>
+                    <div className="mt-5 pt-4 border-t border-general-30">
+                        <div className="flex justify-between items-end">
+                            <div>
+                                <span className="text-xs text-general-60">Total Skor</span>
+                                <p className="h4 font-bold text-general-100 leading-none mt-1">{scoring.totalScore}<span className="text-sm text-general-50 font-normal">/18</span></p>
+                            </div>
+                            <span className={`inline-flex px-3 py-1 rounded-lg text-xs font-bold border ${CREDIBILITY_LABELS[scoring.credibilityLevel]?.style || ''}`}>
+                                {CREDIBILITY_LABELS[scoring.credibilityLevel]?.label || scoring.credibilityLevel}
+                            </span>
+                        </div>
+                    </div>
+                    </div>
+                )}
+
+                {/* Riwayat Status */}
+                {history.length > 0 && (
+                    <div className="bg-general-20 border border-general-30 rounded-xl p-5">
+                    <h4 className="h4 text-general-100 mb-4 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-general-60" />
+                        Log Aktivitas
+                    </h4>
+                    <div className="relative pl-2 border-l-2 border-general-30 space-y-6 my-2">
+                        {history.map((h: any, idx: number) => (
+                        <div key={h.id} className="relative pl-4">
+                            <div className="absolute -left-[13px] top-1.5 w-2.5 h-2.5 rounded-full bg-general-40 border-2 border-general-20" />
+                            <p className="text-xs text-general-50 mb-0.5">{formatDateTime(h.createdAt)}</p>
+                            <div className="body-sm font-medium text-general-100">
+                                Status diubah menjadi <span className="text-blue-100">{h.toStatus}</span>
+                            </div>
+                            <p className="text-xs text-general-60 mt-0.5">Oleh: {h.changedBy}</p>
+                            {h.notes && (
+                                <div className="mt-2 bg-general-30/30 border border-general-30 p-2 rounded text-xs text-general-80 italic">
+                                    "{h.notes}"
+                                </div>
+                            )}
+                        </div>
+                        ))}
+                    </div>
+                    </div>
+                )}
+
+            </div>
         </div>
       </div>
 
@@ -550,7 +582,7 @@ function LaporanDetail() {
             </div>
             <h3 className="h5 text-general-100 mb-2">Berhasil!</h3>
             <p className="body-sm text-general-60 mb-6">Status laporan berhasil diperbarui.</p>
-            <button onClick={handleCloseSuccessModal} className="w-full px-6 py-3 bg-blue-100 hover:bg-blue-90 text-general-20 font-semibold rounded-lg transition-colors">Kembali ke Daftar</button>
+            <button onClick={handleCloseSuccessModal} className="w-full px-6 py-3 bg-blue-100 hover:bg-blue-90 text-general-20 font-bold rounded-xl transition-colors shadow-md">Kembali ke Daftar</button>
           </div>
         </div>
       )}

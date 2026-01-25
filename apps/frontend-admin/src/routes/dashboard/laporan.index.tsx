@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { DashboardAnggotaLayout } from "@/components/dashboard/dashboard-anggota-layout"
+import { DashboardAnggotaLayout } from "@/components/dashboard/dashboard-admin-layout"
 import {
   ChevronDown,
   ChevronLeft,

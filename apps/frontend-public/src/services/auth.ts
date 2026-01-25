@@ -21,7 +21,6 @@ export interface LoginRequest {
 }
 
 export interface SignupRequest {
-  nik: string
   email: string
   password: string
   passwordConfirmation: string

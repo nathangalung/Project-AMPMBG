@@ -1,7 +1,8 @@
+// login admin
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState } from "react"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2, LogIn} from "lucide-react"
 import { authService } from "@/services/auth"
 
 export const Route = createFileRoute("/auth/login")({
@@ -16,18 +17,33 @@ function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
+  // --- LOGIKA VALIDASI UI (Disamakan dengan Public) ---
+  const isEmailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)
+  const isIdentifierValid = identifier.length === 0 || isEmailFormat
+  const isPasswordFilled = password.length > 0
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    
+    // Validasi format email sebelum submit
+    if (!isEmailFormat) {
+      setError("Mohon masukkan format email yang valid")
+      return
+    }
+
     setIsLoading(true)
 
     try {
       const response = await authService.login({ identifier, password })
+      
+      // --- LOGIKA KHUSUS ADMIN ---
       if (response.user.role !== "admin") {
         setError("Akses ditolak. Hanya admin yang dapat masuk.")
-        authService.logout()
+        authService.logout() // Logout paksa jika bukan admin
         return
       }
+      
       navigate({ to: "/dashboard" })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login gagal")
@@ -38,64 +54,103 @@ function AdminLoginPage() {
 
   return (
     <AuthLayout>
-      <div className="mb-8">
-        <h1 className="h3 text-general-100 mb-2">Selamat Datang, Admin!</h1>
-        <p className="body-md text-general-60">Masuk ke dashboard admin</p>
+      {/* HEADER SECTION (Disamakan) */}
+      <div className="mb-10 relative">
+        <div className="absolute -top-10 -left-10 w-20 h-20 bg-blue-100/10 rounded-full blur-2xl" />
+        <h1 className="h3 font-heading font-bold text-general-100 mb-2 relative z-10">
+          Selamat Datang, <span className="text-blue-100">Admin!</span>
+        </h1>
+        <p className="body-md text-general-60">Masuk untuk mengakses dashboard.</p>
       </div>
 
-      <form onSubmit={handleLogin} className="space-y-5">
+      <form onSubmit={handleLogin} className="space-y-6">
+        {/* Error Alert */}
         {error && (
-          <div className="bg-red-20 border border-red-100 text-red-100 px-4 py-3 rounded-lg body-sm">
+          <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-center gap-3 animate-in fade-in">
+            <div className="w-1.5 h-1.5 bg-red-100 rounded-full shrink-0" />
             {error}
           </div>
         )}
 
-        <fieldset className="border border-general-30 rounded-lg px-3 pb-3 pt-1 focus-within:border-blue-100 focus-within:ring-1 focus-within:ring-blue-100 transition-all">
-          <legend className="body-xs text-general-60 px-2 font-medium bg-general-20">Surel</legend>
-          <input
-            type="text"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="Masukkan surel admin"
-            className="w-full outline-none text-general-100 placeholder:text-general-40 body-sm bg-transparent"
-            disabled={isLoading}
-          />
-        </fieldset>
-
-        <fieldset className="border border-general-30 rounded-lg px-3 pb-3 pt-1 focus-within:border-blue-100 focus-within:ring-1 focus-within:ring-blue-100 transition-all">
-          <legend className="body-xs text-general-60 px-2 font-medium bg-general-20">Kata Sandi</legend>
-          <div className="flex items-center gap-2">
+        {/* Email Field (Style Public) */}
+        <div className="space-y-1">
+          <div className={`group bg-white border rounded-xl px-4 py-2.5 transition-all duration-300 focus-within:shadow-md ${
+            identifier.length > 0 && !isIdentifierValid
+              ? "border-red-100 ring-2 ring-red-100/5"
+              : "border-general-30 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10"
+          }`}>
+            <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
+              Surel Admin
+            </label>
             <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Masukkan kata sandi"
-              className="w-full outline-none text-general-100 placeholder:text-general-40 body-sm bg-transparent"
+              type="email"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="admin@domain.com"
+              className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
               disabled={isLoading}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="text-general-40 hover:text-general-60 transition-colors"
-            >
-              {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-            </button>
           </div>
-        </fieldset>
+          {identifier.length > 0 && !isIdentifierValid && (
+            <p className="text-[10px] text-red-100 font-medium px-1">* Format email tidak valid</p>
+          )}
+        </div>
 
+        {/* Password Field (Style Public) */}
+        <div className="space-y-1">
+          <div className="group bg-white border border-general-30 rounded-xl px-4 py-2.5 transition-all duration-300 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 focus-within:shadow-md">
+            <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
+              Kata Sandi
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-general-40 hover:text-blue-100 transition-colors p-1"
+              >
+                {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+          <div className="flex justify-between items-center px-1">
+             {!isPasswordFilled && identifier.length > 0 && (
+                <p className="text-[10px] text-general-50">Masukkan kata sandi Anda</p>
+             )}
+          </div>
+        </div>
+
+        {/* Submit Button (Style Public) */}
         <button
           type="submit"
           disabled={isLoading || !identifier || !password}
-          className="w-full py-3 bg-blue-100 hover:bg-blue-90 text-general-20 font-heading font-semibold rounded-lg transition-colors shadow-sm body-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3.5 bg-gradient-to-r from-blue-100 to-blue-90 hover:from-blue-90 hover:to-blue-100 text-white font-heading font-bold rounded-xl transition-all shadow-lg shadow-blue-100/20 hover:shadow-blue-100/40 transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2"
         >
-          {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-          {isLoading ? "Memproses..." : "Masuk"}
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin text-white/90" />
+          ) : (
+            <LogIn className="w-5 h-5" />
+          )}
+          {isLoading ? "Memproses..." : "Masuk Dashboard"}
         </button>
       </form>
 
-      <p className="text-center body-xs text-general-50 mt-8">
-        Hubungi administrator jika mengalami kendala akses.
-      </p>
+      {/* Footer (Layout disamakan, konten disesuaikan untuk Admin) */}
+      <div className="mt-8 pt-6 border-t border-general-30 text-center space-y-4">
+        <p className="body-sm text-general-60">
+          Mengalami kendala akses?{" "}
+          <span className="text-blue-100 font-bold cursor-help hover:text-orange-100 transition-colors duration-300">
+            Hubungi Super Admin
+          </span>
+        </p>
+      </div>
     </AuthLayout>
   )
 }

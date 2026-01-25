@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { DashboardAnggotaLayout } from "@/components/dashboard/dashboard-anggota-layout"
+import { DashboardAnggotaLayout } from "@/components/dashboard/dashboard-admin-layout"
 import { useQuery } from "@tanstack/react-query"
 import { adminService } from "@/services/admin"
 import {
@@ -9,7 +9,12 @@ import {
   AlertTriangle,
   ChevronDown,
   FileText,
-  ClipboardList
+  ClipboardList,
+  X,
+  HelpCircle,
+  ChevronUp,
+  Lightbulb,
+  ClipboardCheck
 } from "lucide-react"
 import { useState, useMemo } from "react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
@@ -43,9 +48,41 @@ const MONTH_OPTIONS = [
   { value: 12, label: "Desember" },
 ]
 
+// --- KONSTANTA MATRIKS ---
+const RISK_LEGEND = [
+  {
+    label: "Tingkat Tinggi",
+    className: "bg-red-20 text-red-100 border-red-30", 
+    indicator: "bg-red-100", 
+    desc: "Total Skor ≥ 12. Data sangat lengkap, valid, dan konsisten."
+  },
+  {
+    label: "Tingkat Sedang",
+    className: "bg-orange-100 text-orange-400 border-orange-30", // Sesuai request
+    indicator: "bg-orange-400",
+    desc: "Total Skor 7 - 11. Data cukup jelas namun butuh verifikasi tambahan."
+  },
+  {
+    label: "Tingkat Rendah",
+    className: "bg-green-20 text-green-100 border-green-30",
+    indicator: "bg-green-100",
+    desc: "Total Skor ≤ 6. Informasi minim atau indikasi tidak valid."
+  }
+]
+
+const SCORING_INDICATORS = [
+  "Relasi Pelapor dengan MBG",
+  "Validitas Lokasi & Waktu",
+  "Kelengkapan Bukti Pendukung",
+  "Konsistensi Narasi & Bahasa",
+  "Riwayat Laporan Pelapor",
+  "Kesesuaian dengan Laporan Lain"
+]
+
 function DashboardAnggota() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
   const [selectedMonth, setSelectedMonth] = useState<number>(0)
+  const [showLegend, setShowLegend] = useState(false)
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["admin", "dashboard"],
@@ -84,9 +121,14 @@ function DashboardAnggota() {
 
   return (
     <DashboardAnggotaLayout>
-      <div className="p-4 md:p-8">
+      {/* FLUID CONTAINER:
+          - w-full + max-w-[2400px]: Agar konten tidak pecah di layar ultrawide (zoom 50%).
+          - px-4 sm:px-6 lg:px-8 xl:px-12: Padding bertahap agar rapi dari HP (33%) sampai Monitor Besar.
+      */}
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6 lg:py-8 max-w-[2400px]">
 
         {/* --- Header Section --- */}
+        {/* 'lg:flex-row' memastikan di laptop kecil/tablet landscape layout sudah side-by-side */}
         <div className="flex flex-col lg:flex-row gap-6 mb-8">
             
             {/* Title Box */}
@@ -97,18 +139,20 @@ function DashboardAnggota() {
                 <p className="body-sm text-general-60">
                     Pantau sebaran masalah program MBG secara real-time.
                 </p>
-                <div className="mt-4 flex gap-3">
-                    <div className="px-3 py-1.5 bg-general-30/50 rounded-lg text-xs font-medium text-general-80">
+                {/* flex-wrap: Mencegah tombol turun berantakan saat layar sempit/HP */}
+                <div className="mt-4 flex flex-wrap gap-3">
+                    <div className="px-3 py-1.5 bg-general-30/50 rounded-lg text-xs font-medium text-general-80 whitespace-nowrap">
                         Total Laporan: <span className="text-general-100 font-bold">{stats?.reports.total || 0}</span>
                     </div>
-                    <div className="px-3 py-1.5 bg-green-20 border border-green-30 rounded-lg text-xs font-medium text-green-100">
+                    <div className="px-3 py-1.5 bg-green-20 border border-green-30 rounded-lg text-xs font-medium text-green-100 whitespace-nowrap">
                         Terverifikasi: <span className="font-bold">{stats?.reports.total ? stats.reports.total - pendingCount : 0}</span>
                     </div>
                 </div>
             </div>
 
-            {/* Action Needed Card (Pending Reports) */}
-            <div className="lg:w-1/3 bg-orange-50 border border-orange-200 rounded-xl p-6 shadow-sm flex items-center justify-between">
+            {/* Action Needed Card */}
+            {/* lg:w-1/3 xl:w-1/4: Proporsi tetap di layar besar, w-full di HP */}
+            <div className="w-full lg:w-1/3 xl:w-1/4 bg-orange-50 border border-orange-200 rounded-xl p-6 shadow-sm flex items-center justify-between">
                 <div>
                     <p className="text-orange-800 text-xs font-bold uppercase tracking-wider mb-1">Perlu Tindakan</p>
                     <div className="flex items-baseline gap-2">
@@ -117,7 +161,7 @@ function DashboardAnggota() {
                     </div>
                     <p className="text-xs text-orange-700/80 mt-2">Menunggu verifikasi admin</p>
                 </div>
-                <div className="h-16 w-16 bg-white/50 rounded-full flex items-center justify-center text-orange-500">
+                <div className="h-16 w-16 bg-white/50 rounded-full flex items-center justify-center text-orange-500 shrink-0 ml-4">
                     <ClipboardList className="w-8 h-8" />
                 </div>
             </div>
@@ -129,38 +173,115 @@ function DashboardAnggota() {
             <p className="body-sm text-general-60">Memuat analitik data...</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-6 xl:space-y-8">
+
+            {/* --- SECTION 0: KETERANGAN MATRIKS --- */}
+            <div>
+                <div className="flex justify-end mb-4">
+                    <button
+                    onClick={() => setShowLegend(!showLegend)}
+                    className={`group flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 border ${
+                        showLegend
+                        ? "bg-blue-100 text-white border-blue-100 shadow-md"
+                        : "bg-white text-general-60 border-general-30 hover:border-blue-30 hover:text-blue-100"
+                    }`}
+                    >
+                    {showLegend ? <X className="w-3.5 h-3.5" /> : <HelpCircle className="w-3.5 h-3.5" />}
+                    <span>{showLegend ? "Tutup Keterangan" : "Lihat Matriks Penilaian Risiko"}</span>
+                    {showLegend ? <ChevronUp className="w-3.5 h-3.5 opacity-70" /> : <ChevronDown className="w-3.5 h-3.5 opacity-70" />}
+                    </button>
+                </div>
+
+                <div 
+                    className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                    showLegend ? 'max-h-[1200px] opacity-100 mb-6' : 'max-h-0 opacity-0'
+                    }`}
+                >
+                    <div className="bg-white rounded-2xl p-4 sm:p-6 border border-blue-30/50 shadow-sm">
+                        {/* Grid: 1 kolom di HP, 2 kolom di Laptop */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+
+                            {/* KOLOM KIRI */}
+                            <div className="flex flex-col h-full">
+                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-general-30">
+                                <AlertTriangle className="w-4 h-4 text-blue-100" />
+                                <h6 className="text-blue-100 uppercase tracking-wider font-heading font-bold text-xs">
+                                Klasifikasi Kepercayaan Data
+                                </h6>
+                            </div>
+                            <div className="flex flex-col gap-3 flex-1">
+                                {RISK_LEGEND.map((risk, idx) => (
+                                <div key={idx} className={`p-3.5 rounded-xl border flex-1 flex flex-col justify-center ${risk.className}`}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                    <div className={`w-2.5 h-2.5 rounded-full ${risk.indicator} ring-2 ring-white/20`} />
+                                    <span className="font-heading font-bold text-sm leading-tight">{risk.label}</span>
+                                    </div>
+                                    <span className="text-xs font-medium opacity-90 leading-tight">{risk.desc}</span>
+                                </div>
+                                ))}
+                            </div>
+                            </div>
+
+                            {/* KOLOM KANAN */}
+                            <div className="flex flex-col h-full">
+                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-general-30">
+                                <ClipboardCheck className="w-4 h-4 text-blue-100" />
+                                <h6 className="text-blue-100 uppercase tracking-wider font-heading font-bold text-xs">
+                                Komponen Matriks Penilaian
+                                </h6>
+                            </div>
+                            <div className="bg-blue-20/50 border border-blue-30/50 rounded-xl p-3 mb-4 text-center">
+                                <div className="flex justify-center mb-1"><Lightbulb className="w-4 h-4 text-blue-100" /></div>
+                                <p className="text-xs text-blue-100 font-medium">Total skor dihitung dari penjumlahan poin 6 indikator (skala 0-3).</p>
+                            </div>
+                            {/* Grid indikator: Responsif 1 -> 2 kolom */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 content-start">
+                                {SCORING_INDICATORS.map((indicator, idx) => (
+                                <div key={idx} className="flex items-center gap-3 p-3 bg-general-20/30 rounded-xl border border-general-30 shadow-sm hover:border-blue-30 transition-colors">
+                                    <span className="flex items-center justify-center w-6 h-6 bg-blue-100 text-white rounded text-xs font-bold shrink-0">{idx + 1}</span>
+                                    <span className="text-xs font-medium text-general-100 leading-tight">{indicator}</span>
+                                </div>
+                                ))}
+                            </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             {/* --- SECTION 1: RISIKO MASALAH --- */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Responsif Grid: 1 (HP) -> 2 (Tablet) -> 3 (Laptop/Desktop) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 xl:gap-6">
                 <div className="bg-red-20 border border-red-30 rounded-xl p-5 shadow-sm relative overflow-hidden">
                     <div className="absolute right-0 top-0 p-4 opacity-10"><AlertTriangle className="w-16 h-16 text-red-100" /></div>
                     <p className="body-sm font-bold text-red-100 uppercase tracking-wider mb-1">Risiko Tinggi</p>
                     <p className="h2 text-red-100">{riskCounts.high}</p>
                 </div>
 
-                <div className="bg-yellow-20 border border-yellow-30 rounded-xl p-5 shadow-sm relative overflow-hidden">
-                    <div className="absolute right-0 top-0 p-4 opacity-10"><AlertTriangle className="w-16 h-16 text-yellow-600" /></div>
-                    <p className="body-sm font-bold text-yellow-600 uppercase tracking-wider mb-1">Risiko Sedang</p>
-                    <p className="h2 text-yellow-600">{riskCounts.medium}</p>
+                <div className="bg-orange-20 border border-orange-30 rounded-xl p-5 shadow-sm relative overflow-hidden">
+                    <div className="absolute right-0 top-0 p-4 opacity-10"><AlertTriangle className="w-16 h-16 text-orange-400" /></div>
+                    <p className="body-sm font-bold text-orange-400 uppercase tracking-wider mb-1">Risiko Sedang</p>
+                    <p className="h2 text-orange-400">{riskCounts.medium}</p>
                 </div>
 
-                <div className="bg-green-20 border border-green-30 rounded-xl p-5 shadow-sm relative overflow-hidden">
+                {/* col-span-2 pada layar 'sm' (tablet) agar grid tidak bolong, kembali ke col-span-1 di 'lg' */}
+                <div className="bg-green-20 border border-green-30 rounded-xl p-5 shadow-sm relative overflow-hidden sm:col-span-2 lg:col-span-1">
                     <div className="absolute right-0 top-0 p-4 opacity-10"><AlertTriangle className="w-16 h-16 text-green-100" /></div>
                     <p className="body-sm font-bold text-green-100 uppercase tracking-wider mb-1">Risiko Rendah</p>
                     <p className="h2 text-green-100">{riskCounts.low}</p>
                 </div>
             </div>
 
-            {/* --- SECTION 2: CHART & CATEGORIES (Grid Split) --- */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* --- SECTION 2: CHART & CATEGORIES --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8">
 
-                {/* Left: Chart (2 Cols) */}
+                {/* Left: Chart (2/3 width on Desktop) */}
                 <div className="lg:col-span-2 bg-general-20 border border-general-30 rounded-xl p-6 shadow-sm">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                         <h3 className="h6 text-general-100 flex items-center gap-2">
                             <TrendingUp className="w-5 h-5 text-blue-100" />
-                            Tren Laporan {selectedMonth === 0 ? "Bulanan" : "Harian"}
+                            Tren Laporan
                         </h3>
                         <div className="flex gap-2">
                             <div className="relative">
@@ -189,9 +310,10 @@ function DashboardAnggota() {
                             </div>
                         </div>
                     </div>
-                    <div className="h-64 mt-4">
+                    {/* Responsive Height: h-64 (HP), lg:h-80 (Laptop), 2xl:h-96 (Ultrawide/Zoom Out) */}
+                    <div className="h-64 lg:h-80 2xl:h-96 mt-4 transition-all duration-300">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                            <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                                 <XAxis
                                     dataKey="label"
@@ -223,7 +345,7 @@ function DashboardAnggota() {
                     </div>
                 </div>
 
-                {/* Right: Top Categories (1 Col) */}
+                {/* Right: Top Categories */}
                 <div className="bg-general-20 border border-general-30 rounded-xl p-6 shadow-sm flex flex-col">
                     <h3 className="h6 text-general-100 flex items-center gap-2 mb-4">
                         <FileText className="w-5 h-5 text-blue-100" />
@@ -261,9 +383,9 @@ function DashboardAnggota() {
                     Wilayah dengan Laporan Terbanyak
                 </h3>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* 1 Kolom (HP), 2 Kolom (Tablet), 3 Kolom (Laptop) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 xl:gap-8">
                     
-                    {/* Top Provinsi */}
                     <LocationCard 
                         title="Provinsi" 
                         data={analytics?.topProvinces?.slice(0, 5).map(i => ({ 
@@ -271,8 +393,6 @@ function DashboardAnggota() {
                             count: i.count 
                         })) || []} 
                     />
-
-                    {/* Top Kabupaten/Kota */}
                     <LocationCard
                         title="Kabupaten/Kota"
                         data={analytics?.topCities?.slice(0, 5).map(i => ({
@@ -281,8 +401,6 @@ function DashboardAnggota() {
                             count: i.count
                         })) || []}
                     />
-
-                    {/* Top Kecamatan */}
                     <LocationCard
                         title="Kecamatan"
                         data={analytics?.topDistricts?.slice(0, 5).map(i => ({
@@ -306,7 +424,7 @@ function DashboardAnggota() {
 // Reusable Location List Card
 function LocationCard({ title, data }: { title: string, data: { name: string; sub?: string; count: number }[] }) {
     return (
-        <div className="bg-general-20 border border-general-30 rounded-xl overflow-hidden shadow-sm flex flex-col">
+        <div className="bg-general-20 border border-general-30 rounded-xl overflow-hidden shadow-sm flex flex-col h-full">
             <div className="p-4 border-b border-general-30 bg-general-30/30">
                 <h4 className="body-sm font-bold text-general-100">{title}</h4>
             </div>
@@ -314,16 +432,18 @@ function LocationCard({ title, data }: { title: string, data: { name: string; su
                 {data.length > 0 ? (
                     data.map((item, idx) => (
                         <div key={idx} className="p-4 flex justify-between items-center hover:bg-general-30/20 transition-colors">
-                            <div className="flex items-center gap-3">
-                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${idx < 3 ? 'bg-blue-100 text-general-20' : 'bg-general-30 text-general-60'}`}>
+                            {/* Tambahkan overflow-hidden agar teks panjang tidak merusak layout */}
+                            <div className="flex items-center gap-3 overflow-hidden">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${idx < 3 ? 'bg-blue-100 text-general-20' : 'bg-general-30 text-general-60'}`}>
                                     {idx + 1}
                                 </span>
-                                <div>
-                                    <p className="body-sm text-general-80 line-clamp-1">{item.name}</p>
-                                    {item.sub && <p className="text-[10px] text-general-50 line-clamp-1">{item.sub}</p>}
+                                {/* min-w-0 dan truncate sangat penting untuk responsifitas (layar 33%) */}
+                                <div className="min-w-0 flex-1">
+                                    <p className="body-sm text-general-80 truncate">{item.name}</p>
+                                    {item.sub && <p className="text-[10px] text-general-50 truncate">{item.sub}</p>}
                                 </div>
                             </div>
-                            <span className="body-sm font-bold text-general-100">{item.count}</span>
+                            <span className="body-sm font-bold text-general-100 ml-2 shrink-0">{item.count}</span>
                         </div>
                     ))
                 ) : (
@@ -331,7 +451,6 @@ function LocationCard({ title, data }: { title: string, data: { name: string; su
                 )}
             </div>
             <div className="p-3 border-t border-general-30 text-center">
-                {/* LINK KE LAPORAN AGAR BISA DITEKAN */}
                 <Link 
                     to="/dashboard/laporan" 
                     className="text-xs font-medium text-blue-100 hover:text-blue-90 hover:underline transition-colors"

@@ -5,17 +5,17 @@ import { StepChronologyEvidence } from "./step-chronology-evidence"
 import { StepIdentityConfirmation } from "./step-identity-confirmation"
 import { reportsService, type CreateReportRequest, type ReportCategory, type ReporterRelation } from "@/services/reports"
 import { cn } from "@/lib/utils"
+import { CheckCircle2, ArrowLeft, ArrowRight, Send } from "lucide-react"
 
 const STEPS = [
-  { id: 1, title: "Lokasi & Kategori", subtitle: "Apa dan di mana kejadiannya?" },
-  { id: 2, title: "Kronologi & Bukti", subtitle: "Bagaimana kronologi dan bukti kejadian?" },
-  { id: 3, title: "Identitas & Konfirmasi", subtitle: "Data pelapor dan konfirmasi" },
+  { id: 1, title: "Lokasi", subtitle: "Detail Lokasi" },
+  { id: 2, title: "Bukti", subtitle: "Kronologi & Foto" },
+  { id: 3, title: "Konfirmasi", subtitle: "Identitas Pelapor" },
 ]
 
 export type Timezone = "WIB" | "WITA" | "WIT"
 
 export interface ReportFormData {
-  // Step 1
   title: string
   category: string
   date: string
@@ -27,10 +27,8 @@ export interface ReportFormData {
   location: string
   latitude?: number
   longitude?: number
-  // Step 2
   description: string
   files: File[]
-  // Step 3
   relation: string
   relationDetail?: string
   agreement: boolean
@@ -58,10 +56,8 @@ function ReportFormComponent() {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  // Create report mutation
   const createReportMutation = useMutation({
     mutationFn: async () => {
-      // Format incident date with time
       const incidentDate = `${formData.date}T${formData.time}:00`
       
       const reportData: CreateReportRequest = {
@@ -79,31 +75,47 @@ function ReportFormComponent() {
 
       const response = await reportsService.createReport(reportData)
       
-      // Upload files if any
       if (formData.files.length > 0 && response.data.id) {
         await reportsService.uploadFiles(response.data.id, formData.files)
       }
-      
       return response
     },
     onSuccess: () => {
       setIsSubmitted(true)
       setSubmitError(null)
     },
-    onError: (error: Error) => {
-      setSubmitError(error.message || "Terjadi kesalahan saat mengirim laporan")
+    // PERBAIKAN: Handler error yang lebih robust untuk menangani object ZodError
+    onError: (error: any) => {
+      let message = "Terjadi kesalahan saat mengirim laporan."
+
+      // Cek apakah error adalah objek Zod (memiliki properti issues)
+      if (error?.issues && Array.isArray(error.issues) && error.issues.length > 0) {
+        message = error.issues[0].message // Ambil pesan dari isu pertama
+      } 
+      // Cek apakah error.message itu sendiri adalah objek (kasus yang Anda alami)
+      else if (typeof error?.message === 'object' && error.message !== null) {
+         if (error.message.issues && Array.isArray(error.message.issues)) {
+            message = error.message.issues[0].message
+         } else {
+            message = "Terjadi kesalahan validasi data." // Fallback jika strukturnya tidak jelas
+         }
+      }
+      // Error standar JS
+      else if (typeof error?.message === 'string') {
+        message = error.message
+      }
+
+      setSubmitError(message)
     },
   })
 
-  // --- LOGIKA VALIDASI ---
   const isStepValid = useMemo(() => {
     if (currentStep === 1) {
-      // Cek apakah semua field Step 1 terisi
       return (
-        formData.title.trim().length > 0 && // Judul wajib
+        formData.title.trim().length > 0 &&
         formData.category &&
         formData.date &&
-        formData.time &&                    // Jam wajib
+        formData.time &&
         formData.province &&
         formData.city &&
         formData.district &&
@@ -111,11 +123,9 @@ function ReportFormComponent() {
       )
     }
     if (currentStep === 2) {
-      // Validasi Step 2: Deskripsi minimal 50 karakter
       return formData.description.trim().length >= 50
     }
     if (currentStep === 3) {
-      // Validasi Step 3: Wajib centang agreement dan isi hubungan
       return formData.relation && formData.agreement
     }
     return false
@@ -125,34 +135,23 @@ function ReportFormComponent() {
     setFormData((prev) => ({ ...prev, ...data }))
   }, [])
 
-  const nextStep = useCallback(() => {
-    setCurrentStep((s) => (s < 3 ? s + 1 : s))
-  }, [])
-
-  const prevStep = useCallback(() => {
-    setCurrentStep((s) => (s > 1 ? s - 1 : s))
-  }, [])
-
-  const handleSubmit = useCallback(() => {
-    setSubmitError(null)
-    createReportMutation.mutate()
-  }, [createReportMutation])
+  const nextStep = useCallback(() => setCurrentStep((s) => (s < 3 ? s + 1 : s)), [])
+  const prevStep = useCallback(() => setCurrentStep((s) => (s > 1 ? s - 1 : s)), [])
+  const handleSubmit = useCallback(() => { setSubmitError(null); createReportMutation.mutate() }, [createReportMutation])
 
   if (isSubmitted) {
     return (
-      <div className="bg-general-20 rounded-lg shadow-md border border-general-30 p-8 text-center">
-        <div className="w-16 h-16 bg-blue-20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+      <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-blue-30/50 p-8 md:p-16 text-center animate-in zoom-in-95 duration-300 max-w-2xl mx-auto">
+        <div className="w-20 h-20 md:w-24 md:h-24 bg-green-20 rounded-full flex items-center justify-center mx-auto mb-6 md:mb-8">
+          <CheckCircle2 className="w-10 h-10 md:w-12 md:h-12 text-green-100" />
         </div>
-        <h2 className="h3 text-general-100 mb-2">Laporan Berhasil Dikirim!</h2>
-        <p className="body-md text-general-70 mb-6">
-          Terima kasih atas partisipasi Anda. Tim kami akan memverifikasi laporan Anda.
+        <h2 className="h3 text-general-100 mb-3">Laporan Diterima!</h2>
+        <p className="body-md text-general-60 mb-8 md:mb-10 max-w-lg mx-auto leading-relaxed">
+          Terima kasih atas partisipasi Anda. Tim kami akan segera memverifikasi laporan ini demi program MBG yang lebih baik.
         </p>
         <a
           href="/"
-          className="inline-flex items-center justify-center px-6 py-3 bg-blue-100 hover:bg-blue-90 text-general-20 font-medium rounded-lg transition-colors body-sm font-heading"
+          className="inline-flex items-center justify-center px-8 py-3.5 md:px-10 md:py-4 bg-blue-100 hover:bg-blue-90 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 body-sm w-full sm:w-auto"
         >
           Kembali ke Beranda
         </a>
@@ -161,102 +160,108 @@ function ReportFormComponent() {
   }
 
   return (
-    <div className="bg-general-20 rounded-lg shadow-md border border-general-30 overflow-hidden">
-      {/* Step Indicators */}
-      <div className="bg-general-20 border-b border-general-30 p-4">
-        <div className="flex items-center justify-between">
-          {STEPS.map((step, index) => (
-            <div key={step.id} className="flex items-center flex-1">
-              <div className="flex items-center">
+    <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-blue-30/30 overflow-hidden w-full transition-all">
+      
+      {/* Progress Bar Header */}
+      <div className="bg-general-20/30 border-b border-general-30 px-5 py-5 md:px-10 md:py-6">
+        <div className="flex items-center justify-between relative max-w-3xl mx-auto">
+          <div className="absolute left-0 top-1/2 w-full h-1 bg-general-30 -z-10 hidden sm:block transform -translate-y-1/2 rounded-full mx-4" />
+          
+          {STEPS.map((step) => {
+            const isActive = currentStep >= step.id
+            const isCurrent = currentStep === step.id
+            
+            return (
+              <div key={step.id} className="flex flex-col items-center relative z-10 bg-white sm:px-4 rounded-full py-1">
                 <div
                   className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
-                    // Active step styling
-                    currentStep >= step.id 
-                      ? "bg-blue-100 text-general-20" 
-                      : "bg-general-30 text-general-70",
+                    "w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center text-sm md:text-base font-bold transition-all duration-300 border-2",
+                    isActive 
+                      ? "bg-blue-100 border-blue-100 text-white shadow-md scale-105" 
+                      : "bg-white border-general-30 text-general-50"
                   )}
                 >
                   {step.id}
                 </div>
-                <div className="ml-3 hidden sm:block">
-                  <p 
-                    className={cn(
-                      "body-sm font-heading font-medium", 
-                      // Text color styling
-                      currentStep >= step.id ? "text-blue-100" : "text-general-60"
-                    )}
-                  >
-                    {step.title}
-                  </p>
-                </div>
+                <p 
+                  className={cn(
+                    "text-[10px] md:text-xs font-bold mt-2 uppercase tracking-wide transition-colors hidden sm:block", 
+                    isCurrent ? "text-blue-100" : "text-general-50"
+                  )}
+                >
+                  {step.title}
+                </p>
               </div>
-              {index < STEPS.length - 1 && (
-                <div className="flex-1 mx-4">
-                  <div 
-                    className={cn(
-                      "h-1 rounded", 
-                      // Connector line styling
-                      currentStep > step.id ? "bg-blue-100" : "bg-general-30"
-                    )} 
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
       {/* Form Content */}
-      <div className="p-6 md:p-8">
-        <div className="mb-6">
-          <h2 className="h5 text-general-100">
-            Langkah {currentStep} - {STEPS[currentStep - 1].subtitle}
+      <div className="p-5 md:p-10 lg:p-12">
+        <div className="mb-8 md:mb-10 text-center sm:text-left">
+          <h2 className="text-xl md:text-3xl font-heading font-bold text-general-100">
+            {STEPS[currentStep - 1].subtitle}
           </h2>
+          <p className="text-general-60 text-xs md:text-sm mt-1.5">Lengkapi data berikut dengan informasi yang valid.</p>
         </div>
 
-        {currentStep === 1 && <StepLocationCategory formData={formData} updateFormData={updateFormData} />}
-        {currentStep === 2 && <StepChronologyEvidence formData={formData} updateFormData={updateFormData} />}
-        {currentStep === 3 && <StepIdentityConfirmation formData={formData} updateFormData={updateFormData} />}
+        {/* Konten Step */}
+        <div className="w-full">
+          {currentStep === 1 && <StepLocationCategory formData={formData} updateFormData={updateFormData} />}
+          {currentStep === 2 && <StepChronologyEvidence formData={formData} updateFormData={updateFormData} />}
+          {currentStep === 3 && <StepIdentityConfirmation formData={formData} updateFormData={updateFormData} />}
+        </div>
 
-        {/* Error Message */}
         {submitError && (
-          <div className="mt-4 p-4 bg-red-20 border border-red-100 rounded-lg">
-            <p className="text-red-100 body-sm">{submitError}</p>
+          <div className="mt-6 md:mt-8 p-4 bg-red-20 border border-red-100 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-100 mt-2 shrink-0" />
+            <p className="text-red-100 body-sm font-medium">{submitError}</p>
           </div>
         )}
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between mt-8 pt-6 border-t border-general-30">
-          {currentStep > 1 ? (
-            <button
-              type="button"
-              onClick={prevStep}
-              className="px-5 py-2.5 border border-general-30 text-general-80 font-medium rounded-lg hover:bg-general-30 transition-colors body-sm"
-            >
-              Sebelumnya
-            </button>
-          ) : (
-            <div />
-          )}
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-between mt-10 md:mt-12 pt-6 md:pt-8 border-t border-general-30 gap-3 sm:gap-0">
+          <button
+            type="button"
+            onClick={prevStep}
+            disabled={currentStep === 1}
+            className={cn(
+              "w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-colors",
+              currentStep > 1 
+                ? "text-general-60 hover:bg-general-20 hover:text-blue-100 border border-transparent hover:border-general-30" 
+                : "text-transparent cursor-default hidden sm:flex"
+            )}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Sebelumnya
+          </button>
 
           {currentStep < 3 ? (
             <button
               type="button"
               onClick={nextStep}
               disabled={!isStepValid}
-              className="px-5 py-2.5 bg-blue-100 hover:bg-blue-90 text-general-20 font-medium rounded-lg transition-colors body-sm font-heading disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-blue-100 hover:bg-blue-90 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transform active:scale-95 body-sm"
             >
               Selanjutnya
+              <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
             <button
               type="button"
               onClick={handleSubmit}
               disabled={createReportMutation.isPending || !isStepValid}
-              className="px-8 py-2.5 bg-blue-100 hover:bg-blue-90 text-general-20 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed body-sm font-heading"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-10 py-3.5 bg-orange-100 hover:bg-orange-90 text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-100/20 hover:shadow-orange-100/40 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 body-sm"
             >
-              {createReportMutation.isPending ? "Mengirim..." : "Kirim Laporan"}
+              {createReportMutation.isPending ? (
+                <>Mengirim...</> 
+              ) : (
+                <>
+                  Kirim Laporan
+                  <Send className="w-4 h-4" />
+                </>
+              )}
             </button>
           )}
         </div>

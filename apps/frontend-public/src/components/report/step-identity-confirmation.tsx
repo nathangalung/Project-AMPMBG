@@ -1,8 +1,9 @@
 import { memo, useCallback } from "react"
-import { ChevronDown, CheckSquare, Square, Loader2 } from "lucide-react"
+import { ChevronDown, CheckSquare, Square, Loader2, UserCircle2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import type { ReportFormData } from "./report-form"
 import { categoriesService } from "@/services/categories"
+import { cn } from "@/lib/utils"
 
 interface StepIdentityConfirmationProps {
   formData: ReportFormData
@@ -10,136 +11,109 @@ interface StepIdentityConfirmationProps {
 }
 
 function StepIdentityConfirmationComponent({ formData, updateFormData }: StepIdentityConfirmationProps) {
-  // Fetch relations from API
   const { data: relationsData, isLoading: relationsLoading } = useQuery({
-    queryKey: ["relations"],
-    queryFn: async () => {
-      const response = await categoriesService.getRelations()
-      return response.data
-    },
-    staleTime: 1000 * 60 * 60,
+    queryKey: ["relations"], queryFn: async () => (await categoriesService.getRelations()).data, staleTime: 3600000,
   })
-
-  // Fetch categories for label mapping
   const { data: categoriesData } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const response = await categoriesService.getCategories()
-      return response.data
-    },
-    staleTime: 1000 * 60 * 60,
+    queryKey: ["categories"], queryFn: async () => (await categoriesService.getCategories()).data, staleTime: 3600000,
   })
 
   const relations = relationsData || []
   const categories = categoriesData || []
+  const getCategoryLabel = useCallback((val: string) => categories.find((cat) => cat.value === val)?.label || val, [categories])
 
-  const getCategoryLabel = useCallback(
-    (val: string) => categories.find((cat) => cat.value === val)?.label || val,
-    [categories]
-  )
-
-  const handleRelationChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => updateFormData({ relation: e.target.value }), [updateFormData])
-  const handleRelationDetailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => updateFormData({ relationDetail: e.target.value }), [updateFormData])
-  const toggleAgreement = useCallback(() => updateFormData({ agreement: !formData.agreement }), [formData.agreement, updateFormData])
+  const commonInputClass = "w-full px-4 py-3 bg-white border rounded-xl text-general-100 focus:outline-none focus:ring-2 focus:ring-blue-100/50 focus:border-blue-100 transition-all duration-200"
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       
-      {/* 1. Relation to MBG */}
+      {/* 1. Identity Input */}
       <div>
-        <label htmlFor="relation" className="block body-sm font-medium text-general-80 mb-2">
-          Relasi dengan MBG <span className="text-red-100">*</span>
+        <label htmlFor="relation" className="block text-sm font-bold text-general-80 mb-2">
+          Relasi Anda dengan Program MBG <span className="text-red-100">*</span>
         </label>
         <div className="relative">
           <select
             id="relation"
             value={formData.relation}
-            onChange={handleRelationChange}
+            onChange={(e) => updateFormData({ relation: e.target.value })}
             disabled={relationsLoading}
-            className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg text-general-100 focus:ring-2 focus:ring-blue-100 focus:border-blue-100 transition-colors appearance-none cursor-pointer disabled:bg-general-30/30 disabled:cursor-not-allowed"
+            className={cn(commonInputClass, "border-general-30 appearance-none pr-10 cursor-pointer disabled:bg-general-20")}
           >
-            <option value="">
-              {relationsLoading ? "Memuat relasi..." : "Pilih relasi anda"}
-            </option>
-            {relations.map((rel) => (
-              <option key={rel.value} value={rel.value}>
-                {rel.label}
-              </option>
-            ))}
+            <option value="">{relationsLoading ? "Memuat..." : "Pilih Relasi"}</option>
+            {relations.map((rel) => <option key={rel.value} value={rel.value}>{rel.label}</option>)}
           </select>
-          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-general-60">
-            {relationsLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <ChevronDown className="w-5 h-5" />
-            )}
-          </div>
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-general-50 pointer-events-none" />
         </div>
 
-        {/* INPUT TAMBAHAN: Muncul hanya jika pilih "Lainnya" */}
         {formData.relation === "other" && (
-            <div className="mt-3 animate-fadeIn">
+            <div className="mt-4 animate-in slide-in-from-top-2">
                 <input
                     type="text"
-                    placeholder="Sebutkan peran spesifik Anda (Opsional)"
-                    // Pastikan Anda sudah menambahkan field 'relationDetail' di interface ReportFormData
+                    placeholder="Sebutkan peran spesifik Anda"
                     value={formData.relationDetail || ""} 
-                    onChange={handleRelationDetailChange}
-                    className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg text-general-100 placeholder:text-general-40 focus:ring-2 focus:ring-blue-100 focus:border-blue-100 transition-colors body-sm"
+                    onChange={(e) => updateFormData({ relationDetail: e.target.value })}
+                    className={cn(commonInputClass, "border-general-30")}
                 />
             </div>
         )}
-
-        <p className="text-xs text-general-60 mt-1.5">
-          Identitas Anda akan dijaga kerahasiaannya sesuai kebijakan privasi kami.
-        </p>
-      </div>
-
-      {/* 2. Agreement Checkbox */}
-      <div 
-        className={`rounded-lg p-4 border transition-colors cursor-pointer ${
-            formData.agreement 
-            ? "bg-blue-20/50 border-blue-100" 
-            : "bg-general-20 border-general-30"
-        }`}
-        onClick={toggleAgreement}
-      >
-        <div className="flex items-start gap-3">
-          <div className={`mt-0.5 transition-colors ${formData.agreement ? "text-blue-100" : "text-general-40"}`}>
-            {formData.agreement ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
-          </div>
-          <span className="body-sm text-general-80 select-none">
-            Saya menyatakan bahwa informasi yang saya berikan dalam laporan ini adalah benar dan dapat
-            dipertanggungjawabkan. Saya memahami bahwa laporan palsu dapat dikenakan sanksi sesuai hukum yang berlaku.
-          </span>
+        
+        <div className="mt-3 flex items-start gap-2 bg-blue-20/50 p-3 rounded-lg border border-blue-20">
+            <UserCircle2 className="w-5 h-5 text-blue-100 mt-0.5 shrink-0" />
+            <p className="text-xs text-blue-90 leading-relaxed">
+                Identitas Anda sebagai pelapor <strong>dijamin kerahasiaannya</strong>. Kami hanya menggunakan data ini untuk verifikasi laporan.
+            </p>
         </div>
       </div>
 
-      {/* 3. Summary Box (Ringkasan) */}
-      <div className="bg-blue-20 rounded-lg p-5 border border-blue-30">
-        <h3 className="h6 text-blue-100 mb-3 font-bold">Ringkasan Laporan Anda:</h3>
-        <ul className="body-sm text-general-80 space-y-2">
-          <li className="flex justify-between border-b border-blue-30/50 pb-2">
-            <span className="text-general-60">Kategori:</span>
-            {/* Menggunakan Helper function agar muncul Label (Keracunan), bukan Value (poisoning) */}
-            <span className="font-medium text-right text-general-100">
-                {getCategoryLabel(formData.category) || "-"}
-            </span>
-          </li>
-          <li className="flex justify-between border-b border-blue-30/50 pb-2">
-            <span className="text-general-60">Tanggal:</span>
-            <span className="font-medium text-right text-general-100">{formData.date || "-"}</span>
-          </li>
-          <li className="flex justify-between border-b border-blue-30/50 pb-2">
-            <span className="text-general-60">Lokasi:</span>
-            <span className="font-medium text-right text-general-100">{formData.location || "-"}</span>
-          </li>
-          <li className="flex justify-between pt-1">
-            <span className="text-general-60">Bukti:</span>
-            <span className="font-medium text-right text-general-100">{formData.files.length} file diunggah</span>
-          </li>
-        </ul>
+      <div className="border-t border-general-30 my-6" />
+
+      {/* 2. Report Summary Card */}
+      <div className="bg-gradient-to-br from-general-20 to-white rounded-2xl border border-general-30 overflow-hidden shadow-sm">
+        <div className="bg-general-100 px-6 py-4 flex items-center justify-between">
+            <h3 className="text-white font-bold text-sm md:text-base">Ringkasan Laporan</h3>
+            <span className="text-[10px] bg-orange-100 text-white px-2 py-1 rounded font-bold uppercase tracking-wider">Draft</span>
+        </div>
+        <div className="p-6 grid gap-4 text-sm">
+            <div className="grid grid-cols-3 gap-4">
+                <span className="text-general-60 font-medium">Judul</span>
+                <span className="col-span-2 font-bold text-general-100">{formData.title || "-"}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+                <span className="text-general-60 font-medium">Kategori</span>
+                <span className="col-span-2 font-bold text-blue-100">{getCategoryLabel(formData.category) || "-"}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+                <span className="text-general-60 font-medium">Waktu</span>
+                <span className="col-span-2 text-general-100">{formData.date} • {formData.time} {formData.timezone}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+                <span className="text-general-60 font-medium">Lokasi</span>
+                <span className="col-span-2 text-general-100">{formData.location || "-"}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+                <span className="text-general-60 font-medium">Bukti</span>
+                <span className="col-span-2 text-general-100">{formData.files.length} File dilampirkan</span>
+            </div>
+        </div>
       </div>
+
+      {/* 3. Agreement */}
+      <div 
+        className={cn(
+            "rounded-xl p-5 border-2 cursor-pointer transition-all duration-200 flex gap-4 items-start select-none group",
+            formData.agreement ? "bg-orange-10/30 border-orange-100" : "bg-white border-general-30 hover:border-general-40"
+        )}
+        onClick={() => updateFormData({ agreement: !formData.agreement })}
+      >
+        <div className={cn("mt-0.5 transition-colors", formData.agreement ? "text-orange-100" : "text-general-40 group-hover:text-general-60")}>
+            {formData.agreement ? <CheckSquare className="w-6 h-6" /> : <Square className="w-6 h-6" />}
+        </div>
+        <p className="text-sm text-general-80 leading-relaxed">
+            Saya menyatakan bahwa informasi yang saya berikan adalah <strong>benar</strong> dan dapat dipertanggungjawabkan. Saya memahami konsekuensi hukum atas laporan palsu.
+        </p>
+      </div>
+
     </div>
   )
 }

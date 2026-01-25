@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState } from "react"
-import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react"
+import { Eye, EyeOff, Loader2, ArrowLeft, LogIn } from "lucide-react"
 import { authService } from "@/services/auth"
 
 export const Route = createFileRoute("/auth/login")({
@@ -16,7 +16,7 @@ function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
-  // --- VALIDASI HANYA EMAIL ---
+  // --- LOGIKA ASLI (TETAP) ---
   const isEmailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)
   const isIdentifierValid = identifier.length === 0 || isEmailFormat
   const isPasswordFilled = password.length > 0
@@ -44,102 +44,118 @@ function LoginPage() {
 
   return (
     <AuthLayout>
-      <div className="mb-8">
-        <h1 className="h3 text-general-100 mb-2">Selamat Datang, Masyarakat!</h1>
-        <p className="body-md text-general-60">Masuk ke akun Anda</p>
+      {/* HEADER SECTION */}
+      <div className="mb-10 relative">
+        <div className="absolute -top-10 -left-10 w-20 h-20 bg-blue-100/10 rounded-full blur-2xl" />
+        <h1 className="h3 font-heading font-bold text-general-100 mb-2 relative z-10">
+          Selamat Datang, <span className="text-blue-100">Masyarakat!</span>
+        </h1>
+        <p className="body-md text-general-60">Masuk untuk mulai berkontribusi.</p>
       </div>
 
-      <form onSubmit={handleLogin} className="space-y-5">
+      <form onSubmit={handleLogin} className="space-y-6">
         {error && (
-          <div className="bg-red-20 border border-red-100 text-red-100 px-4 py-3 rounded-lg body-sm">
+          <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-center gap-3 animate-in fade-in">
+            <div className="w-1.5 h-1.5 bg-red-100 rounded-full shrink-0" />
             {error}
           </div>
         )}
 
-        {/* Email Field (Hanya Email) */}
-        <div className="flex flex-col gap-1">
-          <fieldset className={`border rounded-lg px-3 pb-3 pt-1 transition-all ${
+        {/* Email Field */}
+        <div className="space-y-1">
+          <div className={`group bg-white border rounded-xl px-4 py-2.5 transition-all duration-300 focus-within:shadow-md ${
             identifier.length > 0 && !isIdentifierValid
-              ? "border-red-100 focus-within:ring-red-100"
-              : "border-general-30 focus-within:border-blue-100 focus-within:ring-blue-100"
+              ? "border-red-100 ring-2 ring-red-100/5"
+              : "border-general-30 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10"
           }`}>
-            <legend className="body-xs text-general-60 px-2 font-medium bg-general-20">Surel</legend>
+            <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
+              Surel
+            </label>
             <input
               type="email"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="Masukkan surel Anda"
-              className="w-full outline-none text-general-100 placeholder:text-general-40 body-sm bg-transparent"
+              placeholder="nama@domain.com"
+              className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
               disabled={isLoading}
             />
-          </fieldset>
+          </div>
           {identifier.length > 0 && !isIdentifierValid && (
-            <p className="text-[10px] text-red-100 px-1">Format email tidak valid (contoh: nama@domain.com)</p>
+            <p className="text-[10px] text-red-100 font-medium px-1">* Format email tidak valid</p>
           )}
         </div>
 
         {/* Password Field */}
-        <div className="flex flex-col gap-1">
-          <fieldset className="border border-general-30 rounded-lg px-3 pb-3 pt-1 focus-within:border-blue-100 focus-within:ring-1 focus-within:ring-blue-100 transition-all">
-            <legend className="body-xs text-general-60 px-2 font-medium bg-general-20">Kata Sandi</legend>
-            <div className="flex items-center gap-2">
+        <div className="space-y-1">
+          <div className="group bg-white border border-general-30 rounded-xl px-4 py-2.5 transition-all duration-300 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 focus-within:shadow-md">
+            <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
+              Kata Sandi
+            </label>
+            <div className="flex items-center gap-3">
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Masukkan kata sandi Anda"
-                className="w-full outline-none text-general-100 placeholder:text-general-40 body-sm bg-transparent"
+                placeholder="••••••••"
+                className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
                 disabled={isLoading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-general-40 hover:text-general-60 transition-colors"
+                className="text-general-40 hover:text-blue-100 transition-colors p-1"
               >
                 {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
               </button>
             </div>
-          </fieldset>
-          {!isPasswordFilled && identifier.length > 0 && (
-            <p className="text-[10px] text-general-50 px-1">Masukkan kata sandi Anda</p>
-          )}
-        </div>
-
-        {/* Forgot Password Link */}
-        <div className="text-right">
-          <Link 
-            to="/auth/forgot-password" 
-            className="body-sm text-blue-100 hover:text-blue-90 hover:underline font-medium"
-          >
-            Lupa kata sandi? Atur ulang
-          </Link>
+          </div>
+          <div className="flex justify-between items-center px-1">
+             {!isPasswordFilled && identifier.length > 0 && (
+                <p className="text-[10px] text-general-50">Masukkan kata sandi Anda</p>
+             )}
+             <div className="flex-1 text-right">
+                <Link 
+                    to="/auth/forgot-password" 
+                    className="text-[11px] font-semibold text-orange-100 hover:text-orange-90 hover:underline transition-colors"
+                >
+                    Lupa kata sandi?
+                </Link>
+             </div>
+          </div>
         </div>
 
         {/* Submit Button */}
         <button
           type="submit"
           disabled={isLoading || !identifier || !password}
-          className="w-full py-3 bg-blue-100 hover:bg-blue-90 text-general-20 font-heading font-semibold rounded-lg transition-colors shadow-sm body-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3.5 bg-gradient-to-r from-blue-100 to-blue-90 hover:from-blue-90 hover:to-blue-100 text-white font-heading font-bold rounded-xl transition-all shadow-lg shadow-blue-100/20 hover:shadow-blue-100/40 transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2"
         >
-          {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-          {isLoading ? "Memproses..." : "Masuk"}
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin text-white/90" />
+          ) : (
+            <LogIn className="w-5 h-5" />
+          )}
+          {isLoading ? "Memproses..." : "Masuk Sekarang"}
         </button>
       </form>
 
-      <p className="text-center body-sm text-general-60 mt-6">
-        Belum memiliki akun?{" "}
-        <Link to="/auth/register" className="text-blue-100 font-semibold hover:underline">
-          Daftar
-        </Link>
-      </p>
+      {/* Footer */}
+      <div className="mt-8 pt-6 border-t border-general-30 text-center space-y-4">
+        <p className="body-sm text-general-60">
+          Belum memiliki akun?{" "}
+          <Link 
+            to="/auth/register" 
+            className="text-blue-100 font-bold hover:text-orange-100 transition-colors duration-300 decoration-2 hover:underline underline-offset-4"
+          >
+            Daftar disini
+          </Link>
+        </p>
 
-      {/* TOMBOL KEMBALI KE BERANDA */}
-      <div className="mt-6 text-center">
         <Link 
           to="/" 
-          className="inline-flex items-center gap-2 text-general-60 hover:text-blue-100 transition-colors body-sm font-medium"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-general-60 hover:text-blue-100 hover:bg-blue-20/50 transition-all duration-300 body-sm font-semibold group"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Kembali ke Beranda
         </Link>
       </div>

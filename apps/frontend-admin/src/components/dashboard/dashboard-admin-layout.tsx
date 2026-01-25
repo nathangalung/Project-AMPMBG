@@ -7,7 +7,9 @@ import {
   UserCog,
   Users,
   LogOut,
-  AlertCircle
+  AlertCircle,
+  Menu, // Icon baru untuk tombol menu mobile
+  X     // Icon baru untuk tombol tutup
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -20,8 +22,11 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
   const location = useLocation()
   const [currentUser, setCurrentUser] = useState<{name: string, role: string} | null>(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  
+  // State untuk kontrol menu mobile
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // 1. Cek User (Auth Guard) - Only admin and member can access
+  // 1. Cek User (Auth Guard)
   useEffect(() => {
     const userStr = localStorage.getItem("currentUser")
     if (userStr) {
@@ -36,7 +41,11 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
     }
   }, [navigate])
 
-  // 2. Fungsi Logout
+  // Tutup menu mobile setiap kali pindah halaman (Route change)
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [location.pathname])
+
   const confirmLogout = () => {
     localStorage.removeItem("currentUser")
     localStorage.removeItem("token")
@@ -52,33 +61,56 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
     { to: "/dashboard/akun-anggota", label: "Akun Anggota", icon: Users, exact: true },
   ]
 
-  // Helper cek active link
   const isActive = (path: string, exact: boolean) => {
     if (exact) return location.pathname === path
     return location.pathname.startsWith(path)
   }
 
   return (
-    <div className="flex h-screen w-full bg-general-20 font-sans text-general-100">
+    <div className="flex h-screen w-full bg-general-20 font-sans text-general-100 overflow-hidden">
       
-      {/* --- SIDEBAR (FIXED) --- */}
-      <aside className="w-64 bg-general-20 border-r border-general-30 flex flex-col fixed inset-y-0 left-0 z-20">
+      {/* --- MOBILE OVERLAY (BACKDROP) --- */}
+      {/* Muncul hanya saat menu terbuka di layar kecil */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* --- SIDEBAR (RESPONSIVE) --- */}
+      {/* - fixed inset-y-0: Selalu menempel dari atas ke bawah.
+          - z-40: Di atas konten utama.
+          - transform transition-transform: Animasi geser halus.
+          - -translate-x-full: Default tersembunyi di kiri (Mobile).
+          - translate-x-0: Muncul jika isMobileMenuOpen=true.
+          - lg:translate-x-0: Selalu muncul di layar besar (Desktop).
+      */}
+      <aside className={cn(
+        "fixed inset-y-0 left-0 z-40 w-64 bg-general-20 border-r border-general-30 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0",
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
         
         {/* LOGO AREA */}
-        <div className="h-24 flex items-center justify-center px-6 border-b border-general-30 shrink-0">
+        <div className="h-16 lg:h-24 flex items-center justify-between px-6 border-b border-general-30 shrink-0">
            <img
              src="/logo_hijau.webp"
              alt="AMP MBG"
-             loading="eager"
-             decoding="async"
-             width="155"
-             height="64"
-             className="h-16 w-auto object-contain"
+             width="140"
+             height="50"
+             className="h-10 lg:h-14 w-auto object-contain"
            /> 
+           {/* Tombol Close di dalam Sidebar (Hanya Mobile) */}
+           <button 
+             onClick={() => setIsMobileMenuOpen(false)}
+             className="lg:hidden p-2 text-general-60 hover:bg-general-30 rounded-lg"
+           >
+             <X className="w-5 h-5" />
+           </button>
         </div>
 
         {/* NAVIGATION */}
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-general-30">
           {navItems.map((item) => {
             const active = isActive(item.to, item.exact)
             return (
@@ -100,7 +132,7 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
         </nav>
 
         {/* USER PROFILE */}
-        <div className="p-4 border-t border-general-30 shrink-0">
+        <div className="p-4 border-t border-general-30 shrink-0 bg-general-20">
           <div className="flex items-center gap-3 px-2">
             <div className="flex-1 min-w-0">
               <p className="body-sm font-heading font-bold text-general-100 truncate">
@@ -112,7 +144,7 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
             </div>
             <button 
               onClick={() => setShowLogoutConfirm(true)}
-              className="text-general-40 hover:text-red-100 transition-colors"
+              className="p-2 text-general-40 hover:text-red-100 hover:bg-red-20 rounded-lg transition-colors"
               title="Keluar"
             >
               <LogOut className="w-5 h-5" />
@@ -121,20 +153,44 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
         </div>
       </aside>
 
-      {/* --- MAIN CONTENT WRAPPER --- */}
-      <main className="flex-1 ml-64 overflow-y-auto h-full bg-general-20">
-        {children}
-      </main>
+      {/* --- CONTENT WRAPPER --- */}
+      <div className="flex-1 flex flex-col min-w-0 h-full transition-all duration-300 lg:ml-64">
+        
+        {/* MOBILE HEADER (Hanya muncul di < lg) */}
+        <header className="lg:hidden h-16 flex items-center justify-between px-4 border-b border-general-30 bg-general-20 sticky top-0 z-20 shrink-0">
+          <div className="flex items-center gap-3">
+             <button 
+               onClick={() => setIsMobileMenuOpen(true)}
+               className="p-2 -ml-2 text-general-60 hover:bg-general-30 rounded-lg"
+             >
+               <Menu className="w-6 h-6" />
+             </button>
+             <span className="font-heading font-bold text-lg text-general-100">Menu</span>
+          </div>
+          {/* Logo Kecil di Header Mobile (Opsional) */}
+          <img
+             src="/logo_hijau.webp"
+             alt="Logo"
+             className="h-8 w-auto object-contain"
+           /> 
+        </header>
+
+        {/* MAIN SCROLL AREA */}
+        {/* overflow-y-auto ada di sini agar hanya konten yang discroll, header/sidebar diam */}
+        <main className="flex-1 overflow-y-auto bg-general-20 w-full">
+           {children}
+        </main>
+      </div>
 
       {/* --- MODAL LOGOUT --- */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-general-20 rounded-xl shadow-xl w-full max-w-sm p-6 transform transition-all scale-100">
+          <div className="bg-general-20 rounded-xl shadow-xl w-full max-w-sm p-6 transform transition-all scale-100 border border-general-30">
             <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-12 h-12 bg-red-30 rounded-full flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-red-20 rounded-full flex items-center justify-center mb-4 border border-red-30">
                 <AlertCircle className="w-6 h-6 text-red-100" />
               </div>
-              <h3 className="h5 text-general-100 mb-2">Konfirmasi Keluar</h3>
+              <h3 className="h5 text-general-100 mb-2 font-bold">Konfirmasi Keluar</h3>
               <p className="body-sm text-general-60">
                 Apakah Anda yakin ingin keluar dari akun anggota ini?
               </p>
@@ -142,13 +198,13 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-2.5 border border-general-30 text-general-80 font-medium rounded-lg hover:bg-general-30 transition-colors body-sm"
+                className="flex-1 py-2.5 border border-general-30 text-general-80 font-medium rounded-xl hover:bg-general-30 transition-colors body-sm"
               >
                 Batal
               </button>
               <button
                 onClick={confirmLogout}
-                className="flex-1 py-2.5 bg-red-100 text-general-20 font-medium rounded-lg hover:bg-red-90 transition-colors body-sm shadow-sm"
+                className="flex-1 py-2.5 bg-red-100 text-general-20 font-medium rounded-xl hover:bg-red-90 transition-colors body-sm shadow-md"
               >
                 Ya, Keluar
               </button>
