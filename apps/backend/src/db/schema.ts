@@ -59,7 +59,6 @@ export const mbgSchedules = pgTable("mbg_schedules", {
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
-  nik: varchar("nik", { length: 16 }).unique(),
   email: varchar("email", { length: 255 }).unique().notNull(),
   phone: varchar("phone", { length: 15 }).unique(),
   password: text("password"),
@@ -67,7 +66,6 @@ export const users = pgTable("users", {
   role: roleEnum("role").default("public").notNull(),
   memberType: memberTypeEnum("member_type"),
   adminRole: varchar("admin_role", { length: 100 }),
-  // Organization info for member applications
   organizationName: varchar("organization_name", { length: 255 }),
   organizationEmail: varchar("organization_email", { length: 255 }),
   organizationPhone: varchar("organization_phone", { length: 20 }),
@@ -84,7 +82,6 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   index("users_email_idx").on(table.email),
-  index("users_nik_idx").on(table.nik),
   index("users_role_idx").on(table.role),
 ])
 

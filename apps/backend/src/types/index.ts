@@ -30,7 +30,6 @@ export type ReporterRelation = "parent" | "teacher" | "principal" | "supplier" |
 // User interface
 export interface User {
   id: string
-  nik: string
   email: string
   phone: string
   name: string

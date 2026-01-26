@@ -12,7 +12,6 @@ const adminAccounts = [
 
 const memberAccounts = [
   {
-    nik: "3275012345670001",
     name: "Andi Pratama",
     email: "andi.pratama@gmail.com",
     phone: "+6281234567001",
@@ -26,7 +25,6 @@ const memberAccounts = [
     organizationMbgRole: "Supplier utama bahan makanan segar seperti sayuran, daging, dan telur untuk program MBG di wilayah Jakarta",
   },
   {
-    nik: "3275012345670002",
     name: "Ratna Dewi",
     email: "ratna.dewi@gmail.com",
     phone: "+6281234567002",
@@ -40,7 +38,6 @@ const memberAccounts = [
     organizationMbgRole: "Penyedia jasa katering untuk 50 sekolah dasar di Jakarta Selatan dengan menu bergizi seimbang",
   },
   {
-    nik: "3275012345670003",
     name: "Hendra Kusuma",
     email: "hendra.kusuma@gmail.com",
     phone: "+6281234567003",
@@ -54,7 +51,6 @@ const memberAccounts = [
     organizationMbgRole: "Sekolah penerima program MBG dengan 450 siswa yang mendapat makan bergizi setiap hari sekolah",
   },
   {
-    nik: "3275012345670004",
     name: "Maya Sari",
     email: "maya.sari@gmail.com",
     phone: "+6281234567004",
@@ -68,7 +64,6 @@ const memberAccounts = [
     organizationMbgRole: "Koordinator program MBG tingkat kota yang mengawasi 120 sekolah penerima program",
   },
   {
-    nik: "3275012345670005",
     name: "Bambang Sutrisno",
     email: "bambang.sutrisno@gmail.com",
     phone: "+6281234567005",
@@ -117,7 +112,6 @@ async function seedAccounts() {
   const now = new Date()
   for (const member of memberAccounts) {
     await db.insert(schema.users).values({
-      nik: member.nik,
       name: member.name,
       email: member.email,
       phone: member.phone,

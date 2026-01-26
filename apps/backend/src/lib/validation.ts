@@ -1,10 +1,5 @@
 import { z } from "zod"
 
-// NIK: Strictly 16 digits
-export const nikSchema = z.string()
-  .length(16, "NIK harus tepat 16 digit")
-  .regex(/^\d{16}$/, "NIK harus berupa 16 angka")
-
 // Phone: 9-12 digits (will be prefixed with +62)
 export const phoneInputSchema = z.string()
   .min(9, "Nomor telepon minimal 9 digit")
@@ -111,21 +106,6 @@ export function sanitizeString(str: string): string {
 export function isValidFileExtension(filename: string, allowedExtensions: string[]): boolean {
   const ext = filename.split(".").pop()?.toLowerCase()
   return ext ? allowedExtensions.includes(ext) : false
-}
-
-// Validate Indonesian NIK checksum (basic validation)
-export function isValidNIK(nik: string): boolean {
-  if (!/^\d{16}$/.test(nik)) return false
-
-  const provinceCode = nik.substring(0, 2)
-  const validProvinceCodes = [
-    "11", "12", "13", "14", "15", "16", "17", "18", "19", "21",
-    "31", "32", "33", "34", "35", "36", "51", "52", "53", "61",
-    "62", "63", "64", "65", "71", "72", "73", "74", "75", "76",
-    "81", "82", "91", "92", "94", "95", "96", "97"
-  ]
-
-  return validProvinceCodes.includes(provinceCode)
 }
 
 // Format phone number with +62 prefix

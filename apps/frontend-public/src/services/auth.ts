@@ -4,7 +4,6 @@ export type UserRole = "admin" | "member" | "public"
 
 export interface User {
   id: string
-  nik: string
   email: string
   phone: string
   name: string

@@ -74,7 +74,6 @@ async function seed() {
   if (!existingAdmin) {
     const hashedPassword = await hashPassword("Admin@123!")
     const [admin] = await db.insert(users).values({
-      nik: "0000000000000000",
       email: adminEmail,
       phone: "+62812345678901",
       password: hashedPassword,
@@ -92,11 +91,11 @@ async function seed() {
 
   // Create public test users
   const testUsers = [
-    { nik: "3201234567890001", email: "budi@example.com", phone: "+62812000001", name: "Budi Santoso", reportCount: 5, verifiedReportCount: 4 },
-    { nik: "3201234567890002", email: "siti@example.com", phone: "+62812000002", name: "Siti Rahayu", reportCount: 3, verifiedReportCount: 2 },
-    { nik: "3201234567890003", email: "ahmad@example.com", phone: "+62812000003", name: "Ahmad Hidayat", reportCount: 2, verifiedReportCount: 1 },
-    { nik: "3201234567890004", email: "dewi@example.com", phone: "+62812000004", name: "Dewi Lestari", reportCount: 1, verifiedReportCount: 0 },
-    { nik: "3201234567890005", email: "rudi@example.com", phone: "+62812000005", name: "Rudi Hermawan", reportCount: 4, verifiedReportCount: 3 },
+    { email: "budi@example.com", phone: "+62812000001", name: "Budi Santoso", reportCount: 5, verifiedReportCount: 4 },
+    { email: "siti@example.com", phone: "+62812000002", name: "Siti Rahayu", reportCount: 3, verifiedReportCount: 2 },
+    { email: "ahmad@example.com", phone: "+62812000003", name: "Ahmad Hidayat", reportCount: 2, verifiedReportCount: 1 },
+    { email: "dewi@example.com", phone: "+62812000004", name: "Dewi Lestari", reportCount: 1, verifiedReportCount: 0 },
+    { email: "rudi@example.com", phone: "+62812000005", name: "Rudi Hermawan", reportCount: 4, verifiedReportCount: 3 },
   ]
 
   const userIds: string[] = []

@@ -40,7 +40,6 @@ export interface AdminReportDetail extends ReportDetail {
     name: string
     email: string
     phone: string
-    nik: string
   }
   statusHistory?: {
     id: string

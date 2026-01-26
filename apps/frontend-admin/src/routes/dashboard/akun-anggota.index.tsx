@@ -406,10 +406,6 @@ function MemberDetailModal({
                 <p className="body-sm font-medium text-general-100">{member.name}</p>
               </div>
               <div>
-                <label className="block text-xs text-general-60 mb-1">NIK</label>
-                <p className="body-sm font-medium text-general-100">{member.nik}</p>
-              </div>
-              <div>
                 <label className="block text-xs text-general-60 mb-1">Email</label>
                 <p className="body-sm font-medium text-general-100">{member.email}</p>
               </div>
@@ -581,7 +577,6 @@ function DeleteConfirmModal({ onClose, onConfirm, isLoading }: { onClose: () => 
 // --- MODAL TAMBAH ANGGOTA ---
 function AddMemberModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [formData, setFormData] = useState<CreateMemberData>({
-    nik: "",
     name: "",
     email: "",
     phone: "",
@@ -606,12 +601,8 @@ function AddMemberModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.nik || !formData.name || !formData.email || !formData.phone || !formData.password) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.password) {
       setErrorMsg("Mohon lengkapi seluruh kolom formulir.")
-      return
-    }
-    if (formData.nik.length !== 16) {
-      setErrorMsg("NIK harus terdiri dari 16 digit angka.")
       return
     }
 
@@ -671,31 +662,19 @@ function AddMemberModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-4">
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block body-sm font-semibold text-general-80 mb-2">NIK (16 Digit)</label>
-                  <input
-                    type="text"
-                    value={formData.nik}
-                    onChange={(e) => setFormData({ ...formData, nik: e.target.value.replace(/\D/g, '').slice(0, 16) })}
-                    className={`w-full px-4 py-2.5 bg-general-20 border rounded-lg focus:outline-none focus:ring-4 transition-all body-sm text-general-100 ${errorMsg && formData.nik.length !== 16 ? 'border-red-100 focus:border-red-100 focus:ring-red-100/10' : 'border-general-30 focus:border-blue-100 focus:ring-blue-100/10'}`}
-                    placeholder="16 digit NIK"
-                  />
-                </div>
-                <div>
-                  <label className="block body-sm font-semibold text-general-80 mb-2">Jenis</label>
-                  <div className="relative">
-                    <select
-                      value={formData.memberType}
-                      onChange={(e) => setFormData({ ...formData, memberType: e.target.value as CreateMemberData["memberType"] })}
-                      className="w-full px-4 py-2.5 bg-general-20 border border-general-30 rounded-lg focus:outline-none focus:border-blue-100 focus:ring-4 focus:ring-blue-100/10 transition-all body-sm text-general-100 appearance-none cursor-pointer"
-                    >
-                      {MEMBER_TYPE_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-general-50 pointer-events-none" />
-                  </div>
+              <div>
+                <label className="block body-sm font-semibold text-general-80 mb-2">Jenis</label>
+                <div className="relative">
+                  <select
+                    value={formData.memberType}
+                    onChange={(e) => setFormData({ ...formData, memberType: e.target.value as CreateMemberData["memberType"] })}
+                    className="w-full px-4 py-2.5 bg-general-20 border border-general-30 rounded-lg focus:outline-none focus:border-blue-100 focus:ring-4 focus:ring-blue-100/10 transition-all body-sm text-general-100 appearance-none cursor-pointer"
+                  >
+                    {MEMBER_TYPE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-general-50 pointer-events-none" />
                 </div>
               </div>
 

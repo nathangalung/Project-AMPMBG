@@ -182,7 +182,7 @@ reports.get("/summary", async (c) => {
       .limit(1),
     db.select({
       totalCommunityUsers: sql<number>`count(*) filter (where ${schema.users.role} = 'public')`,
-      totalAmpMbgUsers: sql<number>`count(*) filter (where ${schema.users.role} = 'admin')`,
+      totalAmpMbgUsers: sql<number>`count(*) filter (where ${schema.users.role} in ('admin', 'member'))`,
     }).from(schema.users),
   ])
 

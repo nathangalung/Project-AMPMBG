@@ -23,7 +23,7 @@ profile.get("/", async (c) => {
     db.query.users.findFirst({
       where: eq(schema.users.id, authUser.id),
       columns: {
-        id: true, nik: true, email: true, phone: true, name: true,
+        id: true, email: true, phone: true, name: true,
         role: true, isVerified: true, reportCount: true,
         verifiedReportCount: true, createdAt: true, lastLoginAt: true,
       },
@@ -92,7 +92,6 @@ profile.patch("/", zValidator("json", updateProfileSchema), async (c) => {
     .where(eq(schema.users.id, authUser.id))
     .returning({
       id: schema.users.id,
-      nik: schema.users.nik,
       email: schema.users.email,
       phone: schema.users.phone,
       name: schema.users.name,

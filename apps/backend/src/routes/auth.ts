@@ -16,16 +16,10 @@ const auth = new Hono<{ Variables: Variables }>()
 // Generate secure random token
 const generateToken = () => randomBytes(32).toString("hex")
 
-// NIK: strictly 16 digits
-const nikValidator = z.string()
-  .length(16, "NIK harus tepat 16 digit")
-  .regex(/^\d{16}$/, "NIK harus berupa 16 angka")
-
-// Phone: 9-12 digits (will be stored with +62 prefix)
+// Phone: accepts various formats (62xxx, 08xxx, 8xxx)
 const phoneValidator = z.string()
   .min(9, "Nomor telepon minimal 9 digit")
-  .max(12, "Nomor telepon maksimal 12 digit")
-  .regex(/^\d{9,12}$/, "Nomor telepon harus 9-12 angka")
+  .max(15, "Nomor telepon maksimal 15 digit")
 
 // Email: must have @ and .
 const emailValidator = z.string()
@@ -42,7 +36,6 @@ const passwordValidator = z.string()
   .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, "Password harus mengandung minimal 1 simbol")
 
 const signupSchema = z.object({
-  nik: nikValidator,
   email: emailValidator,
   password: passwordValidator,
   passwordConfirmation: z.string(),
@@ -54,7 +47,7 @@ const signupSchema = z.object({
 })
 
 const loginSchema = z.object({
-  identifier: z.string().min(1, "Email, NIK, atau nomor telepon wajib diisi"),
+  identifier: z.string().min(1, "Email atau nomor telepon wajib diisi"),
   password: z.string().min(1, "Password wajib diisi"),
 })
 
@@ -76,21 +69,28 @@ const verifyEmailSchema = z.object({
 })
 
 auth.post("/signup", zValidator("json", signupSchema), async (c) => {
-  const { nik, email, password, name, phone } = c.req.valid("json")
+  const { email, password, name, phone: rawPhone } = c.req.valid("json")
 
-  // Format phone with +62 prefix
-  const formattedPhone = `+62${phone}`
+  // Format phone with +62 prefix (handles 62xxx, 08xxx, 8xxx formats)
+  let formattedPhone = rawPhone.replace(/\D/g, "")
+  if (formattedPhone.startsWith("62")) {
+    formattedPhone = "+" + formattedPhone
+  } else if (formattedPhone.startsWith("08")) {
+    formattedPhone = "+62" + formattedPhone.slice(1)
+  } else if (formattedPhone.startsWith("8")) {
+    formattedPhone = "+62" + formattedPhone
+  } else {
+    formattedPhone = "+62" + formattedPhone
+  }
 
   const existingUser = await db.query.users.findFirst({
     where: or(
-      eq(schema.users.nik, nik),
       eq(schema.users.email, email),
       eq(schema.users.phone, formattedPhone)
     ),
   })
 
   if (existingUser) {
-    if (existingUser.nik === nik) return c.json({ error: "NIK sudah terdaftar" }, 400)
     if (existingUser.email === email) return c.json({ error: "Email sudah terdaftar" }, 400)
     if (existingUser.phone === formattedPhone) return c.json({ error: "Nomor telepon sudah terdaftar" }, 400)
   }
@@ -98,7 +98,6 @@ auth.post("/signup", zValidator("json", signupSchema), async (c) => {
   const hashedPassword = await hashPassword(password)
 
   const [user] = await db.insert(schema.users).values({
-    nik,
     email,
     phone: formattedPhone,
     password: hashedPassword,
@@ -106,7 +105,6 @@ auth.post("/signup", zValidator("json", signupSchema), async (c) => {
     role: "public",
   }).returning({
     id: schema.users.id,
-    nik: schema.users.nik,
     email: schema.users.email,
     phone: schema.users.phone,
     name: schema.users.name,
@@ -117,7 +115,7 @@ auth.post("/signup", zValidator("json", signupSchema), async (c) => {
 
   return c.json({
     message: "Registrasi berhasil",
-    user: { id: user.id, nik: user.nik, email: user.email, phone: user.phone, name: user.name, role: user.role },
+    user: { id: user.id, email: user.email, phone: user.phone, name: user.name, role: user.role },
     token,
   }, 201)
 })
@@ -125,19 +123,29 @@ auth.post("/signup", zValidator("json", signupSchema), async (c) => {
 auth.post("/login", zValidator("json", loginSchema), async (c) => {
   const { identifier, password } = c.req.valid("json")
 
-  // Support login by email, phone (+62 prefix), or NIK
-  // Also check phone without +62 prefix for convenience
-  const phoneWithPrefix = identifier.startsWith("+62") ? identifier : `+62${identifier}`
+  // Support login by email or phone (various formats)
+  let phoneWithPrefix = identifier
+  const cleanPhone = identifier.replace(/\D/g, "")
+  if (/^\d{9,15}$/.test(cleanPhone)) {
+    if (cleanPhone.startsWith("62")) {
+      phoneWithPrefix = "+" + cleanPhone
+    } else if (cleanPhone.startsWith("08")) {
+      phoneWithPrefix = "+62" + cleanPhone.slice(1)
+    } else if (cleanPhone.startsWith("8")) {
+      phoneWithPrefix = "+62" + cleanPhone
+    } else {
+      phoneWithPrefix = "+62" + cleanPhone
+    }
+  }
 
   const user = await db.query.users.findFirst({
     where: or(
       eq(schema.users.email, identifier.toLowerCase()),
-      eq(schema.users.phone, phoneWithPrefix),
-      eq(schema.users.nik, identifier)
+      eq(schema.users.phone, phoneWithPrefix)
     ),
   })
 
-  if (!user) return c.json({ error: "Email/NIK/telepon atau password salah" }, 401)
+  if (!user) return c.json({ error: "Email/telepon atau password salah" }, 401)
 
   if (!user.isActive) return c.json({ error: "Akun Anda telah dinonaktifkan" }, 403)
 
@@ -145,7 +153,7 @@ auth.post("/login", zValidator("json", loginSchema), async (c) => {
   if (!user.password) return c.json({ error: "Akun ini tidak dapat melakukan login" }, 403)
 
   const isValid = await verifyPassword(password, user.password)
-  if (!isValid) return c.json({ error: "Email/NIK/telepon atau password salah" }, 401)
+  if (!isValid) return c.json({ error: "Email/telepon atau password salah" }, 401)
 
   await db.update(schema.users)
     .set({ lastLoginAt: new Date() })
@@ -155,7 +163,7 @@ auth.post("/login", zValidator("json", loginSchema), async (c) => {
 
   return c.json({
     message: "Login berhasil",
-    user: { id: user.id, nik: user.nik, email: user.email, phone: user.phone, name: user.name, role: user.role, isVerified: user.isVerified },
+    user: { id: user.id, email: user.email, phone: user.phone, name: user.name, role: user.role, isVerified: user.isVerified },
     token,
   })
 })
@@ -167,7 +175,6 @@ auth.get("/me", authMiddleware, async (c) => {
     where: eq(schema.users.id, authUser.id),
     columns: {
       id: true,
-      nik: true,
       email: true,
       phone: true,
       name: true,
@@ -212,7 +219,7 @@ auth.put("/profile", authMiddleware, zValidator("json", z.object({
   const [updated] = await db.update(schema.users)
     .set(updateData)
     .where(eq(schema.users.id, authUser.id))
-    .returning({ id: schema.users.id, nik: schema.users.nik, email: schema.users.email, phone: schema.users.phone, name: schema.users.name, role: schema.users.role })
+    .returning({ id: schema.users.id, email: schema.users.email, phone: schema.users.phone, name: schema.users.name, role: schema.users.role })
 
   return c.json({ user: updated, message: "Profil berhasil diperbarui" })
 })

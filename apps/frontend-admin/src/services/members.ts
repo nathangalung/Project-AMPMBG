@@ -24,7 +24,6 @@ export interface Member {
   name: string
   email: string
   phone: string
-  nik: string
   role: string
   memberType: string | null
   organizationName: string | null
@@ -48,7 +47,6 @@ export interface CreateAdminData {
 }
 
 export interface CreateMemberData {
-  nik: string
   name: string
   email: string
   phone: string

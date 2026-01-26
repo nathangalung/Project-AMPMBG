@@ -8,7 +8,6 @@ function ProfileFormComponent() {
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
-    nik: "",
     email: "",
     phone: "",
   })
@@ -34,7 +33,6 @@ function ProfileFormComponent() {
     if (profileData?.user) {
       setFormData({
         name: profileData.user.name || "",
-        nik: profileData.user.nik || "",
         email: profileData.user.email || "",
         phone: profileData.user.phone || "",
       })
@@ -151,21 +149,6 @@ function ProfileFormComponent() {
               disabled={!isEditing}
               className="w-full px-4 py-3 bg-white border border-general-30 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-100 transition-colors disabled:bg-general-20 disabled:text-general-60 body-sm text-general-100"
             />
-          </div>
-
-          {/* NIK */}
-          <div>
-            <label htmlFor="nik" className="block text-xs font-bold text-general-80 mb-2 uppercase tracking-wide">NIK</label>
-            <div className="relative">
-              <input
-                type="text"
-                id="nik"
-                value={formData.nik}
-                disabled
-                className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-xl text-general-60 cursor-not-allowed body-sm"
-              />
-              <span className="absolute right-4 top-3.5 text-[10px] text-general-50 bg-general-30 px-2 py-0.5 rounded">Tidak dapat diubah</span>
-            </div>
           </div>
 
           {/* EMAIL */}

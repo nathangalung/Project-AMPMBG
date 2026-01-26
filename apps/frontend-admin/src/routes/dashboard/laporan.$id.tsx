@@ -39,9 +39,9 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const RELATION_LABELS: Record<string, string> = {
   parent: "Orang Tua/Wali Murid",
-  teacher: "Guru/Tenaga Pengajar",
+  teacher: "Guru/Tenaga Pendidik",
   principal: "Kepala Sekolah",
-  supplier: "Supplier/Vendor",
+  supplier: "Penyedia Makanan/Supplier",
   student: "Siswa",
   community: "Masyarakat Umum",
   other: "Lainnya",
@@ -241,11 +241,6 @@ function LaporanDetail() {
   const currentStatus = report ? STATUS_LABELS[report.status] || { label: report.status, style: "bg-general-30 text-general-70" } : null
   const hasChanges = report && (newStatus !== report.status || newRisk !== report.credibilityLevel || notes !== (report.adminNotes || ""))
 
-  const DUMMY_IMAGES = [
-    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300&h=300",
-    "https://images.unsplash.com/photo-1606787366850-de6330128bfc?auto=format&fit=crop&q=80&w=300&h=300",
-    "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=300&h=300"
-  ]
 
   if (isLoading) {
     return (
@@ -412,23 +407,27 @@ function LaporanDetail() {
 
                         <div>
                             <label className="block text-xs font-semibold text-general-60 mb-3">Bukti Lampiran</label>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                            {(report.files && report.files.length > 0 ? report.files : DUMMY_IMAGES).map((file: any, idx: number) => {
-                                const imageUrl = typeof file === 'string' ? file : file.fileUrl
-                                return (
-                                <div
-                                    key={idx}
+                            {report.files && report.files.length > 0 ? (
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                {report.files.map((file: any) => (
+                                  <div
+                                    key={file.id}
                                     className="group relative aspect-square bg-general-30 rounded-xl overflow-hidden border border-general-30 cursor-pointer shadow-sm hover:shadow-md transition-all"
-                                    onClick={() => setSelectedImage(imageUrl)}
-                                >
-                                    <img src={imageUrl} alt="Bukti" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                                    onClick={() => setSelectedImage(file.fileUrl)}
+                                  >
+                                    <img src={file.fileUrl} alt={file.fileName || "Bukti"} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <ExternalLink className="w-5 h-5 text-white" />
+                                      <ExternalLink className="w-5 h-5 text-white" />
                                     </div>
-                                </div>
-                                )
-                            })}
-                            </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center py-8 bg-general-30/30 rounded-xl border border-dashed border-general-40">
+                                <FileText className="w-8 h-8 text-general-50 mb-2" />
+                                <p className="body-sm text-general-60">Tidak ada bukti lampiran</p>
+                              </div>
+                            )}
                         </div>
                     </div>
                 </div>

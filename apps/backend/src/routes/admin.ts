@@ -29,7 +29,7 @@ admin.get("/users", zValidator("query", userQuerySchema), async (c) => {
   if (isActive !== undefined) conditions.push(eq(schema.users.isActive, isActive))
   if (search) {
     conditions.push(
-      or(like(schema.users.name, `%${search}%`), like(schema.users.email, `%${search}%`), like(schema.users.nik, `%${search}%`))
+      or(like(schema.users.name, `%${search}%`), like(schema.users.email, `%${search}%`))
     )
   }
 
@@ -38,7 +38,6 @@ admin.get("/users", zValidator("query", userQuerySchema), async (c) => {
   const [data, countResult] = await Promise.all([
     db.select({
       id: schema.users.id,
-      nik: schema.users.nik,
       name: schema.users.name,
       email: schema.users.email,
       phone: schema.users.phone,
@@ -122,6 +121,7 @@ admin.get("/dashboard", async (c) => {
     db.select({
       total: sql<number>`count(*)`,
       adminCount: sql<number>`count(*) filter (where ${schema.users.role} = 'admin')`,
+      memberCount: sql<number>`count(*) filter (where ${schema.users.role} = 'member')`,
       publicCount: sql<number>`count(*) filter (where ${schema.users.role} = 'public')`,
     }).from(schema.users),
     db.select({
@@ -144,6 +144,7 @@ admin.get("/dashboard", async (c) => {
       total: Number(userAggregates[0]?.total || 0),
       byRole: [
         { role: "admin", count: Number(userAggregates[0]?.adminCount || 0) },
+        { role: "member", count: Number(userAggregates[0]?.memberCount || 0) },
         { role: "public", count: Number(userAggregates[0]?.publicCount || 0) },
       ],
     },
@@ -291,7 +292,7 @@ admin.get("/reports/:id", async (c) => {
   const report = await db.query.reports.findFirst({
     where: eq(schema.reports.id, id),
     with: {
-      user: { columns: { id: true, name: true, email: true, phone: true, nik: true } },
+      user: { columns: { id: true, name: true, email: true, phone: true } },
       province: true,
       city: true,
       district: true,
@@ -317,7 +318,6 @@ admin.get("/reports/:id", async (c) => {
         name: report.user?.name || "Anonim",
         email: report.user?.email,
         phone: report.user?.phone,
-        nik: report.user?.nik,
       },
       verifier: report.verifier ? {
         name: report.verifier.name,
@@ -919,7 +919,6 @@ admin.get("/members", zValidator("query", memberQuerySchema), async (c) => {
 
   const data = await db.select({
     id: schema.users.id,
-    nik: schema.users.nik,
     name: schema.users.name,
     email: schema.users.email,
     phone: schema.users.phone,
@@ -982,22 +981,26 @@ admin.get("/members/:id", async (c) => {
 })
 
 const createMemberSchema = z.object({
-  nik: z.string().length(16),
   name: z.string().min(3).max(255),
   email: z.string().email().max(255),
-  phone: z.string().regex(/^\+62\d{9,12}$/),
+  phone: z.string().min(10).max(15),
   password: z.string().min(8).max(100),
   memberType: z.enum(["supplier", "caterer", "school", "government", "ngo", "farmer", "other"]),
 })
 
 admin.post("/members", zValidator("json", createMemberSchema), async (c) => {
-  const { nik, name, email, phone, password, memberType } = c.req.valid("json")
+  const { name, email, phone: rawPhone, password, memberType } = c.req.valid("json")
+
+  // Convert phone format
+  let phone = rawPhone
+  if (phone.startsWith("08")) {
+    phone = "+62" + phone.slice(1)
+  } else if (!phone.startsWith("+62")) {
+    phone = "+62" + phone
+  }
 
   const existingEmail = await db.query.users.findFirst({ where: eq(schema.users.email, email) })
   if (existingEmail) return c.json({ error: "Email sudah terdaftar" }, 400)
-
-  const existingNik = await db.query.users.findFirst({ where: eq(schema.users.nik, nik) })
-  if (existingNik) return c.json({ error: "NIK sudah terdaftar" }, 400)
 
   const existingPhone = await db.query.users.findFirst({ where: eq(schema.users.phone, phone) })
   if (existingPhone) return c.json({ error: "Nomor telepon sudah terdaftar" }, 400)
@@ -1005,7 +1008,6 @@ admin.post("/members", zValidator("json", createMemberSchema), async (c) => {
   const hashedPassword = await Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 })
 
   const [newMember] = await db.insert(schema.users).values({
-    nik,
     name,
     email,
     phone,

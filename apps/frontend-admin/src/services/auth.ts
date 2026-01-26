@@ -4,7 +4,6 @@ export type UserRole = "admin" | "associate" | "public"
 
 export interface User {
   id: string
-  nik: string
   email: string
   phone: string
   name: string
@@ -21,7 +20,6 @@ export interface LoginRequest {
 }
 
 export interface SignupRequest {
-  nik: string
   email: string
   password: string
   passwordConfirmation: string
