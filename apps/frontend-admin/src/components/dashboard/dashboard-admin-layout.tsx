@@ -10,7 +10,8 @@ import {
   AlertCircle,
   Menu,
   X,
-  Utensils // Icon untuk Permintaan Dapur
+  Utensils,
+  Briefcase // Icon baru untuk Manajemen Kebutuhan
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -70,11 +71,18 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
       icon: FileText, 
       exact: false 
     },
-    // MENU BARU DITAMBAHKAN DI SINI
+    // MENU PERMINTAAN (Inbox)
     { 
       to: "/dashboard/permintaan-kebutuhan-dapur", 
       label: "Permintaan Dapur", 
       icon: Utensils, 
+      exact: false 
+    },
+    // MENU BARU: MANAJEMEN KEBUTUHAN (CMS)
+    { 
+      to: "/dashboard/manajemen-kebutuhan", 
+      label: "Manajemen Kebutuhan", 
+      icon: Briefcase, 
       exact: false 
     },
     // ----------------------------
