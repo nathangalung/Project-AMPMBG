@@ -596,3 +596,74 @@ describe("Integration Tests - Kitchen Needs Validation", () => {
     expect(res.status).toBe(404)
   })
 })
+
+describe("Integration Tests - Admin Bulk Operations", () => {
+  test("PATCH /api/admin/reports/bulk-status validates empty reportIds", async () => {
+    if (!adminToken) return
+    const res = await testRequest(app, "PATCH", "/api/admin/reports/bulk-status", {
+      token: adminToken,
+      body: { reportIds: [], status: "analyzing" },
+    })
+    expect(res.status).toBe(400)
+  })
+
+  test("PATCH /api/admin/reports/bulk-status validates invalid status", async () => {
+    if (!adminToken) return
+    const res = await testRequest(app, "PATCH", "/api/admin/reports/bulk-status", {
+      token: adminToken,
+      body: { reportIds: ["test-id"], status: "invalid" },
+    })
+    expect(res.status).toBe(400)
+  })
+})
+
+describe("Integration Tests - Admin Export", () => {
+  test("export endpoint requires admin token", async () => {
+    const res = await testRequest(app, "GET", "/api/admin/reports/export?format=csv")
+    expect(res.status).toBe(401)
+  })
+})
+
+describe("Integration Tests - Error Handling", () => {
+  test("GET /api/reports/:id returns 404 for non-existent", async () => {
+    const res = await testRequest(app, "GET", "/api/reports/00000000-0000-0000-0000-000000000000")
+    expect(res.status).toBe(404)
+  })
+
+  test("GET /api/admin/users/:id returns 404 for non-existent", async () => {
+    if (!adminToken) return
+    const res = await testRequest(app, "GET", "/api/admin/users/00000000-0000-0000-0000-000000000000", { token: adminToken })
+    expect(res.status).toBe(404)
+  })
+
+  test("GET /api/admin/members/:id returns 404 for non-existent", async () => {
+    if (!adminToken) return
+    const res = await testRequest(app, "GET", "/api/admin/members/00000000-0000-0000-0000-000000000000", { token: adminToken })
+    expect(res.status).toBe(404)
+  })
+
+  test("PATCH /api/admin/reports/:id/status returns 404 for non-existent", async () => {
+    if (!adminToken) return
+    const res = await testRequest(app, "PATCH", "/api/admin/reports/00000000-0000-0000-0000-000000000000/status", {
+      token: adminToken,
+      body: { status: "analyzing" },
+    })
+    expect(res.status).toBe(404)
+  })
+})
+
+describe("Integration Tests - Sessions Management", () => {
+  test("GET /api/admin/sessions returns session list", async () => {
+    if (!adminToken) return
+    const res = await testRequest(app, "GET", "/api/admin/sessions", { token: adminToken })
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.data).toBeDefined()
+  })
+
+  test("POST /api/admin/sessions/:userId/revoke-all returns 404 for non-existent user", async () => {
+    if (!adminToken) return
+    const res = await testRequest(app, "POST", "/api/admin/sessions/00000000-0000-0000-0000-000000000000/revoke-all", { token: adminToken })
+    expect(res.status).toBe(404)
+  })
+})

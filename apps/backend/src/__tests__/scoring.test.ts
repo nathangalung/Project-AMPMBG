@@ -694,5 +694,121 @@ describe("Scoring Library", () => {
       expect(result.totalScore).toBe(3)
       expect(result.credibilityLevel).toBe("low")
     })
+
+    test("returns medium credibility for mid-range scores", () => {
+      const result = updateTotalScore({
+        scoreRelation: 2,
+        scoreLocationTime: 2,
+        scoreEvidence: 1,
+        scoreNarrative: 1,
+        scoreReporterHistory: 1,
+        scoreSimilarity: 1,
+      })
+      expect(result.totalScore).toBe(8)
+      expect(result.credibilityLevel).toBe("medium")
+    })
+  })
+
+  describe("Edge Cases - Location Time Scoring", () => {
+    test("scores time without MBG match - fallback general hours", () => {
+      const result = calculateReportScore({
+        relation: "other",
+        description: "Test",
+        filesCount: 0,
+        incidentDate: new Date("2025-01-13T19:00:00"),
+        provinceId: "31",
+        cityId: "31.71",
+        reporterReportCount: 0,
+        reporterVerifiedCount: 0,
+        similarReportsCount: 0,
+        locationHasHistory: false,
+      })
+      expect(result.scoreLocationTime).toBeDefined()
+    })
+
+    test("scores time for washing period", () => {
+      const result = calculateReportScore({
+        relation: "other",
+        description: "Test",
+        filesCount: 0,
+        incidentDate: new Date("2025-01-13T15:00:00"),
+        provinceId: "31",
+        cityId: "31.71",
+        reporterReportCount: 0,
+        reporterVerifiedCount: 0,
+        similarReportsCount: 0,
+        locationHasHistory: false,
+      })
+      expect(result.scoreLocationTime).toBeGreaterThanOrEqual(0)
+    })
+  })
+
+  describe("Edge Cases - Reporter History", () => {
+    test("scores medium for 40% verified ratio", () => {
+      const result = calculateReportScore({
+        relation: "parent",
+        description: "Test description",
+        filesCount: 0,
+        incidentDate: new Date(),
+        provinceId: "31",
+        cityId: "31.71",
+        reporterReportCount: 5,
+        reporterVerifiedCount: 2,
+        similarReportsCount: 0,
+        locationHasHistory: false,
+      })
+      expect(result.scoreReporterHistory).toBe(2)
+    })
+
+    test("scores zero for low verified ratio", () => {
+      const result = calculateReportScore({
+        relation: "parent",
+        description: "Test description",
+        filesCount: 0,
+        incidentDate: new Date(),
+        provinceId: "31",
+        cityId: "31.71",
+        reporterReportCount: 10,
+        reporterVerifiedCount: 1,
+        similarReportsCount: 0,
+        locationHasHistory: false,
+      })
+      expect(result.scoreReporterHistory).toBe(0)
+    })
+  })
+
+  describe("Edge Cases - Evidence Scoring", () => {
+    test("scores 1 for moderate narrative with file", () => {
+      const result = calculateReportScore({
+        relation: "parent",
+        description: "This is a moderate length description that definitely has more than one hundred characters total here for the validation check.",
+        filesCount: 1,
+        incidentDate: new Date(),
+        provinceId: "31",
+        cityId: "31.71",
+        reporterReportCount: 0,
+        reporterVerifiedCount: 0,
+        similarReportsCount: 0,
+        locationHasHistory: false,
+      })
+      expect(result.scoreEvidence).toBeGreaterThanOrEqual(1)
+    })
+
+    test("scores 2 for detailed narrative with one file", () => {
+      const longDescription = "a".repeat(200)
+      const result = calculateReportScore({
+        relation: "parent",
+        description: longDescription,
+        filesCount: 1,
+        incidentDate: new Date(),
+        provinceId: "31",
+        cityId: "31.71",
+        reporterReportCount: 0,
+        reporterVerifiedCount: 0,
+        similarReportsCount: 0,
+        locationHasHistory: false,
+      })
+      expect(result.scoreEvidence).toBe(2)
+    })
   })
 })

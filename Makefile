@@ -1,6 +1,6 @@
 # AMP MBG Makefile
 
-.PHONY: help setup run stop install build clean db-up db-down db-push db-seed db-reset db-studio docker-build docker-up docker-down docker-logs
+.PHONY: help setup setup-fresh run stop install build clean db-up db-down db-push db-seed db-reset db-studio docker-build docker-up docker-down docker-logs test
 
 DOCKER_COMPOSE = docker compose
 DOCKER_COMPOSE_PROD = docker compose -f docker-compose.prod.yml
@@ -8,11 +8,13 @@ DOCKER_COMPOSE_PROD = docker compose -f docker-compose.prod.yml
 help:
 	@echo "AMP MBG - Available Commands"
 	@echo ""
-	@echo "  make setup        First time setup (install + db + seed)"
+	@echo "  make setup        First time setup (clean db + install + seed)"
+	@echo "  make setup-fresh  Fresh setup (removes existing data)"
 	@echo "  make run          Start development servers"
 	@echo "  make stop         Stop all services"
 	@echo "  make build        Build frontend + backend"
 	@echo "  make clean        Remove node_modules and dist"
+	@echo "  make test         Run backend tests"
 	@echo ""
 	@echo "  make db-up        Start PostgreSQL"
 	@echo "  make db-down      Stop PostgreSQL"
@@ -28,7 +30,9 @@ help:
 
 setup:
 	@echo "[setup] Setting up..."
-	@cp -n apps/backend/.env.example apps/backend/.env 2>/dev/null || true
+	@$(DOCKER_COMPOSE) down 2>/dev/null || true
+	@docker volume rm ampmbg-postgres-data 2>/dev/null || true
+	@cp -n apps/backend/.env.example apps/backend/.env.development 2>/dev/null || true
 	@mkdir -p apps/backend/uploads
 	bun install
 	$(MAKE) db-up
@@ -36,6 +40,8 @@ setup:
 	$(MAKE) db-push
 	$(MAKE) db-seed
 	@echo "[setup] Done! Run: make run"
+
+setup-fresh: clean setup
 
 run: db-up
 	bun run dev
@@ -70,7 +76,7 @@ db-seed:
 	bun run db:seed
 
 db-reset: db-down
-	docker volume rm amp-mbg_postgres-data 2>/dev/null || true
+	docker volume rm ampmbg-postgres-data 2>/dev/null || true
 	$(MAKE) db-up
 	@sleep 3
 	$(MAKE) db-push
@@ -79,6 +85,9 @@ db-reset: db-down
 
 db-studio:
 	bun run db:studio
+
+test:
+	bun --cwd apps/backend test
 
 docker-build:
 	docker build -t ampmbg-backend:latest apps/backend

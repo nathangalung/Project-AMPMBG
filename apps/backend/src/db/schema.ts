@@ -213,18 +213,21 @@ export const mbgSchedulesRelations = relations(mbgSchedules, ({ one }) => ({
 }))
 
 export const usersRelations = relations(users, ({ many }) => ({
-  reports: many(reports),
+  reports: many(reports, { relationName: "reportAuthor" }),
+  verifiedReports: many(reports, { relationName: "reportVerifier" }),
   sessions: many(sessions),
   passwordResetTokens: many(passwordResetTokens),
   emailVerificationTokens: many(emailVerificationTokens),
+  statusHistoryChanges: many(reportStatusHistory, { relationName: "statusChanger" }),
+  kitchenNeedsRequests: many(kitchenNeedsRequests, { relationName: "kitchenNeedsRequestAuthor" }),
 }))
 
 export const reportsRelations = relations(reports, ({ one, many }) => ({
-  user: one(users, { fields: [reports.userId], references: [users.id] }),
+  user: one(users, { fields: [reports.userId], references: [users.id], relationName: "reportAuthor" }),
   province: one(provinces, { fields: [reports.provinceId], references: [provinces.id] }),
   city: one(cities, { fields: [reports.cityId], references: [cities.id] }),
   district: one(districts, { fields: [reports.districtId], references: [districts.id] }),
-  verifier: one(users, { fields: [reports.verifiedBy], references: [users.id] }),
+  verifier: one(users, { fields: [reports.verifiedBy], references: [users.id], relationName: "reportVerifier" }),
   files: many(reportFiles),
   statusHistory: many(reportStatusHistory),
 }))
@@ -239,7 +242,7 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 
 export const reportStatusHistoryRelations = relations(reportStatusHistory, ({ one }) => ({
   report: one(reports, { fields: [reportStatusHistory.reportId], references: [reports.id] }),
-  changedByUser: one(users, { fields: [reportStatusHistory.changedBy], references: [users.id] }),
+  changedByUser: one(users, { fields: [reportStatusHistory.changedBy], references: [users.id], relationName: "statusChanger" }),
 }))
 
 export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
@@ -287,6 +290,6 @@ export const kitchenNeedsRelations = relations(kitchenNeeds, ({ many }) => ({
 }))
 
 export const kitchenNeedsRequestsRelations = relations(kitchenNeedsRequests, ({ one }) => ({
-  user: one(users, { fields: [kitchenNeedsRequests.userId], references: [users.id] }),
+  user: one(users, { fields: [kitchenNeedsRequests.userId], references: [users.id], relationName: "kitchenNeedsRequestAuthor" }),
   kitchenNeed: one(kitchenNeeds, { fields: [kitchenNeedsRequests.kitchenNeedId], references: [kitchenNeeds.id] }),
 }))
