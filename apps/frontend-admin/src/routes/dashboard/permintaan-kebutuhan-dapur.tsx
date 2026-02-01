@@ -12,9 +12,10 @@ import {
   User,
   Save,
   X,
-  Inbox
+  Inbox,
+  Check // Icon baru untuk CustomSelect
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { adminService, type KitchenRequest } from "@/services/admin"
 
@@ -29,19 +30,16 @@ const STATUS_OPTIONS = [
   { value: "not_found", label: "Tidak Ditemukan" },
 ]
 
-// --- LOGIKA STYLE SESUAI REQUEST ---
+// --- LOGIKA STYLE ---
 const getStatusStyle = (status: string) => {
-  // 1. Definisi Style Variant (Sesuai Design System Anda)
   const variantStyles: Record<string, string> = {
     orange: "bg-orange-20 text-orange-100 border-orange-30",
     green: "bg-green-20 text-green-100 border-green-30",
     red: "bg-red-20 text-red-100 border-red-30",
-    yellow: "bg-yellow-50 text-general-80 border-yellow-100", 
     blue: "bg-blue-20 text-blue-100 border-blue-30",
     gray: "bg-general-30 text-general-70 border-general-40",
   }
 
-  // 2. Mapping Status API -> Variant Warna
   let variant = "gray"
   switch (status) {
     case "pending": variant = "orange"; break;
@@ -51,8 +49,94 @@ const getStatusStyle = (status: string) => {
     default: variant = "gray";
   }
 
-  // 3. Return Class String
   return variantStyles[variant]
+}
+
+// --- KOMPONEN CUSTOM SELECT (UI KHUSUS) ---
+interface Option {
+  value: string
+  label: string
+}
+
+interface CustomSelectProps {
+  label: string
+  value: string
+  options: Option[]
+  onChange: (value: string) => void
+  disabled?: boolean
+  loading?: boolean
+  placeholder?: string
+}
+
+function CustomSelect({ label, value, options, onChange, disabled, loading, placeholder }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const selectedLabel = options.find(opt => opt.value === value)?.label || placeholder || "Pilih Opsi"
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <label className="block text-xs font-bold text-general-80 mb-1.5 uppercase tracking-wide">
+        {label}
+      </label>
+      
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`
+          w-full px-4 py-2.5 text-left bg-white border rounded-lg text-sm font-medium 
+          flex items-center justify-between transition-all duration-200
+          ${isOpen ? 'border-blue-100 ring-2 ring-blue-100/20' : 'border-general-30 hover:border-blue-100'}
+          ${disabled ? 'bg-general-20 text-general-60 cursor-not-allowed' : 'text-general-100 cursor-pointer'}
+        `}
+      >
+        <span className="truncate block mr-2">
+          {loading ? "Memuat..." : selectedLabel}
+        </span>
+        <div className="text-general-60 shrink-0">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />}
+        </div>
+      </button>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-general-30 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 left-0 right-0">
+          <div className="max-h-[150px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-general-30 scrollbar-track-transparent">
+            {options.map((opt) => {
+              const isSelected = opt.value === value
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value)
+                    setIsOpen(false)
+                  }}
+                  className={`
+                    w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between
+                    ${isSelected ? 'bg-blue-100/10 text-blue-100 font-bold' : 'text-general-80 hover:bg-general-20'}
+                  `}
+                >
+                  <span className="truncate">{opt.label}</span>
+                  {isSelected && <Check className="w-4 h-4 shrink-0" />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function PermintaanKebutuhanDapurPage() {
@@ -97,46 +181,39 @@ function PermintaanKebutuhanDapurPage() {
           </div>
         </div>
 
-        {/* Filters Section */}
-        <div className="bg-general-20 border border-general-30 rounded-xl p-5 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+        {/* Filters Section (PENTING: overflow-visible agar dropdown keluar) */}
+        <div className="bg-general-20 border border-general-30 rounded-xl p-5 shadow-sm overflow-visible relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
             {/* Search */}
             <div className="md:col-span-6 lg:col-span-6">
-              <label className="block body-xs font-semibold text-general-80 mb-2 uppercase tracking-wide">Pencarian</label>
+              <label className="block text-xs font-bold text-general-80 mb-1.5 uppercase tracking-wide">Pencarian</label>
               <div className="relative group">
                 <input
                   type="text"
                   placeholder="Cari ID, SPPG, atau Nama..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 bg-general-20 border border-general-30 rounded-lg focus:outline-none focus:border-blue-100 focus:ring-4 focus:ring-blue-100/10 transition-all body-sm text-general-100 placeholder:text-general-50"
+                  className="w-full pl-11 pr-4 py-2.5 bg-white border border-general-30 rounded-lg focus:outline-none focus:border-blue-100 focus:ring-4 focus:ring-blue-100/10 transition-all body-sm text-general-100 placeholder:text-general-50"
                 />
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-general-50 group-focus-within:text-blue-100 transition-colors" />
               </div>
             </div>
 
-            {/* Status Filter */}
-            <div className="md:col-span-6 lg:col-span-6">
-              <label className="block body-xs font-semibold text-general-80 mb-2 uppercase tracking-wide">Filter Status</label>
-              <div className="relative group">
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full pl-4 pr-10 py-2.5 bg-general-20 border border-general-30 rounded-lg focus:outline-none focus:border-blue-100 focus:ring-4 focus:ring-blue-100/10 transition-all body-sm text-general-100 appearance-none cursor-pointer"
-                >
-                  <option value="">Semua Status</option>
-                  {STATUS_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-general-50 group-focus-within:text-blue-100 pointer-events-none transition-colors" />
-              </div>
+            {/* Status Filter (Custom Select) */}
+            <div className="md:col-span-6 lg:col-span-6 relative z-20">
+              <CustomSelect 
+                label="Filter Status"
+                value={filterStatus}
+                options={STATUS_OPTIONS}
+                onChange={setFilterStatus}
+                placeholder="Semua Status"
+              />
             </div>
           </div>
         </div>
 
         {/* Table Content */}
-        <div className="bg-general-20 border border-general-30 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-general-20 border border-general-30 rounded-xl overflow-hidden shadow-sm relative z-0">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-4">
               <Loader2 className="w-10 h-10 animate-spin text-blue-100" />
@@ -346,25 +423,18 @@ function RequestDetailModal({
             </div>
           </div>
 
-          {/* Panel Status Admin */}
-          <div className="bg-white border border-blue-100 shadow-md shadow-blue-100/10 rounded-xl p-6">
+          {/* Panel Status Admin - Overflow Visible untuk Dropdown */}
+          <div className="bg-white border border-blue-100 shadow-md shadow-blue-100/10 rounded-xl p-6 relative overflow-visible z-20">
             <h4 className="body-sm font-bold text-general-100 mb-4 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-blue-100" /> Tindak Lanjut Admin
             </h4>
-            <div>
-              <label className="block text-xs font-bold text-general-60 mb-2 uppercase tracking-wide">Update Status Permintaan</label>
-              <div className="relative">
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg appearance-none cursor-pointer pr-10 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 text-general-100 font-medium transition-all"
-                >
-                  {STATUS_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-general-60 pointer-events-none" />
-              </div>
+            <div className="relative z-50">
+              <CustomSelect 
+                label="Update Status Permintaan"
+                value={status}
+                options={STATUS_OPTIONS}
+                onChange={setStatus}
+              />
             </div>
           </div>
         </div>

@@ -14,9 +14,10 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
-  AlertTriangle
+  AlertTriangle,
+  Check // Icon untuk CustomSelect
 } from "lucide-react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { adminAccountService, type Admin, type CreateAdminData } from "@/services/members"
 
@@ -33,6 +34,98 @@ const ADMIN_ROLE_OPTIONS = [
   { value: "HR", label: "Human Resources" },
   { value: "Legal", label: "Legal" },
 ]
+
+// --- KOMPONEN CUSTOM SELECT ---
+interface Option {
+  value: string
+  label: string
+}
+
+interface CustomSelectProps {
+  label: string
+  value: string
+  options: Option[]
+  onChange: (value: string) => void
+  disabled?: boolean
+  loading?: boolean
+  placeholder?: string
+  isError?: boolean // Prop tambahan untuk validasi form
+}
+
+function CustomSelect({ label, value, options, onChange, disabled, loading, placeholder, isError }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const selectedLabel = options.find(opt => opt.value === value)?.label || placeholder || "Pilih Opsi"
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <label className="block body-sm font-semibold text-general-80 mb-2">
+        {label}
+      </label>
+      
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`
+          w-full px-4 py-2.5 text-left bg-general-20 border rounded-lg text-sm font-medium 
+          flex items-center justify-between transition-all duration-200
+          ${isError 
+            ? 'border-red-100 focus:ring-red-100/10' 
+            : isOpen 
+              ? 'border-blue-100 ring-4 ring-blue-100/10' 
+              : 'border-general-30 hover:border-blue-100'}
+          ${disabled ? 'opacity-70 cursor-not-allowed' : 'text-general-100 cursor-pointer'}
+        `}
+      >
+        <span className={`truncate block mr-2 ${!value ? 'text-general-50' : ''}`}>
+          {loading ? "Memuat..." : selectedLabel}
+        </span>
+        <div className="text-general-60 shrink-0">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />}
+        </div>
+      </button>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-general-30 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 left-0 right-0">
+          <div className="max-h-[200px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-general-30 scrollbar-track-transparent">
+            {options.map((opt) => {
+              const isSelected = opt.value === value
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value)
+                    setIsOpen(false)
+                  }}
+                  className={`
+                    w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between
+                    ${isSelected ? 'bg-blue-100/10 text-blue-100 font-bold' : 'text-general-80 hover:bg-general-20'}
+                  `}
+                >
+                  <span className="truncate">{opt.label}</span>
+                  {isSelected && <Check className="w-4 h-4 shrink-0" />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function AkunAdminPage() {
   const queryClient = useQueryClient()
@@ -115,10 +208,11 @@ function AkunAdminPage() {
         </div>
 
         {/* Filters Section */}
-        <div className="bg-general-20 border border-general-30 rounded-xl p-5 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+        {/* PENTING: overflow-visible agar dropdown tidak terpotong */}
+        <div className="bg-general-20 border border-general-30 rounded-xl p-5 shadow-sm overflow-visible relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
             {/* Search Input */}
-            <div className="md:col-span-7 lg:col-span-8">
+            <div className="md:col-span-7 lg:col-span-8 relative z-0">
               <label className="block body-xs font-semibold text-general-80 mb-2 uppercase tracking-wide">Pencarian</label>
               <div className="relative group">
                 <input
@@ -132,28 +226,21 @@ function AkunAdminPage() {
               </div>
             </div>
 
-            {/* Role Filter */}
-            <div className="md:col-span-5 lg:col-span-4">
-              <label className="block body-xs font-semibold text-general-80 mb-2 uppercase tracking-wide">Filter Peran</label>
-              <div className="relative group">
-                <select
-                  value={filterRole}
-                  onChange={(e) => setFilterRole(e.target.value)}
-                  className="w-full pl-4 pr-10 py-2.5 bg-general-20 border border-general-30 rounded-lg focus:outline-none focus:border-blue-100 focus:ring-4 focus:ring-blue-100/10 transition-all body-sm text-general-100 appearance-none cursor-pointer"
-                >
-                  <option value="">Semua Divisi</option>
-                  {ADMIN_ROLE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-general-50 group-focus-within:text-blue-100 pointer-events-none transition-colors" />
-              </div>
+            {/* Role Filter (Custom Select) */}
+            <div className="md:col-span-5 lg:col-span-4 relative z-20">
+              <CustomSelect 
+                label="Filter Peran"
+                value={filterRole}
+                options={[{ value: "", label: "Semua Divisi" }, ...ADMIN_ROLE_OPTIONS]}
+                onChange={setFilterRole}
+                placeholder="Semua Divisi"
+              />
             </div>
           </div>
         </div>
 
         {/* Table Content */}
-        <div className="bg-general-20 border border-general-30 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-general-20 border border-general-30 rounded-xl overflow-hidden shadow-sm relative z-0">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-4">
               <Loader2 className="w-10 h-10 animate-spin text-blue-100" />
@@ -295,8 +382,6 @@ function AddAdminModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  
-  // State untuk menangani pesan error validasi/API
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const createMutation = useMutation({
@@ -313,7 +398,6 @@ function AddAdminModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validasi Manual
     if (!formData.name || !formData.email || !formData.password || !formData.adminRole) {
       setErrorMsg("Mohon lengkapi seluruh kolom formulir.")
       return
@@ -344,13 +428,14 @@ function AddAdminModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
     )
   }
 
-  // TAMPILAN FORM
+  // TAMPILAN FORM (UPDATED WITH CUSTOM SELECT)
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-general-100/40 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-general-20 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300 border border-general-30">
+      {/* Gunakan overflow-visible agar dropdown bisa keluar dari modal */}
+      <div className="bg-general-20 rounded-2xl shadow-2xl w-full max-w-lg overflow-visible animate-in zoom-in-95 duration-300 border border-general-30 flex flex-col">
         
         {/* Header */}
-        <div className="px-6 py-5 border-b border-general-30 flex items-center justify-between bg-general-20">
+        <div className="px-6 py-5 border-b border-general-30 flex items-center justify-between bg-general-20 rounded-t-2xl">
           <div>
              <h3 className="h5 text-general-100 font-heading">Tambah Admin Baru</h3>
              <p className="body-xs text-general-60 mt-0.5">Lengkapi data untuk membuat akun akses baru.</p>
@@ -360,7 +445,7 @@ function AddAdminModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
           </button>
         </div>
 
-        {/* ALERT ERROR VALIDASI (Muncul jika ada error) */}
+        {/* ALERT ERROR VALIDASI */}
         {errorMsg && (
             <div className="mx-6 mt-6 p-3 bg-red-20 border border-red-30 rounded-lg flex items-start gap-3 animate-in slide-in-from-top-2">
                 <AlertCircle className="w-5 h-5 text-red-100 shrink-0 mt-0.5" />
@@ -398,21 +483,16 @@ function AddAdminModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
                 />
               </div>
 
-              <div>
-                <label className="block body-sm font-semibold text-general-80 mb-2">Divisi / Peran</label>
-                <div className="relative">
-                  <select
-                    value={formData.adminRole}
-                    onChange={(e) => setFormData({ ...formData, adminRole: e.target.value })}
-                    className={`w-full px-4 py-2.5 bg-general-20 border rounded-lg focus:outline-none focus:ring-4 transition-all body-sm text-general-100 appearance-none cursor-pointer ${errorMsg && !formData.adminRole ? 'border-red-100 focus:border-red-100 focus:ring-red-100/10' : 'border-general-30 focus:border-blue-100 focus:ring-blue-100/10'}`}
-                  >
-                    <option value="">Pilih Divisi</option>
-                    {ADMIN_ROLE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-general-50 pointer-events-none" />
-                </div>
+              {/* Custom Select untuk Divisi */}
+              <div className="relative z-50">
+                <CustomSelect 
+                  label="Divisi / Peran"
+                  value={formData.adminRole}
+                  options={ADMIN_ROLE_OPTIONS}
+                  onChange={(val) => setFormData({ ...formData, adminRole: val })}
+                  placeholder="Pilih Divisi"
+                  isError={!!(errorMsg && !formData.adminRole)}
+                />
               </div>
             </div>
 
@@ -440,7 +520,7 @@ function AddAdminModal({ onClose, onSuccess }: { onClose: () => void; onSuccess:
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-general-30 mt-2">
+          <div className="flex gap-3 pt-4 border-t border-general-30 mt-2 rounded-b-2xl">
             <button
               type="button"
               onClick={onClose}

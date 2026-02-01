@@ -17,9 +17,10 @@ import {
   Building2,
   User,
   FileText,
-  Save
+  Save,
+  Check
 } from "lucide-react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { memberService, type Member, type CreateMemberData } from "@/services/members"
 
@@ -51,6 +52,100 @@ const getStatusInfo = (isVerified: boolean) => {
 const getMemberTypeLabel = (type: string | null) => {
   const found = MEMBER_TYPE_OPTIONS.find(opt => opt.value === type)
   return found?.label || type || "-"
+}
+
+// --- KOMPONEN CUSTOM SELECT ---
+interface Option {
+  value: string
+  label: string
+}
+
+interface CustomSelectProps {
+  label?: string
+  value: string
+  options: Option[]
+  onChange: (value: string) => void
+  disabled?: boolean
+  loading?: boolean
+  placeholder?: string
+  isError?: boolean
+}
+
+function CustomSelect({ label, value, options, onChange, disabled, loading, placeholder, isError }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const selectedLabel = options.find(opt => opt.value === value)?.label || placeholder || "Pilih Opsi"
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      {label && (
+        <label className="block body-sm font-semibold text-general-80 mb-2">
+          {label}
+        </label>
+      )}
+      
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`
+          w-full px-4 py-2.5 text-left bg-general-20 border rounded-lg text-sm font-medium 
+          flex items-center justify-between transition-all duration-200
+          ${isError 
+            ? 'border-red-100 focus:ring-red-100/10' 
+            : isOpen 
+              ? 'border-blue-100 ring-4 ring-blue-100/10' 
+              : 'border-general-30 hover:border-blue-100'}
+          ${disabled ? 'opacity-70 cursor-not-allowed' : 'text-general-100 cursor-pointer'}
+        `}
+      >
+        <span className={`truncate block mr-2 ${!value && !placeholder ? 'text-general-50' : ''}`}>
+          {loading ? "Memuat..." : selectedLabel}
+        </span>
+        <div className="text-general-60 shrink-0">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />}
+        </div>
+      </button>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-general-30 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 left-0 right-0">
+          <div className="max-h-[200px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-general-30 scrollbar-track-transparent">
+            {options.map((opt) => {
+              const isSelected = opt.value === value
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value)
+                    setIsOpen(false)
+                  }}
+                  className={`
+                    w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between
+                    ${isSelected ? 'bg-blue-100/10 text-blue-100 font-bold' : 'text-general-80 hover:bg-general-20'}
+                  `}
+                >
+                  <span className="truncate">{opt.label}</span>
+                  {isSelected && <Check className="w-4 h-4 shrink-0" />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function AkunAnggotaPage() {
@@ -136,11 +231,11 @@ function AkunAnggotaPage() {
           </button>
         </div>
 
-        {/* Filters */}
-        <div className="bg-general-20 border border-general-30 rounded-xl p-5 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+        {/* Filters - Overflow Visible untuk Dropdown */}
+        <div className="bg-general-20 border border-general-30 rounded-xl p-5 shadow-sm overflow-visible relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
             {/* Search */}
-            <div className="md:col-span-12 lg:col-span-4">
+            <div className="md:col-span-12 lg:col-span-4 relative z-0">
               <label className="block body-xs font-semibold text-general-80 mb-2 uppercase tracking-wide">Pencarian</label>
               <div className="relative group">
                 <input
@@ -155,45 +250,31 @@ function AkunAnggotaPage() {
             </div>
 
             {/* Type Filter */}
-            <div className="md:col-span-6 lg:col-span-4">
+            <div className="md:col-span-6 lg:col-span-4 relative z-20">
               <label className="block body-xs font-semibold text-general-80 mb-2 uppercase tracking-wide">Filter Jenis</label>
-              <div className="relative group">
-                <select
-                  value={filterRole}
-                  onChange={(e) => setFilterRole(e.target.value)}
-                  className="w-full pl-4 pr-10 py-2.5 bg-general-20 border border-general-30 rounded-lg focus:outline-none focus:border-blue-100 focus:ring-4 focus:ring-blue-100/10 transition-all body-sm text-general-100 appearance-none cursor-pointer"
-                >
-                  <option value="">Semua Jenis</option>
-                  {MEMBER_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-general-50 group-focus-within:text-blue-100 pointer-events-none transition-colors" />
-              </div>
+              <CustomSelect
+                value={filterRole}
+                options={[{ value: "", label: "Semua Jenis" }, ...MEMBER_TYPE_OPTIONS]}
+                onChange={setFilterRole}
+                placeholder="Semua Jenis"
+              />
             </div>
 
             {/* Status Filter */}
-            <div className="md:col-span-6 lg:col-span-4">
+            <div className="md:col-span-6 lg:col-span-4 relative z-10">
               <label className="block body-xs font-semibold text-general-80 mb-2 uppercase tracking-wide">Filter Status</label>
-              <div className="relative group">
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full pl-4 pr-10 py-2.5 bg-general-20 border border-general-30 rounded-lg focus:outline-none focus:border-blue-100 focus:ring-4 focus:ring-blue-100/10 transition-all body-sm text-general-100 appearance-none cursor-pointer"
-                >
-                  <option value="">Semua Status</option>
-                  {STATUS_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-general-50 group-focus-within:text-blue-100 pointer-events-none transition-colors" />
-              </div>
+              <CustomSelect
+                value={filterStatus}
+                options={[{ value: "", label: "Semua Status" }, ...STATUS_OPTIONS]}
+                onChange={setFilterStatus}
+                placeholder="Semua Status"
+              />
             </div>
           </div>
         </div>
 
         {/* Content Table */}
-        <div className="bg-general-20 border border-general-30 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-general-20 border border-general-30 rounded-xl overflow-hidden shadow-sm relative z-0">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-24 space-y-4">
               <Loader2 className="w-10 h-10 animate-spin text-blue-100" />
@@ -500,21 +581,15 @@ function MemberDetailModal({
           </div>
 
           {/* Panel Status Admin */}
-          <div className="bg-general-30/30 rounded-xl p-5 border border-general-30">
+          <div className="bg-general-30/30 rounded-xl p-5 border border-general-30 pb-20 md:pb-5">
             <h4 className="body-sm font-bold text-general-100 mb-4">Panel Verifikasi Admin</h4>
-            <div>
-              <label className="block text-xs text-general-60 mb-2">Status Anggota</label>
-              <div className="relative">
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg appearance-none cursor-pointer pr-10 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 text-general-100"
-                >
-                  <option value="verified">Terverifikasi</option>
-                  <option value="pending">Menunggu Verifikasi</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-general-60 pointer-events-none" />
-              </div>
+            <div className="relative z-50">
+              <CustomSelect
+                label="Status Anggota"
+                value={newStatus}
+                options={STATUS_OPTIONS}
+                onChange={setNewStatus}
+              />
             </div>
           </div>
         </div>
@@ -617,8 +692,14 @@ function AddMemberModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
       return
     }
 
+    // Gabungkan +62 ke nomor telepon
+    const finalData = {
+      ...formData,
+      phone: `+62${formData.phone}`
+    }
+
     setErrorMsg(null)
-    createMutation.mutate(formData)
+    createMutation.mutate(finalData)
   }
 
   if (isSuccess) {
@@ -643,10 +724,10 @@ function AddMemberModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-general-100/40 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-general-20 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300 border border-general-30 max-h-[90vh] flex flex-col">
+      <div className="bg-general-20 rounded-2xl shadow-2xl w-full max-w-lg overflow-visible animate-in zoom-in-95 duration-300 border border-general-30 flex flex-col">
 
         {/* Header */}
-        <div className="px-6 py-5 border-b border-general-30 flex items-center justify-between bg-general-20 shrink-0">
+        <div className="px-6 py-5 border-b border-general-30 flex items-center justify-between bg-general-20 shrink-0 rounded-t-2xl">
           <div>
             <h3 className="h5 text-general-100 font-heading">Tambah Anggota Baru</h3>
             <p className="body-xs text-general-60 mt-0.5">Lengkapi data untuk membuat akun baru.</p>
@@ -668,25 +749,19 @@ function AddMemberModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
           </div>
         )}
 
-        {/* Form Body - Scrollable */}
-        <div className="overflow-y-auto p-6">
+        {/* Form Body - Scrollable if needed, but container is overflow-visible for dropdowns */}
+        <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-4">
 
-              <div>
-                <label className="block body-sm font-semibold text-general-80 mb-2">Jenis</label>
-                <div className="relative">
-                  <select
-                    value={formData.memberType}
-                    onChange={(e) => setFormData({ ...formData, memberType: e.target.value as CreateMemberData["memberType"] })}
-                    className="w-full px-4 py-2.5 bg-general-20 border border-general-30 rounded-lg focus:outline-none focus:border-blue-100 focus:ring-4 focus:ring-blue-100/10 transition-all body-sm text-general-100 appearance-none cursor-pointer"
-                  >
-                    {MEMBER_TYPE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-general-50 pointer-events-none" />
-                </div>
+              <div className="relative z-50">
+                <CustomSelect
+                  label="Jenis"
+                  value={formData.memberType}
+                  options={MEMBER_TYPE_OPTIONS}
+                  onChange={(val) => setFormData({ ...formData, memberType: val as CreateMemberData["memberType"] })}
+                  placeholder="Pilih Jenis"
+                />
               </div>
 
               <div>
@@ -711,17 +786,20 @@ function AddMemberModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
                     placeholder="email@example.com"
                   />
                 </div>
+                {/* NOMOR TELEPON DENGAN +62 */}
                 <div>
                   <label className="block body-sm font-semibold text-general-80 mb-2">Nomor Telepon</label>
-                  <div className="relative">
+                  <div className="flex items-center gap-3 bg-general-20 border border-general-30 rounded-lg px-4 py-2.5 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 transition-all">
+                    <Phone className="w-4 h-4 text-general-50 shrink-0" />
+                    <span className="text-general-60 body-sm font-medium border-r border-general-30 pr-3 mr-1">+62</span>
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full pl-10 pr-4 py-2.5 bg-general-20 border border-general-30 rounded-lg focus:outline-none focus:border-blue-100 focus:ring-4 focus:ring-blue-100/10 transition-all body-sm text-general-100"
-                      placeholder="08..."
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, "") })}
+                      className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
+                      placeholder="8xxxxxxxx"
+                      maxLength={13}
                     />
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-general-50" />
                   </div>
                 </div>
               </div>

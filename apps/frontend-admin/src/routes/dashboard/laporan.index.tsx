@@ -9,9 +9,10 @@ import {
   Search,
   AlertCircle,
   Loader2,
-  Eye // Icon Baru
+  Eye,
+  Check // Icon baru untuk CustomSelect
 } from "lucide-react"
-import { useState, useEffect, useCallback, memo } from "react"
+import { useState, useEffect, useCallback, memo, useRef } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { adminService } from "@/services/admin"
 import { locationsService } from "@/services/locations"
@@ -162,7 +163,7 @@ function LaporanPage() {
 
         <DataFilters onFilter={(newFilters) => setActiveFilters(newFilters)} />
 
-        <div className="bg-general-20 border border-general-30 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-general-20 border border-general-30 rounded-xl overflow-hidden shadow-sm relative z-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-8 h-8 animate-spin text-blue-100" />
@@ -226,7 +227,6 @@ function LaporanPage() {
                         )}
                       </td>
 
-                      {/* --- TOMBOL AKSI DIPERBARUI --- */}
                       <td className="p-4 align-middle text-center">
                         <div className="flex justify-center">
                           <Link
@@ -274,7 +274,108 @@ function LaporanPage() {
   )
 }
 
-// --- FILTER COMPONENT (TIDAK BERUBAH) ---
+// --- KOMPONEN CUSTOM SELECT (UI KHUSUS) ---
+interface Option {
+  id?: string | number
+  value?: string | number
+  name?: string
+  label?: string
+}
+
+interface CustomSelectProps {
+  label: string
+  value: string
+  options: Option[]
+  onChange: (value: string) => void
+  disabled?: boolean
+  loading?: boolean
+  placeholder?: string
+}
+
+function CustomSelect({ label, value, options, onChange, disabled, loading, placeholder }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const selectedLabel = options.find(opt => String(opt.id || opt.value) === value)?.name || 
+                        options.find(opt => String(opt.id || opt.value) === value)?.label || 
+                        placeholder
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <label className="block text-xs md:text-sm font-medium text-general-80 mb-1.5">
+        {label}
+      </label>
+      
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`
+          w-full px-3 py-2 text-left bg-general-20 border rounded-lg text-sm font-medium 
+          flex items-center justify-between transition-all duration-200
+          ${isOpen ? 'border-blue-100 ring-2 ring-blue-100/20' : 'border-general-30 hover:border-blue-100'}
+          ${disabled ? 'opacity-70 cursor-not-allowed' : 'text-general-100 cursor-pointer'}
+        `}
+      >
+        <span className="truncate block mr-2 text-sm">
+          {loading ? "Memuat..." : (value ? selectedLabel : placeholder)}
+        </span>
+        <div className="text-general-60 shrink-0">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />}
+        </div>
+      </button>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-general-30 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 left-0 right-0">
+          {/* max-h-[200px] ≈ 5 items */}
+          <div className="max-h-[200px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-general-30 scrollbar-track-transparent">
+            {options.length > 0 ? (
+              options.map((opt) => {
+                const optValue = String(opt.id || opt.value)
+                const optLabel = opt.name || opt.label
+                const isSelected = optValue === value
+
+                return (
+                  <button
+                    key={optValue}
+                    type="button"
+                    onClick={() => {
+                      onChange(optValue)
+                      setIsOpen(false)
+                    }}
+                    className={`
+                      w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between
+                      ${isSelected ? 'bg-blue-100/10 text-blue-100 font-bold' : 'text-general-80 hover:bg-general-20'}
+                    `}
+                  >
+                    <span className="truncate">{optLabel}</span>
+                    {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                  </button>
+                )
+              })
+            ) : (
+              <div className="px-4 py-3 text-xs text-general-50 text-center italic">
+                Tidak ada data
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// --- FILTER COMPONENT ---
 const DataFiltersComponent = ({ onFilter }: { onFilter: (f: FilterValues) => void }) => {
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
@@ -295,43 +396,30 @@ const DataFiltersComponent = ({ onFilter }: { onFilter: (f: FilterValues) => voi
     return []
   }
 
+  // --- QUERIES ---
   const { data: provincesData, isLoading: provincesLoading } = useQuery({
     queryKey: ["locations", "provinces"],
-    queryFn: async () => {
-      const response = await locationsService.getProvinces()
-      return response.data
-    },
+    queryFn: async () => (await locationsService.getProvinces()).data,
     staleTime: 1000 * 60 * 60,
   })
 
   const { data: citiesData, isLoading: citiesLoading } = useQuery({
     queryKey: ["locations", "cities", province],
-    queryFn: async () => {
-      if (!province) return []
-      const response = await locationsService.getCities(province)
-      return response.data
-    },
+    queryFn: async () => province ? (await locationsService.getCities(province)).data : [],
     enabled: !!province,
     staleTime: 1000 * 60 * 60,
   })
 
   const { data: districtsData, isLoading: districtsLoading } = useQuery({
     queryKey: ["locations", "districts", city],
-    queryFn: async () => {
-      if (!city) return []
-      const response = await locationsService.getDistricts(city)
-      return response.data
-    },
+    queryFn: async () => city ? (await locationsService.getDistricts(city)).data : [],
     enabled: !!city,
     staleTime: 1000 * 60 * 60,
   })
 
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
-    queryFn: async () => {
-      const response = await categoriesService.getCategories()
-      return response.data
-    },
+    queryFn: async () => (await categoriesService.getCategories()).data,
     staleTime: 1000 * 60 * 60,
   })
 
@@ -340,45 +428,32 @@ const DataFiltersComponent = ({ onFilter }: { onFilter: (f: FilterValues) => voi
   const districts = getSafeArray(districtsData)
   const categories = getSafeArray(categoriesData)
 
-  const handleDateInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
-      const val = e.target.value
-      if (val) {
-        const year = val.split("-")[0]
-        if (year.length > 4) return
-      }
-      setter(val)
-      setError("")
-    },
-    []
-  )
+  // Options for Status & Risk
+  const statusOptions = Object.entries(STATUS_LABELS).map(([key, { label }]) => ({ value: key, label }))
+  const riskOptions = Object.entries(CREDIBILITY_LABELS).map(([key, label]) => ({ value: key, label }))
+
+  // --- HANDLERS ---
+  const handleDateInput = useCallback((e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+    const val = e.target.value
+    if (val && val.split("-")[0].length > 4) return
+    setter(val)
+    setError("")
+  }, [])
 
   const handleStartDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => handleDateInput(e, setStartDate), [handleDateInput])
   const handleEndDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => handleDateInput(e, setEndDate), [handleDateInput])
 
-  const handleProvinceChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setProvince(e.target.value)
-    setCity("")
-    setDistrict("")
-  }, [])
-
-  const handleCityChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCity(e.target.value)
-    setDistrict("")
-  }, [])
-
-  const handleDistrictChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setDistrict(e.target.value), [])
-  const handleCategoryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value), [])
-  const handleStatusChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setStatus(e.target.value), [])
-  const handleRiskChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setRiskLevel(e.target.value), [])
+  // Custom Select handlers pass value directly
+  const handleProvinceChange = useCallback((val: string) => { setProvince(val); setCity(""); setDistrict("") }, [])
+  const handleCityChange = useCallback((val: string) => { setCity(val); setDistrict("") }, [])
+  const handleDistrictChange = useCallback((val: string) => setDistrict(val), [])
+  const handleCategoryChange = useCallback((val: string) => setCategory(val), [])
+  const handleStatusChange = useCallback((val: string) => setStatus(val), [])
+  const handleRiskChange = useCallback((val: string) => setRiskLevel(val), [])
 
   const handleSearch = useCallback(() => {
     if (startDate && endDate && startDate > endDate) {
-      setError("Tanggal mulai tidak boleh lebih besar dari tanggal akhir.")
-      return
-    }
-    if ((startDate && startDate > today) || (endDate && endDate > today)) {
-      setError("Tanggal tidak boleh melebihi hari ini.")
+      setError("Tanggal mulai tidak valid.")
       return
     }
     setError("")
@@ -391,14 +466,14 @@ const DataFiltersComponent = ({ onFilter }: { onFilter: (f: FilterValues) => voi
       status, 
       riskLevel 
     })
-  }, [startDate, endDate, province, city, district, category, status, riskLevel, today, onFilter])
+  }, [startDate, endDate, province, city, district, category, status, riskLevel, onFilter])
 
   const isDateError = error !== ""
-  const inputClass = `w-full px-3 py-2 bg-general-20 border rounded-lg focus:outline-none focus:ring-2 body-sm transition-all duration-200 ${isDateError ? "border-red-100 focus:ring-red-50 text-red-100" : "border-general-30 focus:border-blue-100 focus:ring-blue-100/20 text-general-100"}`
+  const dateInputClass = `w-full px-3 py-2 bg-general-20 border rounded-lg focus:outline-none focus:ring-2 body-sm transition-all duration-200 ${isDateError ? "border-red-100 focus:ring-red-50 text-red-100" : "border-general-30 focus:border-blue-100 focus:ring-blue-100/20 text-general-100"}`
   const labelClass = "block body-sm font-medium text-general-80 mb-1.5"
 
   return (
-    <div className="bg-general-20 rounded-lg p-4 md:p-6 shadow-md border border-general-30 mb-6">
+    <div className="bg-general-20 rounded-lg p-4 md:p-6 shadow-md border border-general-30 mb-6 relative z-10 overflow-visible">
       
       <div className="flex justify-between items-center mb-6">
         <h2 className="h5 text-general-100">Filter Laporan</h2>
@@ -411,82 +486,83 @@ const DataFiltersComponent = ({ onFilter }: { onFilter: (f: FilterValues) => voi
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-        <div className="md:col-span-6">
+        <div className="md:col-span-6 relative z-0">
           <label className={labelClass}>Mulai</label>
-          <input type="date" value={startDate} min={minDate} max={today} onChange={handleStartDateChange} className={inputClass} />
+          <input type="date" value={startDate} min={minDate} max={today} onChange={handleStartDateChange} className={dateInputClass} />
         </div>
-        <div className="md:col-span-6">
+        <div className="md:col-span-6 relative z-0">
           <label className={labelClass}>Akhir</label>
-          <input type="date" value={endDate} min={startDate || minDate} max={today} onChange={handleEndDateChange} className={inputClass} />
+          <input type="date" value={endDate} min={startDate || minDate} max={today} onChange={handleEndDateChange} className={dateInputClass} />
         </div>
 
-        <div className="md:col-span-4">
-          <label className={labelClass}>Provinsi</label>
-          <div className="relative">
-            <select value={province} onChange={handleProvinceChange} disabled={provincesLoading} className={`${inputClass} appearance-none cursor-pointer truncate pr-8`}>
-              <option value="">{provincesLoading ? "Memuat..." : "Semua Provinsi"}</option>
-              {provinces.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-general-60 pointer-events-none" />
-          </div>
+        {/* LOKASI (Z-Index diatur agar tidak tertumpuk) */}
+        <div className="md:col-span-4 relative z-50">
+          <CustomSelect 
+            label="Provinsi" 
+            value={province} 
+            options={provinces} 
+            onChange={handleProvinceChange} 
+            loading={provincesLoading} 
+            placeholder="Semua Provinsi" 
+          />
         </div>
         
-        <div className="md:col-span-4">
-          <label className={labelClass}>Kota/Kab</label>
-          <div className="relative">
-            <select value={city} onChange={handleCityChange} disabled={!province || citiesLoading} className={`${inputClass} appearance-none cursor-pointer truncate pr-8 disabled:bg-general-30/30`}>
-              <option value="">{citiesLoading ? "Memuat..." : "Semua Kota/Kab"}</option>
-              {cities.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-general-60 pointer-events-none" />
-          </div>
+        <div className="md:col-span-4 relative z-40">
+          <CustomSelect 
+            label="Kota/Kab" 
+            value={city} 
+            options={cities} 
+            onChange={handleCityChange} 
+            loading={citiesLoading} 
+            disabled={!province}
+            placeholder={!province ? "Pilih Provinsi" : "Semua Kota/Kab"} 
+          />
         </div>
 
-        <div className="md:col-span-4">
-          <label className={labelClass}>Kecamatan</label>
-          <div className="relative">
-            <select value={district} onChange={handleDistrictChange} disabled={!city || districtsLoading} className={`${inputClass} appearance-none cursor-pointer truncate pr-8 disabled:bg-general-30/30`}>
-              <option value="">{districtsLoading ? "Memuat..." : "Semua Kecamatan"}</option>
-              {districts.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-general-60 pointer-events-none" />
-          </div>
+        <div className="md:col-span-4 relative z-30">
+          <CustomSelect 
+            label="Kecamatan" 
+            value={district} 
+            options={districts} 
+            onChange={handleDistrictChange} 
+            loading={districtsLoading} 
+            disabled={!city}
+            placeholder={!city ? "Pilih Kota" : "Semua Kecamatan"} 
+          />
         </div>
 
-        <div className="md:col-span-4">
-          <label className={labelClass}>Kategori</label>
-          <div className="relative">
-            <select value={category} onChange={handleCategoryChange} disabled={categoriesLoading} className={`${inputClass} appearance-none cursor-pointer truncate pr-8`}>
-              <option value="">{categoriesLoading ? "Memuat..." : "Semua Kategori"}</option>
-              {categories.map((c: any) => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-general-60 pointer-events-none" />
-          </div>
+        <div className="md:col-span-4 relative z-20">
+          <CustomSelect 
+            label="Kategori" 
+            value={category} 
+            options={categories} 
+            onChange={handleCategoryChange} 
+            loading={categoriesLoading} 
+            placeholder="Semua Kategori" 
+          />
         </div>
 
-        <div className="md:col-span-4">
-          <label className={labelClass}>Status</label>
-          <div className="relative">
-            <select value={status} onChange={handleStatusChange} className={`${inputClass} appearance-none cursor-pointer truncate pr-8`}>
-              <option value="">Semua Status</option>
-              {Object.entries(STATUS_LABELS).map(([key, { label }]) => <option key={key} value={key}>{label}</option>)}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-general-60 pointer-events-none" />
-          </div>
+        <div className="md:col-span-4 relative z-10">
+          <CustomSelect 
+            label="Status" 
+            value={status} 
+            options={statusOptions} 
+            onChange={handleStatusChange} 
+            placeholder="Semua Status" 
+          />
         </div>
 
-        <div className="md:col-span-4">
-          <label className={labelClass}>Tingkat Masalah</label>
-          <div className="relative">
-            <select value={riskLevel} onChange={handleRiskChange} className={`${inputClass} appearance-none cursor-pointer truncate pr-8`}>
-              <option value="">Semua Tingkat</option>
-              {Object.entries(CREDIBILITY_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-general-60 pointer-events-none" />
-          </div>
+        <div className="md:col-span-4 relative z-10">
+          <CustomSelect 
+            label="Tingkat Masalah" 
+            value={riskLevel} 
+            options={riskOptions} 
+            onChange={handleRiskChange} 
+            placeholder="Semua Tingkat" 
+          />
         </div>
 
-        <div className="md:col-span-12 mt-2">
+        <div className="md:col-span-12 mt-2 relative z-0">
           <button type="button" onClick={handleSearch} className="w-full px-6 py-2.5 bg-orange-100 hover:bg-orange-90 text-general-20 rounded-lg transition-all flex items-center justify-center gap-2 body-sm font-heading font-medium shadow-sm hover:shadow active:scale-[0.98]">
             <Search className="w-4 h-4" /> Cari Data
           </button>

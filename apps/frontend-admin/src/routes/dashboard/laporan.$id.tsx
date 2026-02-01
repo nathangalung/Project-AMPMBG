@@ -17,9 +17,10 @@ import {
   Calendar,
   CheckCircle2,
   Building2, 
-  Utensils
+  Utensils,
+  Check
 } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { adminService } from "@/services/admin"
 import type { ReportStatus } from "@/services/reports"
@@ -86,6 +87,95 @@ const SCORING_LABELS: Record<string, string> = {
   scoreSimilarity: "Kesesuaian Laporan Lain",
 }
 
+// --- KOMPONEN CUSTOM SELECT (SAMA DENGAN FILTER) ---
+interface Option {
+  value: string
+  label: string
+}
+
+interface CustomSelectProps {
+  label: string
+  value: string
+  options: Option[]
+  onChange: (value: string) => void
+  disabled?: boolean
+  loading?: boolean
+  placeholder?: string
+}
+
+function CustomSelect({ label, value, options, onChange, disabled, loading, placeholder }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const selectedLabel = options.find(opt => opt.value === value)?.label || placeholder || "Pilih Opsi"
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <label className="block text-xs font-bold text-general-60 mb-1.5">
+        {label}
+      </label>
+      
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`
+          w-full px-4 py-2.5 text-left bg-general-20 border rounded-lg text-sm font-medium 
+          flex items-center justify-between transition-all duration-200
+          ${isOpen ? 'border-blue-100 ring-2 ring-blue-100/20' : 'border-general-30 hover:border-blue-100'}
+          ${disabled ? 'opacity-70 cursor-not-allowed' : 'text-general-100 cursor-pointer'}
+        `}
+      >
+        <span className="truncate block mr-2 text-sm">
+          {loading ? "Memuat..." : selectedLabel}
+        </span>
+        <div className="text-general-60 shrink-0">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />}
+        </div>
+      </button>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-general-30 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 left-0 right-0">
+          {/* Max height dan scroll */}
+          <div className="max-h-[200px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-general-30 scrollbar-track-transparent">
+            {options.map((opt) => {
+              const isSelected = opt.value === value
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value)
+                    setIsOpen(false)
+                  }}
+                  className={`
+                    w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between
+                    ${isSelected ? 'bg-blue-100/10 text-blue-100 font-bold' : 'text-general-80 hover:bg-general-20'}
+                  `}
+                >
+                  <span className="truncate">{opt.label}</span>
+                  {isSelected && <Check className="w-4 h-4 shrink-0" />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// --- MODAL HISTORY ---
 function UserHistoryModal({ user, onClose }: { user: { name: string; email: string }; onClose: () => void }) {
   const { data: historyData, isLoading } = useQuery({
     queryKey: ["admin", "reports", "user-history", user.email],
@@ -338,7 +428,7 @@ function LaporanDetail() {
                     )}
                 </div>
 
-                {/* 2. PIHAK YANG TERKAIT (Orange Accents) - UPDATED: NO EXTRA NOTE */}
+                {/* 2. PIHAK YANG TERKAIT (Orange Accents) */}
                 <div className="bg-general-20 border border-general-30 rounded-xl p-6 shadow-sm relative overflow-hidden">
                     {/* Decorative Orange element */}
                     <div className="absolute top-0 right-0 w-24 h-24 bg-warning/10 rounded-bl-full -mr-6 -mt-6 pointer-events-none" />
@@ -439,41 +529,33 @@ function LaporanDetail() {
             {/* Right Column (Actions & Scoring) */}
             <div className="space-y-6">
 
-                {/* Panel Verifikasi Admin (NO STICKY) */}
-                <div className="bg-general-20 border border-blue-20 shadow-md shadow-blue-20/10 rounded-xl p-6">
+                {/* PANEL ADMIN: UPDATE STATUS (UPDATED WITH CUSTOM SELECT) */}
+                <div className="bg-general-20 border border-blue-20 shadow-md shadow-blue-20/10 rounded-xl p-6 relative overflow-visible z-20">
                     <h4 className="h4 text-general-100 mb-5 flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5 text-blue-100" />
                         Tindak Lanjut Admin
                     </h4>
                     
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-bold text-general-60 mb-1.5">Update Status</label>
-                            <div className="relative">
-                                <select
-                                    value={newStatus}
-                                    onChange={(e) => setNewStatus(e.target.value as ReportStatus)}
-                                    className="w-full px-4 py-2.5 bg-general-20 border border-general-30 rounded-lg appearance-none cursor-pointer pr-10 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 text-general-100 font-medium"
-                                >
-                                    {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-general-60 pointer-events-none" />
-                            </div>
+                        {/* Status Dropdown */}
+                        <div className="relative z-50">
+                          <CustomSelect 
+                            label="Update Status"
+                            value={newStatus}
+                            options={STATUS_OPTIONS}
+                            onChange={(val) => setNewStatus(val as ReportStatus)}
+                          />
                         </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-general-60 mb-1.5">Penilaian Risiko</label>
-                            <div className="relative">
-                                <select
-                                    value={newRisk}
-                                    onChange={(e) => setNewRisk(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-general-20 border border-general-30 rounded-lg appearance-none cursor-pointer pr-10 body-sm focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 text-general-100 font-medium"
-                                >
-                                    <option value="" disabled>-- Pilih Tingkat --</option>
-                                    {RISK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-general-60 pointer-events-none" />
-                            </div>
+                        {/* Risk Dropdown */}
+                        <div className="relative z-40">
+                           <CustomSelect 
+                            label="Penilaian Risiko"
+                            value={newRisk}
+                            options={RISK_OPTIONS}
+                            onChange={setNewRisk}
+                            placeholder="-- Pilih Tingkat --"
+                          />
                         </div>
 
                         <div>
@@ -499,7 +581,7 @@ function LaporanDetail() {
 
                 {/* Matriks Penilaian */}
                 {scoring && (
-                    <div className="bg-general-20 border border-general-30 rounded-xl p-5">
+                    <div className="bg-general-20 border border-general-30 rounded-xl p-5 relative z-0">
                     <h4 className="h4 text-general-100 mb-4 flex items-center gap-2">
                         <BarChart3 className="w-4 h-4 text-general-60" />
                         Skor Kredibilitas
@@ -542,7 +624,7 @@ function LaporanDetail() {
 
                 {/* Riwayat Status */}
                 {history.length > 0 && (
-                    <div className="bg-general-20 border border-general-30 rounded-xl p-5">
+                    <div className="bg-general-20 border border-general-30 rounded-xl p-5 relative z-0">
                     <h4 className="h4 text-general-100 mb-4 flex items-center gap-2">
                         <Clock className="w-4 h-4 text-general-60" />
                         Log Aktivitas
