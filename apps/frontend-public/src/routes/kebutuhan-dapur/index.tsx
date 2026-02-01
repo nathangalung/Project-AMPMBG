@@ -235,13 +235,33 @@ function RequestModal({ need, onClose }: { need: KitchenNeedItem, onClose: () =>
     details: "",
   })
 
+  // --- VALIDASI ---
+  const MIN_DETAIL_CHARS = 20
+  
+  // 1. Validasi No. Telepon (9-13 digit)
+  const isPhoneValid = /^\d{9,13}$/.test(formData.phoneNumber)
+  
+  // 2. Validasi Detail (Minimal 20 karakter)
+  const isDetailValid = formData.details.trim().length >= MIN_DETAIL_CHARS
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const handlePhoneInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target
+    if (/^\d*$/.test(value)) {
+      setFormData(prev => ({ ...prev, phoneNumber: value }))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Cek semua validasi sebelum submit
+    if (!isPhoneValid || !isDetailValid) return 
+
     setIsLoading(true)
     try {
       await adminService.kitchen.submitRequest({
@@ -249,7 +269,7 @@ function RequestModal({ need, onClose }: { need: KitchenNeedItem, onClose: () =>
         sppgName: formData.sppgName,
         contactPerson: formData.contactPerson,
         position: formData.position,
-        phoneNumber: formData.phoneNumber,
+        phoneNumber: `62${formData.phoneNumber}`,
         details: formData.details,
       })
       setIsSuccess(true)
@@ -280,6 +300,8 @@ function RequestModal({ need, onClose }: { need: KitchenNeedItem, onClose: () =>
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-8 bg-general-100/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl w-full max-w-2xl md:max-w-3xl shadow-2xl border border-general-30 relative flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 overflow-hidden">
+        
+        {/* Header Modal */}
         <div className="px-6 py-5 sm:px-8 border-b border-general-30 flex justify-between items-center bg-general-20 shrink-0">
           <div>
             <p className="body-xs font-bold text-orange-100 uppercase tracking-wider mb-1">Formulir Kebutuhan</p>
@@ -287,12 +309,17 @@ function RequestModal({ need, onClose }: { need: KitchenNeedItem, onClose: () =>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-general-30 rounded-full transition-colors text-general-60"><X className="w-6 h-6" /></button>
         </div>
+
+        {/* Body Modal */}
         <div className="p-6 sm:p-10 overflow-y-auto custom-scrollbar">
           <form id="kitchen-form" onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Nama SPPG */}
             <div className="space-y-2">
               <label className="body-sm font-bold text-general-80 tracking-wide">Nama SPPG / Instansi</label>
-              <input required name="sppgName" value={formData.sppgName} onChange={handleChange} type="text" className="w-full px-5 py-3.5 bg-general-20 border border-general-30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 transition-all body-sm text-general-100" />
+              <input required name="sppgName" value={formData.sppgName} onChange={handleChange} type="text" placeholder="Contoh: SPPG MBG" className="w-full px-5 py-3.5 bg-general-20 border border-general-30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 transition-all body-sm text-general-100" />
             </div>
+
             {/* Contact Person & Jabatan */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -304,23 +331,74 @@ function RequestModal({ need, onClose }: { need: KitchenNeedItem, onClose: () =>
                 <input required name="position" value={formData.position} onChange={handleChange} type="text" placeholder="Contoh: Manajer" className="w-full px-5 py-3.5 bg-general-20 border border-general-30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 transition-all body-sm text-general-100" />
               </div>
             </div>
+
             {/* No Telepon */}
             <div className="space-y-2">
               <label className="body-sm font-bold text-general-80 tracking-wide">No. Telp / WhatsApp</label>
-              <input required name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} type="tel" placeholder="08xxxxxxxxxx" className="w-full px-5 py-3.5 bg-general-20 border border-general-30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 transition-all body-sm text-general-100" />
+              <div className="relative group">
+                <div className="flex items-center w-full bg-general-20 border border-general-30 rounded-xl focus-within:ring-2 focus-within:ring-blue-100/20 focus-within:border-blue-100 transition-all overflow-hidden">
+                  <div className="pl-5 pr-3 py-3.5 bg-general-30/50 border-r border-general-30 text-general-60 font-bold body-sm select-none">
+                    +62
+                  </div>
+                  <input 
+                    required 
+                    name="phoneNumber" 
+                    value={formData.phoneNumber} 
+                    onChange={handlePhoneInput} 
+                    type="tel" 
+                    placeholder="8xxxxxxxxxx" 
+                    maxLength={13}
+                    className="flex-1 px-4 py-3.5 bg-transparent outline-none body-sm text-general-100 placeholder:text-general-40" 
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between px-1">
+                <p className="text-[10px] text-general-50 italic">Tanpa angka 0 di awal</p>
+                {formData.phoneNumber.length > 0 && !isPhoneValid && (
+                  <p className="text-[10px] text-red-100 font-bold animate-pulse">Wajib 9-13 Angka</p>
+                )}
+              </div>
             </div>
-            {/* Detail */}
+
+            {/* Detail Kebutuhan (DENGAN VALIDASI VISUAL) */}
             <div className="space-y-2">
-               <label className="body-sm font-bold text-general-80 tracking-wide">Detail Kebutuhan</label>
-               <textarea required name="details" value={formData.details} onChange={handleChange} rows={5} className="w-full px-5 py-3.5 bg-general-20 border border-general-30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 transition-all body-sm resize-none text-general-100" placeholder="Jelaskan kebutuhan..." />
+               <div className="flex justify-between items-end">
+                 <label className="body-sm font-bold text-general-80 tracking-wide">Detail Kebutuhan</label>
+                 <span className={`text-[10px] font-bold ${!isDetailValid && formData.details.length > 0 ? "text-red-100" : "text-general-50"}`}>
+                   {formData.details.length}/{MIN_DETAIL_CHARS} Karakter
+                 </span>
+               </div>
+               <textarea 
+                 required 
+                 name="details" 
+                 value={formData.details} 
+                 onChange={handleChange} 
+                 rows={5} 
+                 className={`w-full px-5 py-3.5 bg-general-20 border rounded-xl focus:outline-none focus:ring-2 transition-all body-sm resize-none text-general-100
+                   ${!isDetailValid && formData.details.length > 0 
+                     ? "border-red-100 focus:ring-red-100/20 focus:border-red-100" 
+                     : "border-general-30 focus:ring-blue-100/20 focus:border-blue-100"
+                   }
+                 `} 
+                 placeholder={`Jelaskan spesifikasi atau kebutuhan Anda (Min. ${MIN_DETAIL_CHARS} karakter)...`} 
+               />
             </div>
+
           </form>
         </div>
+
+        {/* Footer Modal */}
         <div className="p-6 sm:px-10 border-t border-general-30 bg-general-20 shrink-0">
-          <button type="submit" form="kitchen-form" disabled={isLoading} className="w-full py-4 bg-orange-100 hover:bg-orange-90 text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-70">
+          <button 
+            type="submit" 
+            form="kitchen-form" 
+            disabled={isLoading || !isPhoneValid || !isDetailValid} 
+            className="w-full py-4 bg-orange-100 hover:bg-orange-90 text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed transform active:scale-[0.98]"
+          >
             {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> Kirim Permintaan</>}
           </button>
         </div>
+
       </div>
     </div>
   )

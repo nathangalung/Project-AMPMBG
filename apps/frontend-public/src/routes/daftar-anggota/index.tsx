@@ -52,7 +52,7 @@ function DaftarAnggotaPage() {
     setIsChecking(false)
   }, [navigate])
 
-  const isPhoneValid = /^\d{9,15}$/.test(formData.organizationPhone)
+  const isPhoneValid = /^\d{9,12}$/.test(formData.organizationPhone)
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.organizationEmail)
   const isNameValid = formData.organizationName.trim().length >= 3
   const isRoleDescValid = formData.roleDescription.trim().length >= 10
@@ -126,7 +126,6 @@ function DaftarAnggotaPage() {
                   <h1 className="font-heading text-2xl md:text-3xl font-bold text-general-100">
                     Daftar Sebagai <span className="text-blue-100">Anggota</span>
                   </h1>
-                  {/* UPDATE TEKS JADI 1 BARIS */}
                   <p className="body-sm text-general-60 mt-1 max-w-3xl">
                     Lengkapi data organisasi Anda untuk bergabung dan berkontribusi dalam program MBG.
                   </p>
@@ -140,10 +139,10 @@ function DaftarAnggotaPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                     {error && (
-                    <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-start gap-3 animate-in fade-in">
-                        <div className="w-1.5 h-1.5 bg-red-100 rounded-full mt-2 shrink-0" />
-                        {error}
-                    </div>
+                      // UPDATE: Menghapus elemen div titik dan gap-3
+                      <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-center animate-in fade-in">
+                          {error}
+                      </div>
                     )}
 
                     {/* Jenis Organisasi */}
@@ -218,7 +217,7 @@ function DaftarAnggotaPage() {
                         />
                         </div>
                         {formData.organizationEmail.length > 0 && !isEmailValid && (
-                        <p className="text-[10px] text-red-100 font-medium px-1">* Format email tidak valid</p>
+                        <p className="text-[10px] text-red-100 font-medium px-1">Format email tidak valid</p>
                         )}
                     </div>
 
@@ -241,7 +240,7 @@ function DaftarAnggotaPage() {
                             value={formData.organizationPhone}
                             onChange={handlePhoneInput}
                             type="tel"
-                            maxLength={15}
+                            maxLength={12}
                             placeholder="8xxxxxxxxxx"
                             className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium tracking-wide"
                             disabled={isLoading}
@@ -249,9 +248,8 @@ function DaftarAnggotaPage() {
                         </div>
                         </div>
                         <div className="flex justify-between px-1">
-                            <p className="text-[10px] text-general-50">Tanpa angka 0 awal</p>
                             {formData.organizationPhone.length > 0 && !isPhoneValid && (
-                            <p className="text-[10px] text-red-100 font-medium">9-15 Angka</p>
+                            <p className="text-[10px] text-red-100 font-medium">Wajib 9-12 Angka</p>
                             )}
                         </div>
                     </div>

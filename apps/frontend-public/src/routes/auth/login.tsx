@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState, useEffect, useCallback } from "react"
-import { Eye, EyeOff, Loader2, ArrowLeft, LogIn } from "lucide-react"
+import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react" // LogIn dihapus dari import
 import { authService } from "@/services/auth"
 
 declare global {
@@ -96,7 +96,6 @@ function LoginPage() {
     }
   }
 
-  // --- LOGIKA ASLI (TETAP) ---
   const isEmailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)
   const isIdentifierValid = identifier.length === 0 || isEmailFormat
   const isPasswordFilled = password.length > 0
@@ -135,22 +134,21 @@ function LoginPage() {
 
       <form onSubmit={handleLogin} className="space-y-6">
         {error && (
-          <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-center gap-3 animate-in fade-in">
-            <div className="w-1.5 h-1.5 bg-red-100 rounded-full shrink-0" />
+          <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-center animate-in fade-in">
             {error}
           </div>
         )}
 
         {/* Email Field */}
         <div className="space-y-1">
-          <div className={`group bg-white border rounded-xl px-4 py-2.5 transition-all duration-300 focus-within:shadow-md ${
+          <fieldset className={`group bg-white border rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:shadow-md ${
             identifier.length > 0 && !isIdentifierValid
               ? "border-red-100 ring-2 ring-red-100/5"
               : "border-general-30 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10"
           }`}>
-            <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
+            <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">
               Surel
-            </label>
+            </legend>
             <input
               type="email"
               value={identifier}
@@ -159,18 +157,18 @@ function LoginPage() {
               className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
               disabled={isLoading}
             />
-          </div>
+          </fieldset>
           {identifier.length > 0 && !isIdentifierValid && (
-            <p className="text-[10px] text-red-100 font-medium px-1">* Format email tidak valid</p>
+            <p className="text-[10px] text-red-100 font-medium px-1">Format email tidak valid</p>
           )}
         </div>
 
         {/* Password Field */}
         <div className="space-y-1">
-          <div className="group bg-white border border-general-30 rounded-xl px-4 py-2.5 transition-all duration-300 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 focus-within:shadow-md">
-            <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
+          <fieldset className="group bg-white border border-general-30 rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 focus-within:shadow-md">
+            <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">
               Kata Sandi
-            </label>
+            </legend>
             <div className="flex items-center gap-3">
               <input
                 type={showPassword ? "text" : "password"}
@@ -188,7 +186,8 @@ function LoginPage() {
                 {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
               </button>
             </div>
-          </div>
+          </fieldset>
+          
           <div className="flex justify-between items-center px-1">
              {!isPasswordFilled && identifier.length > 0 && (
                 <p className="text-[10px] text-general-50">Masukkan kata sandi Anda</p>
@@ -210,12 +209,8 @@ function LoginPage() {
           disabled={isLoading || !identifier || !password}
           className="w-full py-3.5 bg-gradient-to-r from-blue-100 to-blue-90 hover:from-blue-90 hover:to-blue-100 text-white font-heading font-bold rounded-xl transition-all shadow-lg shadow-blue-100/20 hover:shadow-blue-100/40 transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2"
         >
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin text-white/90" />
-          ) : (
-            <LogIn className="w-5 h-5" />
-          )}
-          {isLoading ? "Memproses..." : "Masuk Sekarang"}
+          {isLoading && <Loader2 className="w-5 h-5 animate-spin text-white/90" />}
+          {isLoading ? "Memproses..." : "Masuk"}
         </button>
 
         {/* Google Login */}

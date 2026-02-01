@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
-import { Users, ArrowUp, RefreshCw, Scale, Goal, Target, Building2, Search, Loader2 } from "lucide-react"
+import { Users, ArrowUp, RefreshCw, Scale, Goal, Target, Search, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { reportsService } from "@/services/reports"
 
@@ -223,9 +223,6 @@ function TentangKamiPage() {
                         key={foundation.id}
                         className="bg-white rounded-xl p-4 border border-general-30 hover:border-blue-40 transition-all duration-200 flex items-center gap-3 group shadow-sm hover:shadow-md"
                       >
-                        <div className="w-10 h-10 bg-general-20 rounded-lg flex items-center justify-center border border-general-30 shrink-0 group-hover:bg-blue-20 transition-colors">
-                          <Building2 className="w-5 h-5 text-general-60 group-hover:text-blue-100 transition-colors" />
-                        </div>
                         <h4 className="font-bold text-general-100 text-sm leading-tight group-hover:text-blue-100 transition-colors line-clamp-2">
                           {foundation.name}
                         </h4>

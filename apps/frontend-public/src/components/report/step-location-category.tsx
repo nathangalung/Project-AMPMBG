@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import type { ReportFormData, Timezone } from "./report-form"
 import { categoriesService } from "@/services/categories"
 import { locationsService } from "@/services/locations"
-import { cn } from "@/lib/utils" // <--- IMPORT ADDED
+import { cn } from "@/lib/utils"
 
 const LocationMapPreview = lazy(() =>
   import("./location-map-preview").then((m) => ({ default: m.LocationMapPreview }))
@@ -41,6 +41,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
   const availableDistricts = districtsData || []
 
   const MAX_TITLE_WORDS = 10
+  const MIN_TITLE_CHARS = 10
   const MAX_LOCATION_LENGTH = 100
   const MIN_DATE = "2024-01-01"
 
@@ -48,6 +49,9 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
     () => (formData.title ? formData.title.trim().split(/\s+/).filter(Boolean).length : 0),
     [formData.title]
   )
+  
+  const isTitleTooShort = formData.title.length > 0 && formData.title.length < MIN_TITLE_CHARS
+  
   const currentLength = formData.location.length
 
   const { todayInTz, isDateError, isTimeError } = useMemo(() => {
@@ -67,15 +71,16 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value
     const wordCount = inputValue.trim().split(/\s+/).filter(Boolean).length
+    
     if (wordCount <= MAX_TITLE_WORDS || (wordCount === MAX_TITLE_WORDS + 1 && !inputValue.endsWith(" "))) {
       updateFormData({ title: inputValue })
     }
   }, [updateFormData])
 
-  const commonInputClass = "w-full px-4 py-3 bg-white border rounded-xl text-general-100 placeholder:text-general-40 focus:outline-none focus:ring-2 focus:ring-blue-100/50 focus:border-blue-100 transition-all duration-200 disabled:bg-general-20 disabled:cursor-not-allowed"
+  // FIX: Menambahkan h-[50px] agar input tidak gepeng di mobile
+  const commonInputClass = "w-full h-[50px] px-4 py-3 bg-white border rounded-xl text-general-100 placeholder:text-general-40 focus:outline-none focus:ring-2 focus:ring-blue-100/50 focus:border-blue-100 transition-all duration-200 disabled:bg-general-20 disabled:cursor-not-allowed"
   const labelClass = "block text-sm font-bold text-general-80 mb-2"
 
-  // Location Names for Map
   const locationNames = useMemo(() => ({
     province: provinces.find((p) => p.id === formData.province)?.name || "",
     city: availableCities.find((c) => c.id === formData.city)?.name || "",
@@ -84,12 +89,14 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
 
   return (
     <div className="space-y-6">
-      {/* JUDUL */}
+      {/* JUDUL LAPORAN */}
       <div>
         <div className="flex justify-between items-end mb-2">
           <label htmlFor="title" className={labelClass}>Judul Laporan <span className="text-red-100">*</span></label>
-          <span className={`text-xs font-medium ${currentTitleWords === MAX_TITLE_WORDS ? 'text-red-100' : 'text-general-60'}`}>
-            {currentTitleWords}/{MAX_TITLE_WORDS} Kata
+          <span className={cn("text-xs font-medium", 
+            (currentTitleWords === MAX_TITLE_WORDS || isTitleTooShort) ? 'text-red-100' : 'text-general-60'
+          )}>
+            {isTitleTooShort ? `Min. ${MIN_TITLE_CHARS} Karakter` : `${currentTitleWords}/${MAX_TITLE_WORDS} Kata`}
           </span>
         </div>
         <input
@@ -98,8 +105,17 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
           value={formData.title}
           onChange={handleTitleChange}
           placeholder="Contoh: Nasi basi di SDN 01 Pagi"
-          className={cn(commonInputClass, currentTitleWords >= MAX_TITLE_WORDS ? "border-red-100 focus:border-red-100 focus:ring-red-100/30" : "border-general-30")}
+          className={cn(commonInputClass, 
+            (currentTitleWords >= MAX_TITLE_WORDS || isTitleTooShort) 
+              ? "border-red-100 focus:border-red-100 focus:ring-red-100/30" 
+              : "border-general-30"
+          )}
         />
+        {isTitleTooShort && (
+          <p className="text-xs text-red-100 mt-1.5 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+            <AlertCircle className="w-3 h-3"/> Judul terlalu pendek (minimal {MIN_TITLE_CHARS} karakter)
+          </p>
+        )}
       </div>
 
       {/* KATEGORI */}
@@ -131,7 +147,8 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
             min={MIN_DATE}
             max={todayInTz}
             onChange={(e) => updateFormData({ date: e.target.value })}
-            className={cn(commonInputClass, isDateError ? "border-red-100 focus:ring-red-100/30" : "border-general-30")}
+            // FIX: min-h-[50px] memastikan input date memiliki tinggi yang cukup di mobile untuk menampilkan UI placeholder bawaan browser
+            className={cn(commonInputClass, "min-h-[50px]", isDateError ? "border-red-100 focus:ring-red-100/30" : "border-general-30")}
           />
           {isDateError && <p className="text-xs text-red-100 mt-1.5 flex items-center gap-1"><AlertCircle className="w-3 h-3"/> Tanggal tidak valid</p>}
         </div>
@@ -143,7 +160,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
               id="time"
               value={formData.time}
               onChange={(e) => updateFormData({ time: e.target.value })}
-              className={cn(commonInputClass, isTimeError ? "border-red-100" : "border-general-30")}
+              className={cn(commonInputClass, "min-h-[50px]", isTimeError ? "border-red-100" : "border-general-30")}
             />
             <div className="relative w-32 shrink-0">
                 <select
@@ -226,7 +243,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
       {formData.district && (
         <div className="pt-2">
             <label className={labelClass}>Titik Peta (Opsional)</label>
-            <Suspense fallback={<div className="h-[240px] bg-general-20 rounded-xl flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-100" /></div>}>
+            <Suspense fallback={<div className="h-[400px] bg-general-20 rounded-xl flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-100" /></div>}>
                 <LocationMapPreview
                     provinceName={locationNames.province}
                     cityName={locationNames.city}

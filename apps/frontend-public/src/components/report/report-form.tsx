@@ -5,7 +5,7 @@ import { StepChronologyEvidence } from "./step-chronology-evidence"
 import { StepIdentityConfirmation } from "./step-identity-confirmation"
 import { reportsService, type CreateReportRequest, type ReportCategory, type ReporterRelation } from "@/services/reports"
 import { cn } from "@/lib/utils"
-import { CheckCircle2, ArrowLeft, ArrowRight, Send } from "lucide-react"
+import { CheckCircle2, ArrowLeft, ArrowRight, Send, Loader2 } from "lucide-react"
 
 const STEPS = [
   { id: 1, title: "Lokasi", subtitle: "Detail Lokasi" },
@@ -84,35 +84,28 @@ function ReportFormComponent() {
       setIsSubmitted(true)
       setSubmitError(null)
     },
-    // PERBAIKAN: Handler error yang lebih robust untuk menangani object ZodError
     onError: (error: any) => {
       let message = "Terjadi kesalahan saat mengirim laporan."
-
-      // Cek apakah error adalah objek Zod (memiliki properti issues)
       if (error?.issues && Array.isArray(error.issues) && error.issues.length > 0) {
-        message = error.issues[0].message // Ambil pesan dari isu pertama
-      } 
-      // Cek apakah error.message itu sendiri adalah objek (kasus yang Anda alami)
-      else if (typeof error?.message === 'object' && error.message !== null) {
+        message = error.issues[0].message
+      } else if (typeof error?.message === 'object' && error.message !== null) {
          if (error.message.issues && Array.isArray(error.message.issues)) {
             message = error.message.issues[0].message
          } else {
-            message = "Terjadi kesalahan validasi data." // Fallback jika strukturnya tidak jelas
+            message = "Terjadi kesalahan validasi data."
          }
-      }
-      // Error standar JS
-      else if (typeof error?.message === 'string') {
+      } else if (typeof error?.message === 'string') {
         message = error.message
       }
-
       setSubmitError(message)
     },
   })
 
+  // --- PERBAIKAN VALIDASI ---
   const isStepValid = useMemo(() => {
     if (currentStep === 1) {
       return (
-        formData.title.trim().length > 0 &&
+        formData.title.trim().length >= 10 && // FIX: Wajib minimal 10 karakter baru bisa next
         formData.category &&
         formData.date &&
         formData.time &&
@@ -162,33 +155,18 @@ function ReportFormComponent() {
   return (
     <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-blue-30/30 overflow-hidden w-full transition-all">
       
-      {/* Progress Bar Header */}
       <div className="bg-general-20/30 border-b border-general-30 px-5 py-5 md:px-10 md:py-6">
         <div className="flex items-center justify-between relative max-w-3xl mx-auto">
           <div className="absolute left-0 top-1/2 w-full h-1 bg-general-30 -z-10 hidden sm:block transform -translate-y-1/2 rounded-full mx-4" />
-          
           {STEPS.map((step) => {
             const isActive = currentStep >= step.id
             const isCurrent = currentStep === step.id
-            
             return (
               <div key={step.id} className="flex flex-col items-center relative z-10 bg-white sm:px-4 rounded-full py-1">
-                <div
-                  className={cn(
-                    "w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center text-sm md:text-base font-bold transition-all duration-300 border-2",
-                    isActive 
-                      ? "bg-blue-100 border-blue-100 text-white shadow-md scale-105" 
-                      : "bg-white border-general-30 text-general-50"
-                  )}
-                >
+                <div className={cn("w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center text-sm md:text-base font-bold transition-all duration-300 border-2", isActive ? "bg-blue-100 border-blue-100 text-white shadow-md scale-105" : "bg-white border-general-30 text-general-50")}>
                   {step.id}
                 </div>
-                <p 
-                  className={cn(
-                    "text-[10px] md:text-xs font-bold mt-2 uppercase tracking-wide transition-colors hidden sm:block", 
-                    isCurrent ? "text-blue-100" : "text-general-50"
-                  )}
-                >
+                <p className={cn("text-[10px] md:text-xs font-bold mt-2 uppercase tracking-wide transition-colors hidden sm:block", isCurrent ? "text-blue-100" : "text-general-50")}>
                   {step.title}
                 </p>
               </div>
@@ -197,7 +175,6 @@ function ReportFormComponent() {
         </div>
       </div>
 
-      {/* Form Content */}
       <div className="p-5 md:p-10 lg:p-12">
         <div className="mb-8 md:mb-10 text-center sm:text-left">
           <h2 className="text-xl md:text-3xl font-heading font-bold text-general-100">
@@ -206,7 +183,6 @@ function ReportFormComponent() {
           <p className="text-general-60 text-xs md:text-sm mt-1.5">Lengkapi data berikut dengan informasi yang valid.</p>
         </div>
 
-        {/* Konten Step */}
         <div className="w-full">
           {currentStep === 1 && <StepLocationCategory formData={formData} updateFormData={updateFormData} />}
           {currentStep === 2 && <StepChronologyEvidence formData={formData} updateFormData={updateFormData} />}
@@ -214,24 +190,18 @@ function ReportFormComponent() {
         </div>
 
         {submitError && (
-          <div className="mt-6 md:mt-8 p-4 bg-red-20 border border-red-100 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-100 mt-2 shrink-0" />
+          // FIX: Hapus tanda titik (div w-1.5 h-1.5)
+          <div className="mt-6 md:mt-8 p-4 bg-red-20 border border-red-100 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
             <p className="text-red-100 body-sm font-medium">{submitError}</p>
           </div>
         )}
 
-        {/* Navigation Buttons */}
         <div className="flex flex-col-reverse sm:flex-row items-center justify-between mt-10 md:mt-12 pt-6 md:pt-8 border-t border-general-30 gap-3 sm:gap-0">
           <button
             type="button"
             onClick={prevStep}
             disabled={currentStep === 1}
-            className={cn(
-              "w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-colors",
-              currentStep > 1 
-                ? "text-general-60 hover:bg-general-20 hover:text-blue-100 border border-transparent hover:border-general-30" 
-                : "text-transparent cursor-default hidden sm:flex"
-            )}
+            className={cn("w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-colors", currentStep > 1 ? "text-general-60 hover:bg-general-20 hover:text-blue-100 border border-transparent hover:border-general-30" : "text-transparent cursor-default hidden sm:flex")}
           >
             <ArrowLeft className="w-4 h-4" />
             Sebelumnya
@@ -255,7 +225,10 @@ function ReportFormComponent() {
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-10 py-3.5 bg-orange-100 hover:bg-orange-90 text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-100/20 hover:shadow-orange-100/40 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 body-sm"
             >
               {createReportMutation.isPending ? (
-                <>Mengirim...</> 
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Mengirim...
+                </> 
               ) : (
                 <>
                   Kirim Laporan

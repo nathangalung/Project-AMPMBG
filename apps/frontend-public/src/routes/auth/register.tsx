@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState, useEffect, useCallback } from "react"
-import { Eye, EyeOff, CheckCircle2, Loader2, ArrowLeft, ShieldCheck, UserPlus } from "lucide-react"
+import { Eye, EyeOff, CheckCircle2, Loader2, ArrowLeft, ShieldCheck } from "lucide-react" // UserPlus dihapus dari import
 import { authService } from "@/services/auth"
 
 declare global {
@@ -38,7 +38,6 @@ function RegisterPage() {
   const [requiresPhone, setRequiresPhone] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState("")
 
-  // --- LOGIKA ASLI (TETAP SAMA PERSIS) ---
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -144,7 +143,6 @@ function RegisterPage() {
         passwordConfirmation: formData.confirmPassword,
       })
       setSuccess(true)
-      // Redirect to login after 2 seconds
       setTimeout(() => {
         navigate({ to: "/auth/login" })
       }, 2000)
@@ -157,7 +155,7 @@ function RegisterPage() {
 
   return (
     <AuthLayout>
-      {/* HEADER SECTION AESTHETIC */}
+      {/* HEADER SECTION */}
       <div className="mb-8 relative">
         <div className="absolute -top-6 -right-6 w-16 h-16 bg-blue-100/10 rounded-full blur-2xl" />
         <h1 className="h3 font-heading font-bold text-general-100 mb-2">
@@ -174,22 +172,21 @@ function RegisterPage() {
             <CheckCircle2 className="w-5 h-5 shrink-0" />
             <div>
               <p className="font-bold">Registrasi Berhasil!</p>
-              <p className="text-xs mt-0.5">Mengalihkan ke halaman login...</p>
+              <p className="text-xs mt-0.5">Mengalihkan ke halaman masuk...</p>
             </div>
           </div>
         )}
         {error && (
-          <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-start gap-3 animate-in fade-in">
-            <div className="w-1.5 h-1.5 bg-red-100 rounded-full mt-2 shrink-0" />
+          <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-center animate-in fade-in">
             {error}
           </div>
         )}
 
         {/* Nama Lengkap */}
-        <div className="group bg-white border border-general-30 rounded-xl px-4 py-2 transition-all duration-300 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 hover:border-blue-100/50">
-          <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
+        <fieldset className="group bg-white border border-general-30 rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 hover:border-blue-100/50">
+          <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">
             Nama Lengkap
-          </label>
+          </legend>
           <input
             name="name"
             value={formData.name}
@@ -198,45 +195,44 @@ function RegisterPage() {
             placeholder="Masukkan nama Anda"
             className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
           />
-        </div>
+        </fieldset>
 
         {/* Surel (Email) */}
         <div className="space-y-1">
-          <div className={`group bg-white border rounded-xl px-4 py-2 transition-all duration-300 ${
+          <fieldset className={`group bg-white border rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:shadow-md ${
             formData.email.length > 0 && !isEmailValid
               ? "border-red-100 ring-2 ring-red-100/5"
               : "border-general-30 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 hover:border-blue-100/50"
           }`}>
-            <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
+            <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">
               Surel
-            </label>
+            </legend>
             <input
               name="email"
               value={formData.email}
               onChange={handleChange}
               type="email"
-              placeholder="Contoh: a@b.com"
+              placeholder="nama@domain.com"
               className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
             />
-          </div>
+          </fieldset>
           {formData.email.length > 0 && !isEmailValid && (
-            <p className="text-[10px] text-red-100 px-1 font-medium ml-1">* Format email tidak valid</p>
+            <p className="text-[10px] text-red-100 px-1 font-medium ml-1">Format email tidak valid</p>
           )}
         </div>
 
         {/* Nomor Telepon */}
         <div className="space-y-1">
-          <div className={`group bg-white border rounded-xl px-4 py-2 transition-all duration-300 ${
+          <fieldset className={`group bg-white border rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:shadow-md ${
               formData.phone.length > 0 && !isPhoneValid 
                 ? "border-red-100 ring-2 ring-red-100/5" 
                 : "border-general-30 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 hover:border-blue-100/50"
             }`}>
-            <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
+            <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">
               Nomor Telepon
-            </label>
-            
+            </legend>
             <div className="flex items-center gap-3">
-                <span className="text-general-100 font-bold body-sm bg-general-20 px-2 py-1 rounded-md text-xs select-none border border-general-30">
+                <span className="text-general-100 font-bold body-sm bg-general-20 px-2 py-0.5 rounded-md text-xs select-none border border-general-30">
                     +62
                 </span>
                 <input
@@ -249,10 +245,9 @@ function RegisterPage() {
                     className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium tracking-wide"
                 />
             </div>
-          </div>
+          </fieldset>
           
           <div className="flex justify-between items-start px-1 ml-1">
-             <p className="text-[10px] text-general-50 font-medium">Tanpa angka 0 di awal</p>
              {formData.phone.length > 0 && !isPhoneValid && (
                 <p className="text-[10px] text-red-100 font-bold">Wajib 9-12 Angka</p>
              )}
@@ -262,14 +257,14 @@ function RegisterPage() {
         {/* Password & Confirm Password */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           <div className="flex flex-col gap-1">
-            <div className={`group bg-white border rounded-xl px-4 py-2 transition-all duration-300 ${
+            <fieldset className={`group bg-white border rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:shadow-md ${
               formData.password.length > 0 && !isPasswordValid
                 ? "border-red-100 ring-2 ring-red-100/5" 
                 : "border-general-30 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 hover:border-blue-100/50"
             }`}>
-              <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
+              <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">
                 Kata Sandi
-              </label>
+              </legend>
               <div className="flex items-center gap-2">
                 <input
                   name="password"
@@ -287,18 +282,18 @@ function RegisterPage() {
                   {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
               </div>
-            </div>
+            </fieldset>
           </div>
 
           <div className="flex flex-col gap-1">
-            <div className={`group bg-white border rounded-xl px-4 py-2 transition-all duration-300 ${
+            <fieldset className={`group bg-white border rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:shadow-md ${
                formData.confirmPassword.length > 0 && !isMatch
                 ? "border-red-100 ring-2 ring-red-100/5"
                 : "border-general-30 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 hover:border-blue-100/50"
             }`}>
-              <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
+              <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">
                 Konfirmasi
-              </label>
+              </legend>
               <div className="flex items-center gap-2">
                 <input
                   name="confirmPassword"
@@ -316,9 +311,9 @@ function RegisterPage() {
                   {showConfirmPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
               </div>
-            </div>
+            </fieldset>
             {formData.confirmPassword.length > 0 && !isMatch && (
-              <p className="text-[10px] text-red-100 px-1 font-medium ml-1">* Sandi tidak cocok</p>
+              <p className="text-[10px] text-red-100 px-1 font-medium ml-1">Sandi tidak cocok</p>
             )}
           </div>
         </div>
@@ -347,7 +342,7 @@ function RegisterPage() {
           </div>
         )}
 
-        {/* Terms - Custom Checkbox UI */}
+        {/* Terms */}
         <div className="pt-2">
           <label className="flex items-start gap-3 cursor-pointer select-none group">
             <div className="relative flex items-center mt-0.5">
@@ -376,11 +371,7 @@ function RegisterPage() {
             isValid && !isLoading ? "cursor-pointer" : "cursor-not-allowed"
           }`}
         >
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin text-white/90" />
-          ) : (
-            <UserPlus className="w-5 h-5" />
-          )}
+          {isLoading && <Loader2 className="w-5 h-5 animate-spin text-white/90" />}
           {isLoading ? "Memproses..." : "Daftar"}
         </button>
 
@@ -433,8 +424,8 @@ function RegisterPage() {
             )}
 
             <form onSubmit={handlePhoneSubmit} className="space-y-4">
-              <div className="group bg-white border border-general-30 rounded-xl px-4 py-2.5 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10">
-                <label className="block body-xs font-semibold text-general-60 mb-0.5">Nomor Telepon</label>
+              <fieldset className="group bg-white border border-general-30 rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 focus-within:shadow-md">
+                <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">Nomor Telepon</legend>
                 <div className="flex items-center gap-2">
                   <span className="text-general-60 body-sm font-medium">+62</span>
                   <input
@@ -447,7 +438,7 @@ function RegisterPage() {
                     maxLength={12}
                   />
                 </div>
-              </div>
+              </fieldset>
 
               <button
                 type="submit"

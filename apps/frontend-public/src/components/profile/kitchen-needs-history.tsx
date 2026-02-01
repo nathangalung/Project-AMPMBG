@@ -1,6 +1,9 @@
-import { memo, useCallback } from "react"
+import { memo, useCallback, useState, useMemo, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Loader2, Utensils, Calendar } from "lucide-react"
+import { 
+  Loader2, Utensils, Calendar, 
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight 
+} from "lucide-react"
 import { adminService } from "@/services/admin"
 
 const DATE_OPTIONS: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" }
@@ -33,10 +36,33 @@ const getStatusStyle = (status: string) => {
 }
 
 function KitchenNeedsHistoryComponent() {
+  // --- STATE PAGINATION ---
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
+
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["profile", "kitchen-requests"],
     queryFn: () => adminService.kitchen.getMyRequests(),
   })
+
+  // --- LOGIKA PAGINATION ---
+  const totalPages = Math.ceil(requests.length / itemsPerPage)
+  
+  const currentRequests = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return requests.slice(start, start + itemsPerPage)
+  }, [currentPage, requests])
+
+  // Reset ke halaman 1 jika data berubah
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [requests.length])
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+    }
+  }
 
   const formatDate = useCallback((dateString: string) => new Date(dateString).toLocaleDateString("id-ID", DATE_OPTIONS), [])
 
@@ -61,7 +87,7 @@ function KitchenNeedsHistoryComponent() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] border border-general-30 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] border border-general-30 overflow-hidden flex flex-col">
       
       {/* Header Section */}
       <div className="px-6 py-5 md:px-8 border-b border-general-30 flex items-center gap-3 bg-general-20/30">
@@ -71,7 +97,7 @@ function KitchenNeedsHistoryComponent() {
         <h2 className="text-lg font-bold text-general-100">Riwayat Kebutuhan Dapur</h2>
       </div>
 
-      {/* Desktop Table (Hidden on Mobile) */}
+      {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
           <thead className="bg-blue-20/30 border-b border-general-30">
@@ -84,12 +110,14 @@ function KitchenNeedsHistoryComponent() {
             </tr>
           </thead>
           <tbody className="divide-y divide-general-30">
-            {requests.map((req, index) => {
+            {currentRequests.map((req, index) => {
               const statusStyle = getStatusStyle(req.status)
+              // Hitung nomor urut berdasarkan halaman
+              const itemNumber = (currentPage - 1) * itemsPerPage + index + 1
               
               return (
                 <tr key={req.id} className="hover:bg-blue-20/10 transition-colors">
-                  <td className="px-6 py-4 body-sm text-general-60 font-medium">{index + 1}</td>
+                  <td className="px-6 py-4 body-sm text-general-60 font-medium">{itemNumber}</td>
                   
                   <td className="px-6 py-4 body-sm text-general-80">
                     {formatDate(req.createdAt)}
@@ -117,9 +145,9 @@ function KitchenNeedsHistoryComponent() {
         </table>
       </div>
 
-      {/* Mobile Layout (Cards Style - Modern & Responsive) */}
+      {/* Mobile Layout (Cards Style) */}
       <div className="md:hidden flex flex-col gap-4 p-4 bg-general-20/30">
-        {requests.map((req) => {
+        {currentRequests.map((req) => {
           const statusStyle = getStatusStyle(req.status)
 
           return (
@@ -155,6 +183,69 @@ function KitchenNeedsHistoryComponent() {
           )
         })}
       </div>
+
+      {/* --- PAGINATION CONTROLS --- */}
+      {totalPages > 1 && (
+        <div className="p-4 border-t border-general-30 bg-general-20/30 flex items-center justify-center gap-2 select-none mt-auto">
+          
+          {/* First Page */}
+          <button 
+            onClick={() => handlePageChange(1)} 
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg border border-general-30 bg-white text-general-60 hover:bg-blue-20 hover:text-blue-100 hover:border-blue-30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronsLeft className="w-4 h-4" />
+          </button>
+
+          {/* Prev Page */}
+          <button 
+            onClick={() => handlePageChange(currentPage - 1)} 
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg border border-general-30 bg-white text-general-60 hover:bg-blue-20 hover:text-blue-100 hover:border-blue-30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          {/* Page Numbers */}
+          <div className="flex gap-1.5 mx-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`
+                  w-8 h-8 rounded-lg text-sm font-bold border transition-all flex items-center justify-center
+                  ${currentPage === page 
+                    ? 'bg-blue-100 border-blue-100 text-white shadow-sm' 
+                    : 'bg-white border-general-30 text-general-60 hover:border-blue-100 hover:text-blue-100'
+                  }
+                `}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+
+          {/* Next Page */}
+          <button 
+            onClick={() => handlePageChange(currentPage + 1)} 
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg border border-general-30 bg-white text-general-60 hover:bg-blue-20 hover:text-blue-100 hover:border-blue-30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+
+          {/* Last Page */}
+          <button 
+            onClick={() => handlePageChange(totalPages)} 
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg border border-general-30 bg-white text-general-60 hover:bg-blue-20 hover:text-blue-100 hover:border-blue-30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronsRight className="w-4 h-4" />
+          </button>
+
+        </div>
+      )}
+
     </div>
   )
 }

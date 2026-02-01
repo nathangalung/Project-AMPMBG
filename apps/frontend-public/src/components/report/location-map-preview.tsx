@@ -179,7 +179,7 @@ function LocationMapPreviewComponent({
       </div>
 
       {/* Map Container */}
-      <div className="relative rounded-lg overflow-hidden border border-general-30 h-[200px]">
+      <div className="relative rounded-lg overflow-hidden border border-general-30 h-[400px]">
         <MapContainer
           center={DEFAULT_CENTER}
           zoom={DEFAULT_ZOOM}
@@ -228,10 +228,6 @@ function LocationMapPreviewComponent({
           )}
         </div>
       )}
-
-      <p className="text-xs text-general-50">
-        Klik pada peta untuk menentukan lokasi yang lebih akurat.
-      </p>
     </div>
   )
 }

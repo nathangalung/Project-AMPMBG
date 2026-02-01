@@ -58,8 +58,8 @@ const RISK_LEGEND = [
   },
   {
     label: "Tingkat Sedang",
-    className: "bg-orange-100 text-orange-400 border-orange-30", // Sesuai request
-    indicator: "bg-orange-400",
+    className: "bg-orange-40 text-orange-100 border-orange-40",
+    indicator: "bg-orange-100",
     desc: "Total Skor 7 - 11. Data cukup jelas namun butuh verifikasi tambahan."
   },
   {

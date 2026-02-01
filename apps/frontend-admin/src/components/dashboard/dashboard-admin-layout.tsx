@@ -11,7 +11,7 @@ import {
   Menu,
   X,
   Utensils,
-  Briefcase // Icon baru untuk Manajemen Kebutuhan
+  Briefcase
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -24,16 +24,13 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
   const location = useLocation()
   const [currentUser, setCurrentUser] = useState<{name: string, role: string} | null>(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
-  
-  // State untuk kontrol menu mobile
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // 1. Cek User (Auth Guard)
+  // Auth Guard
   useEffect(() => {
     const userStr = localStorage.getItem("admin_currentUser")
     if (userStr) {
       const admin = JSON.parse(userStr)
-      // Admin dashboard - all users are admins
       if (admin.id && admin.email) {
         setCurrentUser({ name: admin.name, role: admin.adminRole || "Admin" })
       } else {
@@ -44,7 +41,6 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
     }
   }, [navigate])
 
-  // Tutup menu mobile setiap kali pindah halaman
   useEffect(() => {
     setIsMobileMenuOpen(false)
   }, [location.pathname])
@@ -57,7 +53,6 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
     navigate({ to: "/auth/login" })
   }
 
-  // --- CONFIG NAVIGASI SIDEBAR ---
   const navItems = [
     { 
       to: "/dashboard", 
@@ -71,21 +66,18 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
       icon: FileText, 
       exact: false 
     },
-    // MENU PERMINTAAN (Inbox)
     { 
       to: "/dashboard/permintaan-kebutuhan-dapur", 
       label: "Permintaan Dapur", 
       icon: Utensils, 
       exact: false 
     },
-    // MENU BARU: MANAJEMEN KEBUTUHAN (CMS)
     { 
       to: "/dashboard/manajemen-kebutuhan", 
       label: "Manajemen Kebutuhan", 
       icon: Briefcase, 
       exact: false 
     },
-    // ----------------------------
     { 
       to: "/dashboard/akun-admin", 
       label: "Akun Admin", 
@@ -108,7 +100,7 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
   return (
     <div className="flex h-screen w-full bg-general-20 font-sans text-general-100 overflow-hidden">
       
-      {/* --- MOBILE OVERLAY (BACKDROP) --- */}
+      {/* MOBILE OVERLAY */}
       {isMobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm transition-opacity"
@@ -116,14 +108,15 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
         />
       )}
 
-      {/* --- SIDEBAR (RESPONSIVE) --- */}
+      {/* --- SIDEBAR --- */}
       <aside className={cn(
         "fixed inset-y-0 left-0 z-40 w-64 bg-general-20 border-r border-general-30 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         
-        {/* LOGO AREA */}
-        <div className="h-16 lg:h-20 flex items-center justify-between px-6 border-b border-general-30 shrink-0 bg-general-20">
+        {/* LOGO AREA SIDEBAR */}
+        {/* Update: lg:justify-center agar di desktop logo ke tengah, justify-between untuk mobile agar ada space antara logo dan tombol X */}
+        <div className="h-16 lg:h-20 flex items-center justify-between lg:justify-center px-6 border-b border-general-30 shrink-0 bg-general-20 relative">
            <img
              src="/logo_hijau.webp"
              alt="AMP MBG"
@@ -133,7 +126,7 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
            /> 
            <button 
              onClick={() => setIsMobileMenuOpen(false)}
-             className="lg:hidden p-2 text-general-60 hover:bg-general-30 rounded-lg"
+             className="lg:hidden p-2 text-general-60 hover:bg-general-30 rounded-lg absolute right-4"
            >
              <X className="w-5 h-5" />
            </button>
@@ -187,7 +180,8 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
       <div className="flex-1 flex flex-col min-w-0 h-full transition-all duration-300 lg:ml-64">
         
         {/* MOBILE HEADER */}
-        <header className="lg:hidden h-16 flex items-center justify-between px-4 border-b border-general-30 bg-general-20 sticky top-0 z-20 shrink-0">
+        {/* Update: Tambahkan 'relative' dan posisikan img secara absolute di tengah */}
+        <header className="lg:hidden h-16 flex items-center px-4 border-b border-general-30 bg-general-20 sticky top-0 z-20 shrink-0 relative">
           <div className="flex items-center gap-3">
              <button 
                onClick={() => setIsMobileMenuOpen(true)}
@@ -197,10 +191,12 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
              </button>
              <span className="font-heading font-bold text-lg text-general-100">Dashboard</span>
           </div>
+          
+          {/* Logo Tengah Absolut */}
           <img
              src="/logo_hijau.webp"
              alt="Logo"
-             className="h-8 w-auto object-contain"
+             className="h-8 w-auto object-contain absolute left-1/2 -translate-x-1/2"
            /> 
         </header>
 

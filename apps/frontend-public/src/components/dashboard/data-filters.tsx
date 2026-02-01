@@ -1,6 +1,6 @@
-import { useState, useCallback, memo } from "react"
+import { useState, useCallback, memo, useRef, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Search, ChevronDown, AlertCircle, Loader2 } from "lucide-react"
+import { Search, ChevronDown, AlertCircle, Loader2, Check, RotateCcw } from "lucide-react"
 import { locationsService } from "@/services/locations"
 import { categoriesService } from "@/services/categories"
 
@@ -27,6 +27,106 @@ const REPORT_STATUSES = [
   { value: "resolved", label: "Selesai Ditangani" },
 ]
 
+// --- KOMPONEN CUSTOM SELECT ---
+interface Option {
+  id?: string | number
+  value?: string | number
+  name?: string
+  label?: string
+}
+
+interface CustomSelectProps {
+  label: string
+  value: string
+  options: Option[]
+  onChange: (value: string) => void
+  disabled?: boolean
+  loading?: boolean
+  placeholder?: string
+}
+
+function CustomSelect({ label, value, options, onChange, disabled, loading, placeholder }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const selectedLabel = options.find(opt => String(opt.id || opt.value) === value)?.name || 
+                        options.find(opt => String(opt.id || opt.value) === value)?.label || 
+                        placeholder
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <label className="block text-xs md:text-sm font-medium text-general-80 mb-1.5">
+        {label}
+      </label>
+      
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`
+          w-full h-[42px] px-3 text-left bg-white border rounded-lg text-sm font-medium 
+          flex items-center justify-between transition-all duration-200
+          ${isOpen ? 'border-blue-100 ring-2 ring-blue-100/20' : 'border-general-30 hover:border-blue-100'}
+          ${disabled ? 'bg-general-20 text-general-60 cursor-not-allowed' : 'text-general-100 cursor-pointer'}
+        `}
+      >
+        <span className="truncate block mr-2 text-sm">
+          {loading ? "Memuat..." : (value ? selectedLabel : placeholder)}
+        </span>
+        <div className="text-general-60 shrink-0">
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />}
+        </div>
+      </button>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-general-30 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 left-0 right-0">
+          <div className="max-h-[200px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-general-30 scrollbar-track-transparent">
+            {options.length > 0 ? (
+              options.map((opt) => {
+                const optValue = String(opt.id || opt.value)
+                const optLabel = opt.name || opt.label
+                const isSelected = optValue === value
+
+                return (
+                  <button
+                    key={optValue}
+                    type="button"
+                    onClick={() => {
+                      onChange(optValue)
+                      setIsOpen(false)
+                    }}
+                    className={`
+                      w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between
+                      ${isSelected ? 'bg-blue-100/10 text-blue-100 font-bold' : 'text-general-80 hover:bg-general-20'}
+                    `}
+                  >
+                    <span className="truncate">{optLabel}</span>
+                    {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                  </button>
+                )
+              })
+            ) : (
+              <div className="px-4 py-3 text-xs text-general-50 text-center italic">
+                Tidak ada data
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function DataFiltersComponent({ onFilter }: DataFiltersProps) {
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
@@ -37,6 +137,7 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
   const [status, setStatus] = useState("") 
   const [error, setError] = useState("")
 
+  // --- DATA FETCHING ---
   const { data: provincesData, isLoading: provincesLoading } = useQuery({
     queryKey: ["provinces"],
     queryFn: async () => (await locationsService.getProvinces()).data,
@@ -68,6 +169,7 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
   const districts = districtsData || []
   const categories = categoriesData || []
 
+  // --- HANDLERS ---
   const today = new Date().toISOString().split("T")[0]
   const minDate = "2024-01-01"
 
@@ -80,11 +182,12 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
 
   const handleStartDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => handleDateInput(e, setStartDate), [handleDateInput])
   const handleEndDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => handleDateInput(e, setEndDate), [handleDateInput])
-  const handleProvinceChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => { setProvince(e.target.value); setCity(""); setDistrict("") }, [])
-  const handleCityChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => { setCity(e.target.value); setDistrict("") }, [])
-  const handleDistrictChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setDistrict(e.target.value), [])
-  const handleCategoryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value), [])
-  const handleStatusChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setStatus(e.target.value), [])
+  
+  const handleProvinceChange = useCallback((val: string) => { setProvince(val); setCity(""); setDistrict("") }, [])
+  const handleCityChange = useCallback((val: string) => { setCity(val); setDistrict("") }, [])
+  const handleDistrictChange = useCallback((val: string) => setDistrict(val), [])
+  const handleCategoryChange = useCallback((val: string) => setCategory(val), [])
+  const handleStatusChange = useCallback((val: string) => setStatus(val), [])
 
   const handleSearch = useCallback(() => {
     if (startDate && endDate && startDate > endDate) {
@@ -95,23 +198,42 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
     onFilter({ startDate, endDate, province, city, district, category, status })
   }, [startDate, endDate, province, city, district, category, status, onFilter])
 
+  // --- RESET HANDLER BARU ---
+  const handleReset = useCallback(() => {
+    setStartDate("")
+    setEndDate("")
+    setProvince("")
+    setCity("")
+    setDistrict("")
+    setCategory("")
+    setStatus("")
+    setError("")
+    onFilter({ 
+      startDate: "", 
+      endDate: "", 
+      province: "", 
+      city: "", 
+      district: "", 
+      category: "", 
+      status: "" 
+    })
+  }, [onFilter])
+
   const isDateError = error !== ""
 
-  // Styles Updated: Focus Ring Blue
-  const inputClass = `w-full px-3 py-2.5 bg-white border rounded-lg focus:ring-2 text-sm transition-colors truncate appearance-none disabled:bg-general-20 disabled:text-general-60 disabled:cursor-not-allowed ${
+  // FIX: Menambahkan h-[42px] agar tinggi input tanggal konsisten dengan tombol dan tidak gepeng di mobile
+  const dateInputClass = `w-full h-[42px] px-3 py-2 bg-white border rounded-lg focus:ring-2 text-sm transition-colors truncate appearance-none disabled:bg-general-20 disabled:text-general-60 disabled:cursor-not-allowed ${
     isDateError ? "border-red-100 focus:border-red-100 focus:ring-red-100 text-red-100" : "border-general-30 focus:border-blue-100 focus:ring-blue-100 text-general-100"
   }`
+  
   const labelClass = "block text-xs md:text-sm font-medium text-general-80 mb-1.5"
-  const selectIconClass = "absolute inset-y-0 right-3 flex items-center pointer-events-none text-general-60"
 
   return (
-    <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-blue-30/30 mb-8 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-blue-30/30 mb-8 overflow-visible relative z-10">
       
-      {/* PADDING SAMA DENGAN KOTAK CARA KERJA (p-6 md:p-10) */}
       <div className="p-6 md:p-10">
         
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
-          {/* Judul Biru Formal */}
           <h2 className="text-lg font-bold text-blue-100">Filter Laporan</h2>
           {error && (
             <div className="flex items-center gap-2 text-red-100 text-xs bg-red-20 px-3 py-2 rounded-lg animate-pulse border border-red-100/20 w-full sm:w-auto">
@@ -123,78 +245,85 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-5 items-end">
           
-          <div className="lg:col-span-6">
+          <div className="lg:col-span-6 relative z-0">
             <label htmlFor="startDate" className={labelClass}>Tanggal Mulai</label>
-            <input type="date" id="startDate" value={startDate} min={minDate} max={today} onChange={handleStartDateChange} className={inputClass} />
+            <input type="date" id="startDate" value={startDate} min={minDate} max={today} onChange={handleStartDateChange} className={dateInputClass} />
           </div>
-          <div className="lg:col-span-6">
+          <div className="lg:col-span-6 relative z-0">
             <label htmlFor="endDate" className={labelClass}>Tanggal Akhir</label>
-            <input type="date" id="endDate" value={endDate} min={startDate || minDate} max={today} onChange={handleEndDateChange} className={inputClass} />
+            <input type="date" id="endDate" value={endDate} min={startDate || minDate} max={today} onChange={handleEndDateChange} className={dateInputClass} />
           </div>
 
-          {/* LOKASI */}
-          <div className="lg:col-span-4 relative">
-            <label htmlFor="province" className={labelClass}>Provinsi</label>
-            <div className="relative">
-              <select id="province" value={province} onChange={handleProvinceChange} disabled={provincesLoading} className={`${inputClass} pr-10`}>
-                <option value="">{provincesLoading ? "Memuat..." : "Semua Provinsi"}</option>
-                {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-              <div className={selectIconClass}>{provincesLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}</div>
-            </div>
+          <div className="lg:col-span-4 relative z-50">
+            <CustomSelect 
+              label="Provinsi"
+              value={province}
+              options={provinces}
+              onChange={handleProvinceChange}
+              loading={provincesLoading}
+              placeholder="Semua Provinsi"
+            />
           </div>
 
-          <div className="lg:col-span-4 relative">
-            <label htmlFor="city" className={labelClass}>Kabupaten/Kota</label>
-            <div className="relative">
-              <select id="city" value={city} onChange={handleCityChange} disabled={!province || citiesLoading} className={`${inputClass} pr-10`}>
-                <option value="">{!province ? "Pilih Provinsi" : citiesLoading ? "Memuat..." : "Semua Kota/Kab"}</option>
-                {cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <div className={selectIconClass}>{citiesLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}</div>
-            </div>
+          <div className="lg:col-span-4 relative z-40">
+            <CustomSelect 
+              label="Kabupaten/Kota"
+              value={city}
+              options={cities}
+              onChange={handleCityChange}
+              loading={citiesLoading}
+              disabled={!province}
+              placeholder={!province ? "Pilih Provinsi Dulu" : "Semua Kota/Kab"}
+            />
           </div>
 
-          <div className="lg:col-span-4 relative">
-            <label htmlFor="district" className={labelClass}>Kecamatan</label>
-            <div className="relative">
-              <select id="district" value={district} onChange={handleDistrictChange} disabled={!city || districtsLoading} className={`${inputClass} pr-10`}>
-                <option value="">{!city ? "Pilih Kota" : districtsLoading ? "Memuat..." : "Semua Kecamatan"}</option>
-                {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
-              <div className={selectIconClass}>{districtsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}</div>
-            </div>
+          <div className="lg:col-span-4 relative z-30">
+            <CustomSelect 
+              label="Kecamatan"
+              value={district}
+              options={districts}
+              onChange={handleDistrictChange}
+              loading={districtsLoading}
+              disabled={!city}
+              placeholder={!city ? "Pilih Kota Dulu" : "Semua Kecamatan"}
+            />
           </div>
 
-          {/* META & TOMBOL */}
-          <div className="lg:col-span-4 relative">
-            <label htmlFor="category" className={labelClass}>Kategori</label>
-            <div className="relative">
-              <select id="category" value={category} onChange={handleCategoryChange} disabled={categoriesLoading} className={`${inputClass} pr-10`}>
-                <option value="">{categoriesLoading ? "Memuat..." : "Semua Kategori"}</option>
-                {categories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-              <div className={selectIconClass}>{categoriesLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}</div>
-            </div>
+          <div className="lg:col-span-4 relative z-20">
+            <CustomSelect 
+              label="Kategori"
+              value={category}
+              options={categories}
+              onChange={handleCategoryChange}
+              loading={categoriesLoading}
+              placeholder="Semua Kategori"
+            />
           </div>
 
-          <div className="lg:col-span-4 relative">
-            <label htmlFor="status" className={labelClass}>Status Laporan</label>
-            <div className="relative">
-              <select id="status" value={status} onChange={handleStatusChange} className={`${inputClass} pr-10`}>
-                <option value="">Semua Status</option>
-                {REPORT_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-              </select>
-              <div className={selectIconClass}><ChevronDown className="w-4 h-4" /></div>
-            </div>
+          <div className="lg:col-span-4 relative z-10">
+            <CustomSelect 
+              label="Status Laporan"
+              value={status}
+              options={REPORT_STATUSES}
+              onChange={handleStatusChange}
+              placeholder="Semua Status"
+            />
           </div>
 
-          <div className="lg:col-span-4 sm:col-span-2 lg:col-start-auto">
-            {/* TOMBOL AKSI: ORANYE (Primary Action) */}
+          {/* AREA TOMBOL AKSI */}
+          <div className="lg:col-span-4 sm:col-span-2 lg:col-start-auto relative z-0 flex gap-2">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="px-3 py-2.5 bg-general-20 hover:bg-general-30 text-general-80 font-bold rounded-lg transition-all shadow-sm flex items-center justify-center h-[42px] border border-general-30"
+              title="Reset Filter"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
             <button
               type="button"
               onClick={handleSearch}
-              className="w-full px-4 py-2.5 bg-orange-100 hover:bg-orange-90 text-white font-bold rounded-lg transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2 text-sm h-[42px]"
+              className="flex-1 px-4 py-2.5 bg-orange-100 hover:bg-orange-90 text-white font-bold rounded-lg transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2 text-sm h-[42px]"
             >
               <Search className="w-4 h-4" />
               <span>Cari Data</span>
