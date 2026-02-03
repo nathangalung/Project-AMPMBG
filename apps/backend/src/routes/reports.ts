@@ -13,14 +13,6 @@ type AdminVariables = { admin: AuthAdmin }
 
 const reports = new Hono()
 
-// Public-visible status condition (not pending/invalid)
-const getPublicVisibleCondition = () => or(
-  eq(schema.reports.status, "analyzing"),
-  eq(schema.reports.status, "needs_evidence"),
-  eq(schema.reports.status, "in_progress"),
-  eq(schema.reports.status, "resolved")
-)
-
 const createReportSchema = z.object({
   category: z.enum(["poisoning", "kitchen", "quality", "policy", "implementation", "social"]),
   title: z.string().min(10, "Judul minimal 10 karakter").max(255),
@@ -54,7 +46,7 @@ reports.get("/", zValidator("query", querySchema), async (c) => {
   const { page, limit, category, status, credibilityLevel, provinceId, cityId, districtId, startDate, endDate, search, sortBy, sortOrder } = c.req.valid("query")
   const offset = (page - 1) * limit
 
-  const conditions = [getPublicVisibleCondition()]
+  const conditions = []
 
   if (category) conditions.push(eq(schema.reports.category, category))
   if (status) conditions.push(eq(schema.reports.status, status))
@@ -74,7 +66,7 @@ reports.get("/", zValidator("query", querySchema), async (c) => {
     )
   }
 
-  const whereClause = and(...conditions)
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
   const [data, countResult] = await Promise.all([
     db.query.reports.findMany({
@@ -127,17 +119,15 @@ reports.get("/", zValidator("query", querySchema), async (c) => {
 })
 
 reports.get("/stats", async (c) => {
-  const verifiedCondition = getPublicVisibleCondition()
-
   const [aggregates, byStatusResult, byCategoryResult, byProvinceResult, provinces] = await Promise.all([
     db.select({
       total: sql<number>`count(*)`,
       uniqueCities: sql<number>`count(distinct ${schema.reports.cityId})`,
       highRisk: sql<number>`count(*) filter (where ${schema.reports.category} = 'poisoning')`,
-    }).from(schema.reports).where(verifiedCondition),
-    db.select({ status: schema.reports.status, count: sql<number>`count(*)` }).from(schema.reports).where(verifiedCondition).groupBy(schema.reports.status),
-    db.select({ category: schema.reports.category, count: sql<number>`count(*)` }).from(schema.reports).where(verifiedCondition).groupBy(schema.reports.category),
-    db.select({ provinceId: schema.reports.provinceId, count: sql<number>`count(*)` }).from(schema.reports).where(verifiedCondition).groupBy(schema.reports.provinceId).limit(10),
+    }).from(schema.reports),
+    db.select({ status: schema.reports.status, count: sql<number>`count(*)` }).from(schema.reports).groupBy(schema.reports.status),
+    db.select({ category: schema.reports.category, count: sql<number>`count(*)` }).from(schema.reports).groupBy(schema.reports.category),
+    db.select({ provinceId: schema.reports.provinceId, count: sql<number>`count(*)` }).from(schema.reports).groupBy(schema.reports.provinceId).limit(10),
     db.query.provinces.findMany({ columns: { id: true, name: true } }),
   ])
 
@@ -162,20 +152,16 @@ reports.get("/stats", async (c) => {
 
 // Summary endpoint with correct counts from separated tables
 reports.get("/summary", async (c) => {
-  const verifiedCondition = getPublicVisibleCondition()
-
-  const [totalCount, aggregates, topCategoryResult, userCount, adminCount, memberStats] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(schema.reports),
+  const [aggregates, topCategoryResult, userCount, adminCount, memberStats] = await Promise.all([
     db.select({
-      verified: sql<number>`count(*)`,
+      total: sql<number>`count(*)`,
       uniqueCities: sql<number>`count(distinct ${schema.reports.cityId})`,
       highRisk: sql<number>`count(*) filter (where ${schema.reports.credibilityLevel} = 'high')`,
       mediumRisk: sql<number>`count(*) filter (where ${schema.reports.credibilityLevel} = 'medium')`,
       lowRisk: sql<number>`count(*) filter (where ${schema.reports.credibilityLevel} = 'low')`,
-    }).from(schema.reports).where(verifiedCondition),
+    }).from(schema.reports),
     db.select({ category: schema.reports.category, count: sql<number>`count(*)` })
       .from(schema.reports)
-      .where(verifiedCondition)
       .groupBy(schema.reports.category)
       .orderBy(desc(sql`count(*)`))
       .limit(1),
@@ -188,8 +174,7 @@ reports.get("/summary", async (c) => {
   ])
 
   return c.json({
-    total: Number(totalCount[0]?.count || 0),
-    verified: Number(aggregates[0]?.verified || 0),
+    total: Number(aggregates[0]?.total || 0),
     uniqueCities: Number(aggregates[0]?.uniqueCities || 0),
     highRisk: Number(aggregates[0]?.highRisk || 0),
     mediumRisk: Number(aggregates[0]?.mediumRisk || 0),
@@ -236,7 +221,6 @@ reports.get("/recent", async (c) => {
     limit: 6,
     orderBy: [desc(schema.reports.createdAt)],
     with: { province: true, city: true },
-    where: getPublicVisibleCondition(),
   })
 
   return c.json({

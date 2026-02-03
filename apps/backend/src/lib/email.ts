@@ -1,15 +1,4 @@
-import nodemailer from "nodemailer"
-
-// SMTP configuration
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-})
+import { Resend } from "resend"
 
 interface EmailOptions {
   to: string
@@ -17,25 +6,38 @@ interface EmailOptions {
   html: string
 }
 
-// Send email
+// Send email using Resend (HTTP-based, not blocked by cloud providers)
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.error("[Email] SMTP credentials not configured")
+    if (!process.env.RESEND_API_KEY) {
+      console.error("[Email] RESEND_API_KEY not configured")
       return false
     }
 
-    await transporter.sendMail({
-      from: `"AMP MBG" <${process.env.SMTP_USER}>`,
+    console.log("[Email] Attempting to send email to:", options.to)
+
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev"
+
+    const { data, error } = await resend.emails.send({
+      from: fromEmail,
       to: options.to,
       subject: options.subject,
       html: options.html,
     })
 
-    console.log(`[Email] Sent to ${options.to}`)
+    if (error) {
+      console.error("[Email] Resend error:", error)
+      return false
+    }
+
+    console.log(`[Email] Successfully sent to ${options.to}`, data)
     return true
   } catch (error) {
     console.error("[Email] Failed to send:", error)
+    if (error instanceof Error) {
+      console.error("[Email] Error message:", error.message)
+    }
     return false
   }
 }

@@ -4,6 +4,7 @@ import { StepLocationCategory } from "./step-location-category"
 import { StepChronologyEvidence } from "./step-chronology-evidence"
 import { StepIdentityConfirmation } from "./step-identity-confirmation"
 import { reportsService, type CreateReportRequest, type ReportCategory, type ReporterRelation } from "@/services/reports"
+import { queryClient } from "@/lib/query-client"
 import { cn } from "@/lib/utils"
 import { CheckCircle2, ArrowLeft, ArrowRight, Send, Loader2 } from "lucide-react"
 
@@ -83,6 +84,7 @@ function ReportFormComponent() {
     onSuccess: () => {
       setIsSubmitted(true)
       setSubmitError(null)
+      queryClient.invalidateQueries({ queryKey: ["profile", "reports"] })
     },
     onError: (error: any) => {
       let message = "Terjadi kesalahan saat mengirim laporan."

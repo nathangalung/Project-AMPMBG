@@ -5,7 +5,8 @@ import { Footer } from "@/components/layout/footer"
 import { authService } from "@/services/auth"
 import { adminService, type KitchenNeedItem } from "@/services/admin"
 import { useQuery } from "@tanstack/react-query"
-import { 
+import { queryClient } from "@/lib/query-client"
+import {
   X, CheckCircle2, Send, Loader2, ArrowRight, Search, ChevronLeft, ChevronRight
 } from "lucide-react"
 
@@ -273,6 +274,7 @@ function RequestModal({ need, onClose }: { need: KitchenNeedItem, onClose: () =>
         details: formData.details,
       })
       setIsSuccess(true)
+      queryClient.invalidateQueries({ queryKey: ["profile", "kitchen-requests"] })
     } catch (error) {
       console.error(error)
     } finally {

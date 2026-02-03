@@ -80,7 +80,7 @@ export const publics = pgTable("publics", {
 
 export const members = pgTable("members", {
   id: uuid("id").defaultRandom().primaryKey(),
-  publicId: uuid("public_id").references(() => publics.id, { onDelete: "cascade" }).unique().notNull(),
+  publicId: uuid("public_id").references(() => publics.id, { onDelete: "cascade" }).notNull(),
   memberType: memberTypeEnum("member_type").notNull(),
   organizationName: varchar("organization_name", { length: 255 }).notNull(),
   organizationEmail: varchar("organization_email", { length: 255 }),

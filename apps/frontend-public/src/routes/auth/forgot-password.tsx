@@ -44,10 +44,13 @@ function ForgotPasswordPage() {
             <CheckCircle2 className="w-10 h-10 text-green-100" />
           </div>
           <h1 className="h3 font-heading font-bold text-general-100 mb-3">Cek Surel Anda</h1>
-          <p className="body-md text-general-60 mb-8 leading-relaxed">
-            Kami telah mengirimkan tautan untuk mengatur ulang kata sandi ke <strong className="text-general-100">{email}</strong>.
+          <p className="body-md text-general-60 mb-6 leading-relaxed">
+            Jika <strong className="text-general-100">{email}</strong> terdaftar di sistem kami, tautan untuk mengatur ulang kata sandi akan dikirim ke surel tersebut.
           </p>
-          
+          <p className="body-sm text-general-50 mb-8 leading-relaxed">
+            Tidak menerima surel? Periksa folder spam atau pastikan alamat surel yang Anda masukkan sudah terdaftar.
+          </p>
+
           <Link
             to="/auth/login"
             className="block w-full py-3.5 bg-blue-100 hover:bg-blue-90 text-white font-heading font-bold rounded-xl transition-all shadow-lg shadow-blue-100/20 hover:shadow-blue-100/40 transform hover:-translate-y-0.5 body-sm text-center"
@@ -55,11 +58,11 @@ function ForgotPasswordPage() {
             Kembali ke Halaman Masuk
           </Link>
 
-          <button 
+          <button
             onClick={() => setIsSubmitted(false)}
             className="mt-6 text-blue-100 font-bold hover:text-orange-100 transition-colors body-sm hover:underline underline-offset-4"
           >
-            Kirim ulang tautan
+            Coba dengan surel lain
           </button>
         </div>
       ) : (

@@ -535,13 +535,18 @@ auth.post("/forgot-password", zValidator("json", forgotPasswordSchema), async (c
 
   if (!emailSent) {
     console.error("[Forgot Password] Failed to send email to:", publicUser.email)
+    console.error("[Forgot Password] Check RESEND_API_KEY environment variable")
+  } else {
+    console.log("[Forgot Password] Email sent successfully to:", publicUser.email)
   }
 
   // Return token in dev mode for testing
   const isDev = process.env.NODE_ENV !== "production"
   return c.json({
-    message: "Jika email terdaftar, kami akan mengirimkan link reset password",
-    ...(isDev && { token, resetUrl }),
+    message: emailSent
+      ? "Link reset password telah dikirim ke email Anda"
+      : "Jika email terdaftar, kami akan mengirimkan link reset password",
+    ...(isDev && { token, resetUrl, emailSent }),
   })
 })
 
@@ -688,12 +693,17 @@ auth.post("/apply-member", authMiddleware, zValidator("json", applyMemberSchema)
   const authUser = c.get("user")
   const data = c.req.valid("json")
 
+  // Check for duplicate organization name + email combination
   const existingMember = await db.query.members.findFirst({
-    where: eq(schema.members.publicId, authUser.id),
+    where: and(
+      eq(schema.members.publicId, authUser.id),
+      eq(schema.members.organizationName, data.organizationName),
+      eq(schema.members.organizationEmail, data.organizationEmail)
+    ),
   })
 
   if (existingMember) {
-    return c.json({ error: "Anda sudah terdaftar sebagai anggota" }, 400)
+    return c.json({ error: "Anda sudah mendaftarkan organisasi dengan nama dan email yang sama" }, 400)
   }
 
   await db.insert(schema.members).values({
