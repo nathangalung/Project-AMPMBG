@@ -535,7 +535,7 @@ auth.post("/forgot-password", zValidator("json", forgotPasswordSchema), async (c
 
   if (!emailSent) {
     console.error("[Forgot Password] Failed to send email to:", publicUser.email)
-    console.error("[Forgot Password] Check RESEND_API_KEY environment variable")
+    console.error("[Forgot Password] Check SMTP environment variables")
   } else {
     console.log("[Forgot Password] Email sent successfully to:", publicUser.email)
   }

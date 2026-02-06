@@ -104,16 +104,16 @@ function ResetPasswordPage() {
 
           <Link
             to="/auth/forgot-password"
-            className="block w-full py-2.5 bg-blue-100 hover:bg-blue-90 text-general-20 font-heading font-semibold rounded-lg transition-colors shadow-sm body-sm text-center"
+            className="block w-full py-3.5 bg-gradient-to-r from-blue-100 to-blue-90 hover:from-blue-90 hover:to-blue-100 text-white font-heading font-bold rounded-xl transition-all shadow-lg shadow-blue-100/20 hover:shadow-blue-100/40 transform hover:-translate-y-0.5 active:scale-[0.98] text-center body-sm"
           >
             Minta Tautan Baru
           </Link>
 
           <Link
             to="/auth/login"
-            className="inline-flex items-center gap-2 mt-6 text-general-60 hover:text-blue-100 transition-colors body-sm font-medium"
+            className="inline-flex items-center gap-2 mt-6 px-5 py-2 rounded-full text-general-60 hover:text-blue-100 hover:bg-blue-20/50 transition-all duration-300 body-sm font-semibold group"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Kembali ke Masuk
           </Link>
         </div>
@@ -137,7 +137,7 @@ function ResetPasswordPage() {
 
           <Link
             to="/auth/login"
-            className="block w-full py-2.5 bg-blue-100 hover:bg-blue-90 text-general-20 font-heading font-semibold rounded-lg transition-colors shadow-sm body-sm text-center"
+            className="block w-full py-3.5 bg-gradient-to-r from-blue-100 to-blue-90 hover:from-blue-90 hover:to-blue-100 text-white font-heading font-bold rounded-xl transition-all shadow-lg shadow-blue-100/20 hover:shadow-blue-100/40 transform hover:-translate-y-0.5 active:scale-[0.98] text-center body-sm"
           >
             Masuk Sekarang
           </Link>
@@ -149,135 +149,136 @@ function ResetPasswordPage() {
   // Reset form
   return (
     <AuthLayout>
-      {/* Back button */}
-      <div className="mb-6">
-        <Link
-          to="/auth/login"
-          className="inline-flex items-center gap-2 text-general-60 hover:text-blue-100 transition-colors body-sm font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Kembali ke Masuk
-        </Link>
+      {/* Header */}
+      <div className="mb-10 relative">
+        <div className="absolute -top-10 -left-10 w-20 h-20 bg-blue-100/10 rounded-full blur-2xl" />
+        <h1 className="h3 font-heading font-bold text-general-100 mb-2 relative z-10">
+          Atur Ulang <span className="text-blue-100">Kata Sandi</span>
+        </h1>
+        <p className="body-md text-general-60">Masukkan kata sandi baru untuk akun Anda.</p>
       </div>
 
-      <div className="animate-in fade-in duration-300">
-        <div className="mb-8">
-          <h1 className="h3 text-general-100 mb-2">Atur Ulang Kata Sandi</h1>
-          <p className="body-md text-general-60">
-            Masukkan kata sandi baru untuk akun Anda.
-          </p>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-center gap-3 animate-in fade-in">
+            {error}
+          </div>
+        )}
+
+        {/* Password Field */}
+        <div className="space-y-1">
+          <fieldset className={`group bg-white border rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:shadow-md ${
+            password.length > 0 && !isPasswordValid
+              ? "border-red-100 ring-2 ring-red-100/5"
+              : "border-general-30 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10"
+          }`}>
+            <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">
+              Kata Sandi Baru
+            </legend>
+            <div className="flex items-center gap-3">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Masukkan kata sandi baru"
+                className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-general-40 hover:text-blue-100 transition-colors p-1"
+              >
+                {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+              </button>
+            </div>
+          </fieldset>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {error && (
-            <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-center gap-3 animate-in fade-in">
-              <div className="w-1.5 h-1.5 bg-red-100 rounded-full shrink-0" />
-              {error}
+        {/* Password Requirements */}
+        {password.length > 0 && !isPasswordValid && (
+          <div className="bg-red-20/50 border border-red-100/30 p-3 rounded-xl animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center gap-2 mb-2">
+              <ShieldCheck className="w-4 h-4 text-red-600" />
+              <p className="text-[11px] font-bold text-red-600">Syarat Keamanan Kata Sandi:</p>
             </div>
-          )}
-
-          {/* Password Field */}
-          <div className="space-y-1">
-            <div className={`group bg-white border rounded-xl px-4 py-2.5 transition-all duration-300 ${
-              password.length > 0 && !isPasswordValid
-                ? "border-red-100 ring-2 ring-red-100/5"
-                : "border-general-30 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10"
-            }`}>
-              <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
-                Kata Sandi Baru
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Masukkan kata sandi baru"
-                  className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-general-40 hover:text-blue-100 transition-colors p-1"
-                >
-                  {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
+            <ul className="text-[10px] text-red-500 grid grid-cols-2 gap-x-2 gap-y-1 pl-1">
+              <li className={`flex items-center gap-1.5 ${password.length >= 8 ? "text-green-600 font-bold" : ""}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${password.length >= 8 ? "bg-green-600" : "bg-red-300"}`} /> Min. 8 Karakter
+              </li>
+              <li className={`flex items-center gap-1.5 ${/[A-Z]/.test(password) ? "text-green-600 font-bold" : ""}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${/[A-Z]/.test(password) ? "bg-green-600" : "bg-red-300"}`} /> Huruf Besar
+              </li>
+              <li className={`flex items-center gap-1.5 ${/[a-z]/.test(password) ? "text-green-600 font-bold" : ""}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${/[a-z]/.test(password) ? "bg-green-600" : "bg-red-300"}`} /> Huruf Kecil
+              </li>
+              <li className={`flex items-center gap-1.5 ${/[0-9]/.test(password) ? "text-green-600 font-bold" : ""}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${/[0-9]/.test(password) ? "bg-green-600" : "bg-red-300"}`} /> Angka
+              </li>
+            </ul>
           </div>
+        )}
 
-          {/* Password Requirements */}
-          {password.length > 0 && !isPasswordValid && (
-            <div className="bg-red-20/50 border border-red-100/30 p-3 rounded-xl animate-in fade-in slide-in-from-top-1">
-              <div className="flex items-center gap-2 mb-2">
-                <ShieldCheck className="w-4 h-4 text-red-600" />
-                <p className="text-[11px] font-bold text-red-600">Syarat Keamanan Kata Sandi:</p>
-              </div>
-              <ul className="text-[10px] text-red-500 grid grid-cols-2 gap-x-2 gap-y-1 pl-1">
-                <li className={`flex items-center gap-1.5 ${password.length >= 8 ? "text-green-600 font-bold" : ""}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${password.length >= 8 ? "bg-green-600" : "bg-red-300"}`} /> Min. 8 Karakter
-                </li>
-                <li className={`flex items-center gap-1.5 ${/[A-Z]/.test(password) ? "text-green-600 font-bold" : ""}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${/[A-Z]/.test(password) ? "bg-green-600" : "bg-red-300"}`} /> Huruf Besar
-                </li>
-                <li className={`flex items-center gap-1.5 ${/[a-z]/.test(password) ? "text-green-600 font-bold" : ""}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${/[a-z]/.test(password) ? "bg-green-600" : "bg-red-300"}`} /> Huruf Kecil
-                </li>
-                <li className={`flex items-center gap-1.5 ${/[0-9]/.test(password) ? "text-green-600 font-bold" : ""}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${/[0-9]/.test(password) ? "bg-green-600" : "bg-red-300"}`} /> Angka
-                </li>
-              </ul>
+        {/* Confirm Password Field */}
+        <div className="space-y-1">
+          <fieldset className={`group bg-white border rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:shadow-md ${
+            confirmPassword.length > 0 && !isMatch
+              ? "border-red-100 ring-2 ring-red-100/5"
+              : "border-general-30 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10"
+          }`}>
+            <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">
+              Konfirmasi Kata Sandi
+            </legend>
+            <div className="flex items-center gap-3">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Ulangi kata sandi baru"
+                className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="text-general-40 hover:text-blue-100 transition-colors p-1"
+              >
+                {showConfirmPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+              </button>
             </div>
+          </fieldset>
+          {confirmPassword.length > 0 && !isMatch && (
+            <p className="text-[10px] text-red-100 font-medium px-1">* Kata sandi tidak cocok</p>
           )}
+        </div>
 
-          {/* Confirm Password Field */}
-          <div className="space-y-1">
-            <div className={`group bg-white border rounded-xl px-4 py-2.5 transition-all duration-300 ${
-              confirmPassword.length > 0 && !isMatch
-                ? "border-red-100 ring-2 ring-red-100/5"
-                : "border-general-30 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10"
-            }`}>
-              <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
-                Konfirmasi Kata Sandi
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Ulangi kata sandi baru"
-                  className="w-full outline-none text-general-100 placeholder:text-general-30 body-sm bg-transparent font-medium"
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="text-general-40 hover:text-blue-100 transition-colors p-1"
-                >
-                  {showConfirmPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-            {confirmPassword.length > 0 && !isMatch && (
-              <p className="text-[10px] text-red-100 font-medium px-1">* Kata sandi tidak cocok</p>
-            )}
-          </div>
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={!isFormValid || isLoading}
+          className="w-full py-3.5 bg-gradient-to-r from-blue-100 to-blue-90 hover:from-blue-90 hover:to-blue-100 text-white font-heading font-bold rounded-xl transition-all shadow-lg shadow-blue-100/20 hover:shadow-blue-100/40 transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none flex items-center justify-center gap-2"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin text-white/90" />
+              Menyimpan...
+            </>
+          ) : (
+            "Simpan Kata Sandi Baru"
+          )}
+        </button>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={!isFormValid || isLoading}
-            className={`w-full py-3 font-heading font-bold rounded-xl transition-all shadow-sm body-sm flex items-center justify-center gap-2 ${
-              isFormValid && !isLoading
-                ? "bg-gradient-to-r from-blue-100 to-blue-90 hover:from-blue-90 hover:to-blue-100 text-white cursor-pointer shadow-lg shadow-blue-100/20"
-                : "bg-general-30 text-general-60 cursor-not-allowed opacity-70"
-            }`}
+        {/* Back to login */}
+        <div className="text-center">
+          <Link
+            to="/auth/login"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-general-60 hover:text-blue-100 hover:bg-blue-20/50 transition-all duration-300 body-sm font-semibold group"
           >
-            {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
-            {isLoading ? "Menyimpan..." : "Simpan Kata Sandi Baru"}
-          </button>
-        </form>
-      </div>
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Kembali ke Masuk
+          </Link>
+        </div>
+      </form>
     </AuthLayout>
   )
 }

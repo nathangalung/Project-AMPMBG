@@ -1,4 +1,4 @@
-import { Resend } from "resend"
+import nodemailer from "nodemailer"
 
 interface EmailOptions {
   to: string
@@ -6,32 +6,34 @@ interface EmailOptions {
   html: string
 }
 
-// Send email using Resend (HTTP-based, not blocked by cloud providers)
+// Send email via SMTP (nodemailer)
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      console.error("[Email] RESEND_API_KEY not configured")
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.error("[Email] SMTP not configured (SMTP_HOST, SMTP_USER, SMTP_PASS)")
       return false
     }
 
     console.log("[Email] Attempting to send email to:", options.to)
 
-    const resend = new Resend(process.env.RESEND_API_KEY)
-    const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev"
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === "true",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    })
 
-    const { data, error } = await resend.emails.send({
-      from: fromEmail,
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_USER,
       to: options.to,
       subject: options.subject,
       html: options.html,
     })
 
-    if (error) {
-      console.error("[Email] Resend error:", error)
-      return false
-    }
-
-    console.log(`[Email] Successfully sent to ${options.to}`, data)
+    console.log(`[Email] Successfully sent to ${options.to}`, info.messageId)
     return true
   } catch (error) {
     console.error("[Email] Failed to send:", error)
@@ -59,9 +61,9 @@ export function getPasswordResetEmailHtml(name: string, resetUrl: string): strin
         <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 12px 12px 0 0;">
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #538297 0%, #2C4F63 100%); border-radius: 12px 12px 0 0;">
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">AMP MBG</h1>
-              <p style="margin: 8px 0 0; color: #dbeafe; font-size: 14px;">Atur Ulang Kata Sandi</p>
+              <p style="margin: 8px 0 0; color: #B4D7E4; font-size: 14px;">Atur Ulang Kata Sandi</p>
             </td>
           </tr>
 
@@ -78,7 +80,7 @@ export function getPasswordResetEmailHtml(name: string, resetUrl: string): strin
                 <tr>
                   <td align="center" style="padding: 20px 0;">
                     <a href="${resetUrl}"
-                       style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">
+                       style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #538297 0%, #2C4F63 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">
                       Atur Ulang Kata Sandi
                     </a>
                   </td>
@@ -95,7 +97,7 @@ export function getPasswordResetEmailHtml(name: string, resetUrl: string): strin
               <p style="margin: 0; color: #9ca3af; font-size: 12px;">
                 Jika tombol tidak berfungsi, salin dan tempel tautan berikut ke browser Anda:
               </p>
-              <p style="margin: 8px 0 0; color: #2563eb; font-size: 12px; word-break: break-all;">
+              <p style="margin: 8px 0 0; color: #538297; font-size: 12px; word-break: break-all;">
                 ${resetUrl}
               </p>
             </td>
