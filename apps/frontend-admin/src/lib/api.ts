@@ -18,10 +18,10 @@ class ApiError extends Error {
   }
 }
 
-// App-specific storage key
+// Storage key
 const TOKEN_KEY = "admin_token"
 
-// Cache token to avoid localStorage reads
+// Cached token
 let cachedToken: string | null = null
 
 function getToken(): string | null {

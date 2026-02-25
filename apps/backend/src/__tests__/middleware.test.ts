@@ -170,7 +170,7 @@ describe("Auth Middleware", () => {
       )
       expect(res.status).toBe(403)
       const json = await res.json()
-      expect(json.error).toContain("Admin tidak dapat")
+      expect(json.error).toContain("Admins cannot")
     })
 
     test("passes for user token", async () => {

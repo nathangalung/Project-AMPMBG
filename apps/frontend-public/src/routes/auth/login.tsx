@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState, useEffect, useCallback } from "react"
-import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react" // LogIn dihapus dari import
+import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react"
 import { authService } from "@/services/auth"
 
 declare global {
@@ -213,7 +213,7 @@ function LoginPage() {
           {isLoading ? "Memproses..." : "Masuk"}
         </button>
 
-        {/* Google Login */}
+        {/* Google login */}
         {GOOGLE_CLIENT_ID && (
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -248,7 +248,7 @@ function LoginPage() {
         )}
       </form>
 
-      {/* Phone Completion Modal */}
+      {/* Phone completion modal */}
       {requiresPhone && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">

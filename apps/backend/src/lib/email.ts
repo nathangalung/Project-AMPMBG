@@ -6,40 +6,44 @@ interface EmailOptions {
   html: string
 }
 
-// Send email via SMTP (nodemailer)
+// Send via SMTP
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.error("[Email] SMTP not configured (SMTP_HOST, SMTP_USER, SMTP_PASS)")
+    const host = process.env.SMTP_HOST
+    const from = process.env.SMTP_FROM || process.env.SMTP_USER
+
+    if (!host || !from) {
+      console.error("[Email] SMTP_HOST or SMTP_FROM not configured")
       return false
     }
 
-    console.log("[Email] Attempting to send email to:", options.to)
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
+    const config: Record<string, unknown> = {
+      host,
       port: Number(process.env.SMTP_PORT) || 587,
       secure: process.env.SMTP_SECURE === "true",
-      auth: {
+    }
+
+    // Auth optional for local relay
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      config.auth = {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
-      },
-    })
+      }
+    }
+
+    const transporter = nodemailer.createTransport(config as nodemailer.TransportOptions)
 
     const info = await transporter.sendMail({
-      from: process.env.SMTP_USER,
+      from: `"AMP MBG" <${from}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
     })
 
-    console.log(`[Email] Successfully sent to ${options.to}`, info.messageId)
+    console.log(`[Email] Sent to ${options.to}`, info.messageId)
     return true
   } catch (error) {
-    console.error("[Email] Failed to send:", error)
-    if (error instanceof Error) {
-      console.error("[Email] Error message:", error.message)
-    }
+    console.error("[Email] Send failed:", error)
     return false
   }
 }
@@ -126,7 +130,7 @@ export function getPasswordResetEmailHtml(name: string, resetUrl: string): strin
           <tr>
             <td class="email-footer" style="padding: 20px 40px; background-color: #f9fafb; border-radius: 0 0 12px 12px; text-align: center;">
               <p class="text-light" style="margin: 0; color: #9ca3af; font-size: 12px;">
-                &copy; 2024 AMP MBG. Semua hak dilindungi.
+                &copy; ${new Date().getFullYear()} AMP MBG. Semua hak dilindungi.
               </p>
             </td>
           </tr>

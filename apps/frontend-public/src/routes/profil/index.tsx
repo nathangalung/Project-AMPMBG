@@ -3,7 +3,7 @@ import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { ProfileForm } from "@/components/profile/profile-form"
 import { ReportHistory } from "@/components/profile/report-history"
-import { KitchenNeedsHistory } from "@/components/profile/kitchen-needs-history" // Import Komponen Baru
+import { KitchenNeedsHistory } from "@/components/profile/kitchen-needs-history"
 import { useState, useEffect } from "react"
 import { AlertCircle, Users, ArrowRight, LogOut } from "lucide-react"
 import { authService } from "@/services/auth"
@@ -19,7 +19,7 @@ function ProfilPage() {
 
   useEffect(() => {
     const user = authService.getCurrentUser()
-    // Show member banner if user is not already a member
+    // Show member banner
     setCanApplyMember(!!user && !user.isMember)
   }, [])
 
@@ -50,7 +50,7 @@ function ProfilPage() {
                 </p>
               </div>
 
-              {/* Tombol Logout Desktop */}
+              {/* Desktop logout button */}
               <button 
                 onClick={() => setShowLogoutConfirm(true)}
                 className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 bg-red-100/10 hover:bg-red-100 hover:text-white text-red-100 font-medium rounded-xl transition-all body-sm border border-red-100/20"
@@ -61,12 +61,12 @@ function ProfilPage() {
             </div>
 
             <div className="grid gap-8">
-              {/* 1. Form Profil */}
+              {/* 1. Profile form */}
               <div className="w-full">
                 <ProfileForm />
               </div>
 
-              {/* 2. Banner Anggota (Hanya Public User) */}
+              {/* 2. Member banner */}
               {canApplyMember && (
                 <div className="w-full bg-blue-20/50 border border-blue-30 rounded-2xl p-6 md:p-8 relative overflow-hidden shadow-sm">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/5 rounded-full blur-2xl -mr-10 -mt-10" />
@@ -92,17 +92,17 @@ function ProfilPage() {
                 </div>
               )}
 
-              {/* 3. Riwayat Laporan */}
+              {/* 3. Report history */}
               <div className="w-full">
                 <ReportHistory />
               </div>
 
-              {/* 4. Riwayat Kebutuhan Dapur (BARU) */}
+              {/* 4. Kitchen needs history */}
               <div className="w-full">
                 <KitchenNeedsHistory />
               </div>
 
-              {/* Tombol Logout Mobile */}
+              {/* Mobile logout button */}
               <div className="md:hidden mt-4">
                 <button 
                   onClick={() => setShowLogoutConfirm(true)}
@@ -118,7 +118,7 @@ function ProfilPage() {
         <Footer />
       </div>
 
-      {/* MODAL KONFIRMASI LOGOUT */}
+      {/* Logout confirm modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-general-100/20 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 md:p-8 transform transition-all scale-100 border border-general-30">

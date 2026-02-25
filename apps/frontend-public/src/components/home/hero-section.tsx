@@ -4,8 +4,7 @@ import { Link, useNavigate } from "@tanstack/react-router"
 function HeroSectionComponent() {
   const navigate = useNavigate()
 
-  // Authentication check handler
-  // Intercepts the "Report" click to ensure the user is logged in before proceeding
+  // Auth check on click
   const handleLaporClick = (e: React.MouseEvent) => {
     const user = localStorage.getItem("public_currentUser")
     if (!user) {
@@ -14,10 +13,10 @@ function HeroSectionComponent() {
     }
   }
   return (
-    // Main Hero Container
+    // Hero container
     <section className="relative bg-blue-100 w-full overflow-hidden">
       
-      {/* Background Image Section (Desktop Only) */}
+      {/* Desktop background image */}
       <div className="hidden lg:block absolute inset-y-0 right-0 w-1/2 h-full">
         <img
           src="/siswa_makan_mbg_1.webp"
@@ -54,7 +53,7 @@ function HeroSectionComponent() {
 
               {/* Call to Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                {/* Primary Action: Report Incident (Triggers Auth Check) */}
+                {/* Report incident action */}
                 <Link
                   to="/lapor"
                   onClick={handleLaporClick}
@@ -63,7 +62,7 @@ function HeroSectionComponent() {
                   Laporkan Temuan Sekarang
                 </Link>
 
-                {/* Secondary Action: Learn More Link */}
+                {/* Learn more link */}
                 <Link
                   to="/cara-kerja"
                   className="body-sm font-heading font-medium whitespace-nowrap w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 bg-transparent border border-general-20/30 text-general-20 hover:bg-general-20 hover:text-blue-100 rounded-lg transition-colors duration-300"

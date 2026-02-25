@@ -14,11 +14,7 @@ function LaporPage() {
       
       <main className="flex-1 pt-8 md:pt-12 pb-16 md:pb-24">
         
-        {/* CONTAINER UTAMA:
-            - Dihapus: max-w-screen-2xl (Penyebab mengecil saat zoom out).
-            - Diganti: w-full (Agar selalu 100% lebar layar).
-            - Tetap: px-5 ... px-24 (Agar konten tidak nempel tembok, tapi tetap luas).
-        */}
+        {/* Main container */}
         <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24">
           
           {/* Header Section */}
@@ -32,7 +28,7 @@ function LaporPage() {
             </p>
           </div>
 
-          {/* Form Container: Full width mengikuti parent */}
+          {/* Form container */}
           <div className="w-full">
             <ReportForm />
           </div>

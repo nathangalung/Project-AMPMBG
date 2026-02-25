@@ -22,18 +22,18 @@ function KebutuhanDapurPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
 
-  // --- STATE UNTUK SEARCH & PAGINATION ---
+  // Search and pagination state
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 9
 
-  // Fetch Konten Dinamis
+  // Fetch dynamic content
   const { data: kitchenNeeds, isLoading: isContentLoading } = useQuery({
     queryKey: ["public", "kitchen-content"],
     queryFn: adminService.kitchen.getAll
   })
 
-  // Auth Check
+  // Auth check
   useEffect(() => {
     const checkAuth = () => {
       const user = authService.getCurrentUser()
@@ -56,17 +56,17 @@ function KebutuhanDapurPage() {
     setIsModalOpen(true)
   }
 
-  // --- LOGIC FILTER, SORTING (A-Z), & PAGINATION ---
+  // Filter, sort, paginate
   const filteredNeeds = useMemo(() => {
     if (!kitchenNeeds) return []
     
-    // 1. Filter Data
+    // Filter data
     const filtered = kitchenNeeds.filter(item => 
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    // 2. Sort Data A-Z (Alphabetical)
+    // Sort alphabetically
     return filtered.sort((a, b) => a.title.localeCompare(b.title))
 
   }, [kitchenNeeds, searchTerm])
@@ -76,15 +76,14 @@ function KebutuhanDapurPage() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
   const currentItems = filteredNeeds.slice(indexOfFirstItem, indexOfLastItem)
 
-  // --- LOGIKA PAGINATION SESUAI REQUEST ---
+  // Pagination items logic
   const paginationItems = useMemo(() => {
-    // Jika halaman sedikit (<= 3), tampilkan semua (1 2 3)
+    // Show all if few pages
     if (totalPages <= 3) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
-    
-    // Jika halaman > 3, paksa format: 1 2 ... Last
-    // Contoh: 1 2 ... 8 atau 1 2 ... 10
+
+    // Format: 1 2 ... Last
     return [1, 2, "...", totalPages];
   }, [totalPages]);
 
@@ -92,7 +91,7 @@ function KebutuhanDapurPage() {
   const goToPrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1))
   const goToPage = (page: number) => setCurrentPage(page)
 
-  // Reset page ke 1 jika user melakukan pencarian
+  // Reset page on search
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm])
@@ -147,7 +146,7 @@ function KebutuhanDapurPage() {
                   `}
                 >
                   {item.imageUrl ? (
-                    // --- TAMPILAN DENGAN GAMBAR ---
+                    // View with image
                     <>
                       <div className="h-48 w-full relative overflow-hidden">
                         <div className="absolute inset-0 bg-blue-100/10 group-hover:bg-transparent transition-colors z-10" />
@@ -170,7 +169,7 @@ function KebutuhanDapurPage() {
                       </div>
                     </>
                   ) : (
-                    // --- TAMPILAN TANPA GAMBAR ---
+                    // View without image
                     <div className="p-6 md:p-8 flex flex-col h-full relative">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       
@@ -196,7 +195,7 @@ function KebutuhanDapurPage() {
              </div>
           )}
 
-          {/* --- PAGINATION CONTROLS (UPDATED) --- */}
+          {/* Pagination controls */}
           {filteredNeeds.length > itemsPerPage && (
             <div className="mt-12 flex justify-center items-center gap-2 select-none">
               
@@ -265,7 +264,7 @@ function KebutuhanDapurPage() {
   )
 }
 
-// --- REQUEST MODAL ---
+// Request modal component
 function RequestModal({ need, onClose }: { need: KitchenNeedItem, onClose: () => void }) {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -278,13 +277,13 @@ function RequestModal({ need, onClose }: { need: KitchenNeedItem, onClose: () =>
     details: "",
   })
 
-  // --- VALIDASI ---
+  // Validation rules
   const MIN_DETAIL_CHARS = 20
-  
-  // 1. Validasi No. Telepon (9-12 digit)
+
+  // Phone: 9-12 digits
   const isPhoneValid = /^\d{9,12}$/.test(formData.phoneNumber)
-  
-  // 2. Validasi Detail (Minimal 20 karakter)
+
+  // Detail min length
   const isDetailValid = formData.details.trim().length >= MIN_DETAIL_CHARS
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -302,7 +301,7 @@ function RequestModal({ need, onClose }: { need: KitchenNeedItem, onClose: () =>
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Cek semua validasi sebelum submit
+    // Validate before submit
     if (!isPhoneValid || !isDetailValid) return 
 
     setIsLoading(true)
@@ -358,7 +357,7 @@ function RequestModal({ need, onClose }: { need: KitchenNeedItem, onClose: () =>
         <div className="p-6 sm:p-10 overflow-y-auto custom-scrollbar">
           <form id="kitchen-form" onSubmit={handleSubmit} className="space-y-6">
             
-            {/* Nama SPPG */}
+            {/* SPPG name */}
             <div className="space-y-2">
               <label className="body-sm font-bold text-general-80 tracking-wide">Nama SPPG / Instansi</label>
               <input required name="sppgName" value={formData.sppgName} onChange={handleChange} type="text" placeholder="Contoh: SPPG MBG" className="w-full px-5 py-3.5 bg-general-20 border border-general-30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100/20 focus:border-blue-100 transition-all body-sm text-general-100" />
@@ -404,7 +403,7 @@ function RequestModal({ need, onClose }: { need: KitchenNeedItem, onClose: () =>
               </div>
             </div>
 
-            {/* Detail Kebutuhan (DENGAN VALIDASI VISUAL) */}
+            {/* Detail with validation */}
             <div className="space-y-2">
                <div className="flex justify-between items-end">
                  <label className="body-sm font-bold text-general-80 tracking-wide">Detail Kebutuhan</label>

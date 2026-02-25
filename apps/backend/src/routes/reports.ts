@@ -37,7 +37,7 @@ const querySchema = z.object({
   districtId: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  search: z.string().optional(),
+  search: z.string().max(100).optional(),
   sortBy: z.enum(["createdAt", "incidentDate", "status", "totalScore"]).optional(),
   sortOrder: z.enum(["asc", "desc"]).optional(),
 })
@@ -150,7 +150,7 @@ reports.get("/stats", async (c) => {
   })
 })
 
-// Summary endpoint with correct counts from separated tables
+// Summary with counts
 reports.get("/summary", async (c) => {
   const [aggregates, topCategoryResult, userCount, adminCount, memberStats] = await Promise.all([
     db.select({
@@ -189,7 +189,7 @@ reports.get("/summary", async (c) => {
   })
 })
 
-// Public endpoint for foundation list (from members table)
+// Foundation list endpoint
 reports.get("/foundations", async (c) => {
   const foundations = await db.query.members.findMany({
     where: and(
@@ -206,7 +206,7 @@ reports.get("/foundations", async (c) => {
   return c.json({
     data: foundations.map((f) => ({
       id: f.id,
-      name: f.organizationName || "Yayasan Tanpa Nama",
+      name: f.organizationName || "Unnamed Foundation",
     })),
     total: foundations.length,
   })
@@ -247,7 +247,7 @@ reports.get("/:id", async (c) => {
     with: { province: true, city: true, district: true, files: true },
   })
 
-  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
+  if (!report) return c.json({ error: "Report not found" }, 404)
 
   return c.json({
     data: {
@@ -259,71 +259,15 @@ reports.get("/:id", async (c) => {
   })
 })
 
-// Only logged-in public users can submit reports
+// Auth-only report submission
 const userReports = new Hono<{ Variables: UserVariables }>()
 
 userReports.post("/", reporterMiddleware, zValidator("json", createReportSchema), async (c) => {
   const data = c.req.valid("json")
   const user = c.get("user")
-
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-
-  const [reporter, reportsStats, mbgSchedule] = await Promise.all([
-    db.query.publics.findFirst({
-      where: eq(schema.publics.id, user.id),
-      columns: { reportCount: true, verifiedReportCount: true },
-    }),
-    db.select({
-      similarCount: sql<number>`count(*) filter (where ${schema.reports.createdAt} >= ${thirtyDaysAgo}::timestamp)`,
-      totalCount: sql<number>`count(*)`,
-    }).from(schema.reports).where(eq(schema.reports.cityId, data.cityId)),
-    db.query.mbgSchedules.findFirst({
-      where: and(
-        eq(schema.mbgSchedules.cityId, data.cityId),
-        eq(schema.mbgSchedules.isActive, true),
-        data.districtId ? eq(schema.mbgSchedules.districtId, data.districtId) : undefined
-      ),
-    }),
-  ])
-
-  let mbgScheduleMatch = undefined
   const incidentDateObj = new Date(data.incidentDate)
-  if (mbgSchedule) {
-    const incidentDay = incidentDateObj.getDay().toString()
-    const dayMatches = mbgSchedule.scheduleDays.includes(incidentDay)
 
-    const incidentHour = incidentDateObj.getHours()
-    const incidentMinute = incidentDateObj.getMinutes()
-    const incidentTimeStr = `${incidentHour.toString().padStart(2, "0")}:${incidentMinute.toString().padStart(2, "0")}`
-
-    const timeMatches = incidentTimeStr >= mbgSchedule.startTime && incidentTimeStr <= mbgSchedule.endTime
-
-    mbgScheduleMatch = { exists: true, dayMatches, timeMatches }
-  } else {
-    const anySchedule = await db.query.mbgSchedules.findFirst({
-      where: eq(schema.mbgSchedules.cityId, data.cityId),
-    })
-    if (anySchedule) {
-      mbgScheduleMatch = { exists: true, dayMatches: false, timeMatches: false }
-    }
-  }
-
-  const scoringResult = calculateReportScore({
-    relation: data.relation,
-    relationDetail: data.relationDetail,
-    description: data.description,
-    filesCount: 0,
-    incidentDate: incidentDateObj,
-    provinceId: data.provinceId,
-    cityId: data.cityId,
-    districtId: data.districtId,
-    reporterReportCount: reporter?.reportCount || 0,
-    reporterVerifiedCount: reporter?.verifiedReportCount || 0,
-    similarReportsCount: Number(reportsStats[0]?.similarCount || 0),
-    locationHasHistory: Number(reportsStats[0]?.totalCount || 0) > 0,
-    mbgScheduleMatch,
-  })
-
+  // Create with zero scores
   const [report] = await db.insert(schema.reports).values({
     category: data.category,
     title: data.title,
@@ -336,7 +280,14 @@ userReports.post("/", reporterMiddleware, zValidator("json", createReportSchema)
     relation: data.relation,
     relationDetail: data.relationDetail || null,
     publicId: user.id,
-    ...scoringResult,
+    scoreRelation: 0,
+    scoreLocationTime: 0,
+    scoreEvidence: 0,
+    scoreNarrative: 0,
+    scoreReporterHistory: 0,
+    scoreSimilarity: 0,
+    totalScore: 0,
+    credibilityLevel: "low",
   }).returning()
 
   await db.update(schema.publics)
@@ -346,16 +297,85 @@ userReports.post("/", reporterMiddleware, zValidator("json", createReportSchema)
     })
     .where(eq(schema.publics.id, user.id))
 
+  // Background scoring (fire-and-forget)
+  const reportId = report.id
+  const scoringData = { ...data, incidentDateObj }
+  const userId = user.id
+
+  Promise.resolve().then(async () => {
+    try {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
+      const [reporter, reportsStats, mbgSchedule] = await Promise.all([
+        db.query.publics.findFirst({
+          where: eq(schema.publics.id, userId),
+          columns: { reportCount: true, verifiedReportCount: true },
+        }),
+        db.select({
+          similarCount: sql<number>`count(*) filter (where ${schema.reports.createdAt} >= ${thirtyDaysAgo}::timestamp)`,
+          totalCount: sql<number>`count(*)`,
+        }).from(schema.reports).where(and(
+          eq(schema.reports.cityId, scoringData.cityId),
+          eq(schema.reports.category, scoringData.category)
+        )),
+        db.query.mbgSchedules.findFirst({
+          where: and(
+            eq(schema.mbgSchedules.cityId, scoringData.cityId),
+            eq(schema.mbgSchedules.isActive, true),
+            scoringData.districtId ? eq(schema.mbgSchedules.districtId, scoringData.districtId) : undefined
+          ),
+        }),
+      ])
+
+      let mbgScheduleMatch = undefined
+      if (mbgSchedule) {
+        const incidentDay = scoringData.incidentDateObj.getDay().toString()
+        const dayMatches = mbgSchedule.scheduleDays.includes(incidentDay)
+        const incidentHour = scoringData.incidentDateObj.getHours()
+        const incidentMinute = scoringData.incidentDateObj.getMinutes()
+        const incidentTimeStr = `${incidentHour.toString().padStart(2, "0")}:${incidentMinute.toString().padStart(2, "0")}`
+        const timeMatches = incidentTimeStr >= mbgSchedule.startTime && incidentTimeStr <= mbgSchedule.endTime
+        mbgScheduleMatch = { exists: true, dayMatches, timeMatches }
+      } else {
+        const anySchedule = await db.query.mbgSchedules.findFirst({
+          where: eq(schema.mbgSchedules.cityId, scoringData.cityId),
+        })
+        if (anySchedule) {
+          mbgScheduleMatch = { exists: true, dayMatches: false, timeMatches: false }
+        }
+      }
+
+      const scoringResult = calculateReportScore({
+        relation: scoringData.relation,
+        relationDetail: scoringData.relationDetail,
+        description: scoringData.description,
+        filesCount: 0,
+        incidentDate: scoringData.incidentDateObj,
+        provinceId: scoringData.provinceId,
+        cityId: scoringData.cityId,
+        districtId: scoringData.districtId,
+        reporterReportCount: reporter?.reportCount || 0,
+        reporterVerifiedCount: reporter?.verifiedReportCount || 0,
+        similarReportsCount: Number(reportsStats[0]?.similarCount || 0),
+        locationHasHistory: Number(reportsStats[0]?.totalCount || 0) > 0,
+        mbgScheduleMatch,
+      })
+
+      await db.update(schema.reports)
+        .set({ ...scoringResult, updatedAt: new Date() })
+        .where(eq(schema.reports.id, reportId))
+    } catch (err) {
+      console.error("[Scoring] Background scoring failed:", reportId, err)
+    }
+  })
+
   return c.json({
-    data: {
-      ...report,
-      scoring: scoringResult,
-    },
-    message: "Laporan berhasil dikirim",
+    data: report,
+    message: "Report submitted successfully",
   }, 201)
 })
 
-// Mount user routes for report creation
+// Mount user routes
 reports.route("/", userReports)
 
 // Authenticated user routes
@@ -399,7 +419,7 @@ authUserReports.get("/my/reports", authMiddleware, zValidator("query", z.object(
   })
 })
 
-// Only report owner can upload files
+// Owner file upload
 authUserReports.post("/:id/files", authMiddleware, async (c) => {
   const id = c.req.param("id")
   const user = c.get("user")
@@ -408,23 +428,23 @@ authUserReports.post("/:id/files", authMiddleware, async (c) => {
     with: { files: true },
   })
 
-  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
+  if (!report) return c.json({ error: "Report not found" }, 404)
 
-  // Only owner can upload files (admin uses admin routes)
+  // Owner-only upload
   if (report.publicId !== user.id) {
-    return c.json({ error: "Akses ditolak" }, 403)
+    return c.json({ error: "Access denied" }, 403)
   }
 
   const formData = await c.req.formData()
   const files = formData.getAll("files") as File[]
 
-  if (!files.length) return c.json({ error: "File wajib diunggah" }, 400)
-  if (files.length > 5) return c.json({ error: "Maksimal 5 file" }, 400)
+  if (!files.length) return c.json({ error: "File upload required" }, 400)
+  if (files.length > 5) return c.json({ error: "Maximum 5 files" }, 400)
 
   const uploadedFiles = []
 
   for (const file of files) {
-    const validation = validateFile(file)
+    const validation = await validateFile(file)
     if (!validation.valid) return c.json({ error: validation.error }, 400)
 
     const { url } = await uploadFile(file, `reports/${id}`)
@@ -462,7 +482,7 @@ authUserReports.post("/:id/files", authMiddleware, async (c) => {
       .where(eq(schema.reports.id, id))
   }
 
-  return c.json({ data: uploadedFiles, message: "File berhasil diunggah" }, 201)
+  return c.json({ data: uploadedFiles, message: "Files uploaded successfully" }, 201)
 })
 
 authUserReports.delete("/:id/files/:fileId", authMiddleware, async (c) => {
@@ -470,21 +490,21 @@ authUserReports.delete("/:id/files/:fileId", authMiddleware, async (c) => {
   const user = c.get("user")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
+  if (!report) return c.json({ error: "Report not found" }, 404)
 
-  // Only owner can delete files
+  // Owner-only delete
   if (report.publicId !== user.id) {
     return c.json({ error: "Forbidden" }, 403)
   }
 
   const file = await db.query.reportFiles.findFirst({ where: eq(schema.reportFiles.id, fileId) })
-  if (!file) return c.json({ error: "File tidak ditemukan" }, 404)
+  if (!file) return c.json({ error: "File not found" }, 404)
 
   const key = file.fileUrl.split("/").slice(-2).join("/")
   await deleteFile(key)
   await db.delete(schema.reportFiles).where(eq(schema.reportFiles.id, fileId))
 
-  return c.json({ message: "File berhasil dihapus" })
+  return c.json({ message: "File deleted successfully" })
 })
 
 reports.route("/", authUserReports)
@@ -497,14 +517,14 @@ const updateStatusSchema = z.object({
   notes: z.string().optional(),
 })
 
-// Admin only - update report status
+// Admin status update
 adminReports.patch("/:id/status", adminMiddleware, zValidator("json", updateStatusSchema), async (c) => {
   const id = c.req.param("id")
   const { status, notes } = c.req.valid("json")
   const admin = c.get("admin")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
+  if (!report) return c.json({ error: "Report not found" }, 404)
 
   const previousStatus = report.status
 
@@ -521,6 +541,19 @@ adminReports.patch("/:id/status", adminMiddleware, zValidator("json", updateStat
     .where(eq(schema.reports.id, id))
     .returning()
 
+  // Update verifiedReportCount
+  if (report.publicId) {
+    if (status === "resolved" && previousStatus !== "resolved") {
+      await db.update(schema.publics)
+        .set({ verifiedReportCount: sql`${schema.publics.verifiedReportCount} + 1` })
+        .where(eq(schema.publics.id, report.publicId))
+    } else if (previousStatus === "resolved" && status !== "resolved") {
+      await db.update(schema.publics)
+        .set({ verifiedReportCount: sql`GREATEST(${schema.publics.verifiedReportCount} - 1, 0)` })
+        .where(eq(schema.publics.id, report.publicId))
+    }
+  }
+
   await db.insert(schema.reportStatusHistory).values({
     reportId: id,
     fromStatus: previousStatus,
@@ -529,18 +562,18 @@ adminReports.patch("/:id/status", adminMiddleware, zValidator("json", updateStat
     notes: notes || null,
   })
 
-  return c.json({ data: updated, message: "Status laporan berhasil diperbarui" })
+  return c.json({ data: updated, message: "Report status updated successfully" })
 })
 
 adminReports.delete("/:id", adminMiddleware, async (c) => {
   const id = c.req.param("id")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
+  if (!report) return c.json({ error: "Report not found" }, 404)
 
   await db.delete(schema.reports).where(eq(schema.reports.id, id))
 
-  return c.json({ message: "Laporan berhasil dihapus" })
+  return c.json({ message: "Report deleted successfully" })
 })
 
 reports.route("/", adminReports)

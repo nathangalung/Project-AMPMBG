@@ -5,7 +5,7 @@ import { join } from "path"
 
 const STORAGE_TYPE = process.env.STORAGE_TYPE || "local"
 
-// S3-compatible client (R2 for prod, Supabase for staging)
+// S3-compatible storage client
 const s3 = STORAGE_TYPE !== "local" ? new S3Client({
   region: process.env.S3_REGION || "auto",
   endpoint: process.env.S3_ENDPOINT || "",
@@ -65,12 +65,35 @@ export async function deleteFile(key: string): Promise<void> {
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf"]
 
-export function validateFile(file: File): { valid: boolean; error?: string } {
+// Known file signatures
+const MAGIC_BYTES: Record<string, number[][]> = {
+  "image/jpeg": [[0xFF, 0xD8, 0xFF]],
+  "image/png": [[0x89, 0x50, 0x4E, 0x47]],
+  "image/gif": [[0x47, 0x49, 0x46, 0x38]],
+  "image/webp": [[0x52, 0x49, 0x46, 0x46]],
+  "application/pdf": [[0x25, 0x50, 0x44, 0x46]],
+}
+
+// Validate file signature
+async function validateMagicBytes(file: File): Promise<boolean> {
+  const signatures = MAGIC_BYTES[file.type]
+  if (!signatures) return false
+  const slice = await file.slice(0, 12).arrayBuffer()
+  const bytes = new Uint8Array(slice)
+  return signatures.some((sig) =>
+    sig.every((byte, i) => bytes[i] === byte)
+  )
+}
+
+export async function validateFile(file: File): Promise<{ valid: boolean; error?: string }> {
   if (file.size > MAX_FILE_SIZE) {
-    return { valid: false, error: "Ukuran file maksimal 10MB" }
+    return { valid: false, error: "File size exceeds 10MB limit" }
   }
   if (!ALLOWED_TYPES.includes(file.type)) {
-    return { valid: false, error: "Tipe file tidak diizinkan" }
+    return { valid: false, error: "File type not allowed" }
+  }
+  if (!(await validateMagicBytes(file))) {
+    return { valid: false, error: "File content mismatch" }
   }
   return { valid: true }
 }

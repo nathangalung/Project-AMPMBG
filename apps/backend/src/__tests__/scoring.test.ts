@@ -414,7 +414,7 @@ describe("Scoring Library", () => {
         similarReportsCount: 0,
         locationHasHistory: false,
       })
-      // Should still get some score for location but time relevance is lower
+      // Partial location score
       expect(result.scoreLocationTime).toBeDefined()
     })
 
@@ -469,7 +469,7 @@ describe("Scoring Library", () => {
     })
 
     test("scores general work hours", () => {
-      // 2 PM - within general work hours but outside primary times
+      // 2 PM general hours
       const result = calculateReportScore({
         relation: "other",
         description: "Test description",
@@ -604,7 +604,7 @@ describe("Scoring Library", () => {
     })
 
     test("scores time without relation - general work hours", () => {
-      // 4 PM - within general work hours but outside primary times
+      // 4 PM general hours
       const result = calculateReportScore({
         relation: "other",
         description: "Short",
@@ -621,7 +621,7 @@ describe("Scoring Library", () => {
     })
 
     test("scores time with relation but outside window gives partial credit", () => {
-      // 5 PM - outside student hours, but within general MBG hours
+      // 5 PM outside student hours
       const result = calculateReportScore({
         relation: "student",
         description: "Short",
@@ -637,8 +637,26 @@ describe("Scoring Library", () => {
       expect(result.scoreLocationTime).toBeDefined()
     })
 
+    test("scores general MBG hours fallback for relation outside specific windows", () => {
+      // 1 PM general MBG hours
+      const result = calculateReportScore({
+        relation: "student",
+        description: "Short",
+        filesCount: 0,
+        incidentDate: new Date("2025-01-13T13:00:00"), // Monday 1 PM
+        provinceId: "31",
+        cityId: "31.71",
+        districtId: "31.71.01",
+        reporterReportCount: 0,
+        reporterVerifiedCount: 0,
+        similarReportsCount: 0,
+        locationHasHistory: false,
+      })
+      expect(result.scoreLocationTime).toBeGreaterThan(0)
+    })
+
     test("scores time with relation during secondary window", () => {
-      // 12 PM - containerPickup time for parent (secondary window)
+      // 12 PM parent containerPickup
       const result = calculateReportScore({
         relation: "parent",
         description: "Short",

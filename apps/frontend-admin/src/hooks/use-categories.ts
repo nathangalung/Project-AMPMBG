@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { categoriesService } from "@/services/categories"
 
-// Fallback data
+// Fallback labels
 const CATEGORY_LABELS: Record<string, string> = {
   poisoning: "Keracunan dan Masalah Kesehatan",
   kitchen: "Operasional Dapur",
@@ -57,7 +57,7 @@ const CATEGORY_VARIANTS: Record<string, "danger" | "warning" | "info"> = {
   social: "info",
 }
 
-const STALE_TIME = 1000 * 60 * 60 // 1 hour
+const STALE_TIME = 1000 * 60 * 60 // One hour
 
 export function useCategories() {
   const { data, isLoading } = useQuery({
@@ -121,7 +121,7 @@ export function useStatuses() {
   }
 }
 
-// Static exports for sync usage
+// Static sync exports
 export {
   CATEGORY_LABELS,
   CATEGORY_LABELS_SHORT,

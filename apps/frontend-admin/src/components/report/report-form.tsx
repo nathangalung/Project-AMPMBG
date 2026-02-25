@@ -13,7 +13,6 @@ const STEPS = [
 ]
 
 export interface ReportFormData {
-  // Step 1
   title: string
   category: string
   date: string
@@ -22,10 +21,8 @@ export interface ReportFormData {
   city: string
   district: string
   location: string
-  // Step 2
   description: string
   files: File[]
-  // Step 3
   relation: string
   relationDetail?: string
   agreement: boolean
@@ -52,10 +49,8 @@ function ReportFormComponent() {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  // Create report mutation
   const createReportMutation = useMutation({
     mutationFn: async () => {
-      // Format incident date with time
       const incidentDate = `${formData.date}T${formData.time}:00`
       
       const reportData: CreateReportRequest = {
@@ -73,7 +68,6 @@ function ReportFormComponent() {
 
       const response = await reportsService.createReport(reportData)
       
-      // Upload files if any
       if (formData.files.length > 0 && response.data.id) {
         await reportsService.uploadFiles(response.data.id, formData.files)
       }
@@ -89,27 +83,22 @@ function ReportFormComponent() {
     },
   })
 
-  // --- LOGIKA VALIDASI ---
   const isStepValid = useMemo(() => {
     if (currentStep === 1) {
-      // Cek apakah semua field Step 1 terisi
       return (
-        formData.title.trim().length > 0 && // Judul wajib
+        formData.title.trim().length > 0 &&
         formData.category &&
         formData.date &&
-        formData.time &&                    // Jam wajib
+        formData.time &&
         formData.province &&
         formData.city &&
-        formData.district &&
         formData.location
       )
     }
     if (currentStep === 2) {
-      // Validasi Step 2: Deskripsi minimal 50 karakter
       return formData.description.trim().length >= 50
     }
     if (currentStep === 3) {
-      // Validasi Step 3: Wajib centang agreement dan isi hubungan
       return formData.relation && formData.agreement
     }
     return false
@@ -156,7 +145,6 @@ function ReportFormComponent() {
 
   return (
     <div className="bg-general-20 rounded-lg shadow-md border border-general-30 overflow-hidden">
-      {/* Step Indicators */}
       <div className="bg-general-20 border-b border-general-30 p-4">
         <div className="flex items-center justify-between">
           {STEPS.map((step, index) => (
@@ -165,8 +153,7 @@ function ReportFormComponent() {
                 <div
                   className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
-                    // Active step styling
-                    currentStep >= step.id 
+                    currentStep >= step.id
                       ? "bg-blue-100 text-general-20" 
                       : "bg-general-30 text-general-70",
                   )}
@@ -174,10 +161,9 @@ function ReportFormComponent() {
                   {step.id}
                 </div>
                 <div className="ml-3 hidden sm:block">
-                  <p 
+                  <p
                     className={cn(
-                      "body-sm font-heading font-medium", 
-                      // Text color styling
+                      "body-sm font-heading font-medium",
                       currentStep >= step.id ? "text-blue-100" : "text-general-60"
                     )}
                   >
@@ -187,12 +173,11 @@ function ReportFormComponent() {
               </div>
               {index < STEPS.length - 1 && (
                 <div className="flex-1 mx-4">
-                  <div 
+                  <div
                     className={cn(
-                      "h-1 rounded", 
-                      // Connector line styling
+                      "h-1 rounded",
                       currentStep > step.id ? "bg-blue-100" : "bg-general-30"
-                    )} 
+                    )}
                   />
                 </div>
               )}
@@ -201,7 +186,6 @@ function ReportFormComponent() {
         </div>
       </div>
 
-      {/* Form Content */}
       <div className="p-6 md:p-8">
         <div className="mb-6">
           <h2 className="h5 text-general-100">
@@ -213,14 +197,12 @@ function ReportFormComponent() {
         {currentStep === 2 && <StepChronologyEvidence formData={formData} updateFormData={updateFormData} />}
         {currentStep === 3 && <StepIdentityConfirmation formData={formData} updateFormData={updateFormData} />}
 
-        {/* Error Message */}
         {submitError && (
           <div className="mt-4 p-4 bg-red-20 border border-red-100 rounded-lg">
             <p className="text-red-100 body-sm">{submitError}</p>
           </div>
         )}
 
-        {/* Navigation Buttons */}
         <div className="flex justify-between mt-8 pt-6 border-t border-general-30">
           {currentStep > 1 ? (
             <button

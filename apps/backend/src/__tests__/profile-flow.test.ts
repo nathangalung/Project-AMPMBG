@@ -27,7 +27,7 @@ describe("Profile Flow - User Operations", () => {
     userId = user.id
     userToken = await signToken({ sub: user.id, email: user.email, type: "user" })
 
-    // Create a test report for this user
+    // Test report for user
     const [report] = await db.insert(reports).values({
       publicId: user.id,
       category: "poisoning",
@@ -178,7 +178,7 @@ describe("Profile Flow - Account Deactivation", () => {
     const res = await testRequest(app, "DELETE", "/api/profile", { token: userToken })
     expect(res.status).toBe(200)
     const json = await res.json()
-    expect(json.message).toContain("dihapus")
+    expect(json.message).toContain("deleted")
     userId = "" // Prevent afterAll from trying to delete
   })
 })

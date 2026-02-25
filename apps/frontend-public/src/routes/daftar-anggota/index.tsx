@@ -29,7 +29,7 @@ function DaftarAnggotaPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
 
-  // --- LOGIKA ASLI (TETAP) ---
+  // Form state
   const [formData, setFormData] = useState({
     memberType: "",
     organizationName: "",
@@ -110,7 +110,7 @@ function DaftarAnggotaPage() {
         <main className="flex-1 py-10 md:py-14">
           <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24">
             
-             {/* Header Section */}
+             {/* Header section */}
              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                <div>
                   <button
@@ -129,20 +129,19 @@ function DaftarAnggotaPage() {
                </div>
              </div>
 
-             {/* Content Card (FULL WIDTH) */}
+             {/* Content card */}
              <div className="w-full bg-white rounded-2xl border border-general-30 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] p-6 md:p-10 relative overflow-hidden">
-                {/* Dekorasi Background */}
+                {/* Background decoration */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-orange-100/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
                 <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                     {error && (
-                      // UPDATE: Menghapus elemen div titik dan gap-3
                       <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-center animate-in fade-in">
                           {error}
                       </div>
                     )}
 
-                    {/* Jenis Organisasi */}
+                    {/* Organization type */}
                     <div className="group relative bg-white border border-general-30 rounded-xl px-4 pb-2.5 pt-1.5 transition-all duration-300 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 hover:border-blue-100/50">
                     <label className="block body-xs font-semibold text-general-60 mb-0.5 group-focus-within:text-blue-100 transition-colors">
                         Jenis Organisasi/Komunitas
@@ -164,7 +163,7 @@ function DaftarAnggotaPage() {
                     </div>
                     </div>
 
-                    {/* Nama Organisasi */}
+                    {/* Organization name */}
                     <div className="space-y-1">
                     <div className={`group relative bg-white border rounded-xl px-4 pb-2.5 pt-1.5 transition-all duration-300 ${
                         formData.organizationName.length > 0 && !isNameValid
@@ -191,7 +190,7 @@ function DaftarAnggotaPage() {
                     )}
                     </div>
 
-                    {/* Grid Email & Phone */}
+                    {/* Email and phone */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {/* Email */}
                     <div className="space-y-1">
@@ -252,7 +251,7 @@ function DaftarAnggotaPage() {
                     </div>
                     </div>
 
-                    {/* Deskripsi Peran */}
+                    {/* Role description */}
                     <div className="space-y-1">
                     <div className={`group relative bg-white border rounded-xl px-4 pb-2.5 pt-1.5 transition-all duration-300 ${
                         formData.roleDescription.length > 0 && !isRoleDescValid
@@ -279,7 +278,7 @@ function DaftarAnggotaPage() {
                     )}
                     </div>
 
-                    {/* Deskripsi MBG */}
+                    {/* MBG description */}
                     <div className="space-y-1">
                     <div className={`group relative bg-white border rounded-xl px-4 pb-2.5 pt-1.5 transition-all duration-300 ${
                         formData.mbgDescription.length > 0 && !isMbgDescValid
@@ -306,7 +305,7 @@ function DaftarAnggotaPage() {
                     )}
                     </div>
 
-                    {/* Submit Button */}
+                    {/* Submit button */}
                     <div className="pt-4">
                     <button
                         type="submit"

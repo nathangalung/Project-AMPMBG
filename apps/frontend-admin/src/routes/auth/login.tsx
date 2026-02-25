@@ -1,4 +1,4 @@
-// login.tsx (admin)
+// Admin login page
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState } from "react"
@@ -33,7 +33,7 @@ function AdminLoginPage() {
     setIsLoading(true)
 
     try {
-      // Menggunakan identifier agar konsisten dengan payload yang diharapkan service
+      // Login with email
       await authService.login({ email: identifier, password })
       navigate({ to: "/dashboard" })
     } catch (err) {
@@ -45,7 +45,7 @@ function AdminLoginPage() {
 
   return (
     <AuthLayout>
-      {/* HEADER SECTION */}
+      {/* Header */}
       <div className="mb-10 relative">
         <div className="absolute -top-10 -left-10 w-20 h-20 bg-blue-100/10 rounded-full blur-2xl" />
         <h1 className="h3 font-heading font-bold text-general-100 mb-2 relative z-10">
@@ -58,12 +58,12 @@ function AdminLoginPage() {
         {/* Error Alert */}
         {error && (
           <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-center gap-3 animate-in fade-in">
-            {/* Baris di bawah ini sudah dihapus: <div className="w-1.5 h-1.5 bg-red-100 rounded-full shrink-0" /> */}
+            {/* Error indicator removed */}
             {error}
           </div>
         )}
 
-        {/* Email Field (Fieldset Style) */}
+        {/* Email Field */}
         <div className="space-y-1">
           <fieldset className={`group bg-white border rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:shadow-md ${
             identifier.length > 0 && !isIdentifierValid
@@ -87,7 +87,7 @@ function AdminLoginPage() {
           )}
         </div>
 
-        {/* Password Field (Fieldset Style) */}
+        {/* Password Field */}
         <div className="space-y-1">
           <fieldset className="group bg-white border border-general-30 rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 focus-within:shadow-md">
             <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">

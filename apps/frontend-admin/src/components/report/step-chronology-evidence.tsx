@@ -44,7 +44,6 @@ function StepChronologyEvidenceComponent({ formData, updateFormData }: StepChron
             <label htmlFor="description" className="block body-sm font-medium text-general-80">
             Deskripsi Kronologi Kejadian <span className="text-red-100">*</span>
             </label>
-            {/* INDIKATOR KARAKTER */}
             <span className={`text-xs ${isError ? 'text-red-100 font-bold' : 'text-general-60'}`}>
                 {currentLength}/{MIN_DESCRIPTION_LENGTH} Karakter
             </span>
@@ -57,13 +56,12 @@ function StepChronologyEvidenceComponent({ formData, updateFormData }: StepChron
           rows={6}
           placeholder="Jelaskan secara detail kronologi kejadian yang Anda laporkan..."
           className={`w-full px-4 py-3 bg-general-20 border rounded-lg text-general-100 placeholder:text-general-40 focus:ring-2 transition-colors resize-none body-sm
-            ${isError 
-                ? 'border-red-100 focus:border-red-100 focus:ring-red-100' // Merah jika kurang
-                : 'border-general-30 focus:border-blue-100 focus:ring-blue-100' // Normal
+            ${isError
+                ? 'border-red-100 focus:border-red-100 focus:ring-red-100'
+                : 'border-general-30 focus:border-blue-100 focus:ring-blue-100'
             }`}
         />
         
-        {/* Pesan Bantuan / Error */}
         {isError ? (
             <p className="text-xs text-red-100 mt-1.5 animate-pulse">
                 Mohon tulis minimal 50 karakter agar laporan jelas.
@@ -75,7 +73,7 @@ function StepChronologyEvidenceComponent({ formData, updateFormData }: StepChron
         )}
       </div>
 
-      {/* File Upload (IMAGE ONLY) */}
+      {/* FILE UPLOAD */}
       <div>
         <label className="block body-sm font-medium text-general-80 mb-2">Unggah Bukti Foto</label>
         
@@ -102,7 +100,6 @@ function StepChronologyEvidenceComponent({ formData, updateFormData }: StepChron
           </label>
         </div>
 
-        {/* File Preview List (UPDATED: Shows Image Thumbnail) */}
         {formData.files.length > 0 && (
           <div className="mt-4 space-y-3">
             {formData.files.map((file, index) => (
@@ -112,19 +109,16 @@ function StepChronologyEvidenceComponent({ formData, updateFormData }: StepChron
               >
                 <div className="flex items-center gap-3 overflow-hidden">
                   
-                  {/* --- BAGIAN INI DIPERBARUI UNTUK MENAMPILKAN GAMBAR --- */}
                   <div className="w-16 h-16 bg-general-30 rounded-lg flex-shrink-0 overflow-hidden border border-general-30 relative group/img">
-                    <img 
-                      src={URL.createObjectURL(file)} 
-                      alt="Preview" 
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt="Preview"
                       className="w-full h-full object-cover"
                     />
-                    {/* Overlay Icon saat hover (opsional aesthetic) */}
                     <div className="absolute inset-0 bg-black/10 hidden group-hover/img:flex items-center justify-center">
                         <ImageIcon className="w-4 h-4 text-white drop-shadow-md" />
                     </div>
                   </div>
-                  {/* ----------------------------------------------------- */}
 
                   <div className="min-w-0">
                     <p className="body-sm font-medium text-general-100 truncate">{file.name}</p>

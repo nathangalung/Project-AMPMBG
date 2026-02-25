@@ -21,7 +21,6 @@ function StepChronologyEvidenceComponent({ formData, updateFormData }: StepChron
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || [])
     const validFiles = selectedFiles.filter((file) => file.type.startsWith("image/"))
-    // (Logic same as before, simplified for display)
     const currentTotal = formData.files.reduce((sum, f) => sum + f.size, 0)
     const filesToAdd: File[] = []
     let runningTotal = currentTotal

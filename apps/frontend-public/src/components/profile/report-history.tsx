@@ -9,7 +9,7 @@ import { categoriesService } from "@/services/categories"
 
 const DATE_OPTIONS: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" }
 
-// --- STATUS MAPPING ---
+// Status label map
 const STATUS_LABELS: Record<string, { label: string; variant: string }> = {
   pending: { label: "Menunggu Verifikasi", variant: "orange" },
   analyzing: { label: "Dalam Proses Analisis", variant: "blue" },
@@ -40,17 +40,17 @@ const getStatusStyle = (status: string) => {
 }
 
 function ReportHistoryComponent() {
-  // --- STATE PAGINATION ---
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
-  // 1. Fetch Data Laporan
+  // Fetch reports
   const { data: reportsData, isLoading: isReportsLoading } = useQuery({
     queryKey: ["profile", "reports"],
     queryFn: () => profileService.getReports({ limit: 50 }), 
   })
 
-  // 2. Fetch Data Kategori
+  // Fetch categories
   const { data: categoriesData, isLoading: isCategoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => (await categoriesService.getCategories()).data,
@@ -59,7 +59,7 @@ function ReportHistoryComponent() {
 
   const reports = useMemo(() => reportsData?.data || [], [reportsData])
   
-  // --- LOGIKA PAGINATION ---
+  // Pagination logic
   const totalPages = Math.ceil(reports.length / itemsPerPage)
   
   const currentReports = useMemo(() => {
@@ -67,23 +67,22 @@ function ReportHistoryComponent() {
     return reports.slice(start, start + itemsPerPage)
   }, [currentPage, reports])
 
-  // --- LOGIKA SMART PAGINATION (DIPERBAIKI) ---
+  // Smart pagination items
   const paginationItems = useMemo(() => {
-    // 1. Jika halaman CUMA 1, 2, atau 3 -> Tampilkan semua.
-    // TAPI jika 4, masuk ke logika bawah agar jadi 1 2 ... 4
+    // Show all if few pages
     if (totalPages <= 3) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
 
-    // 2. Jika halaman 4 atau lebih, gunakan logika gap
-    const pages = new Set([1, 2, totalPages]); // Selalu ada 1, 2, dan Last
+    // Use gap logic for 4+
+    const pages = new Set([1, 2, totalPages]);
 
-    // Masukkan current page jika berada di tengah (bukan 1, 2, atau Last)
+    // Add current mid page
     if (currentPage > 2 && currentPage < totalPages) {
       pages.add(currentPage);
     }
 
-    // Urutkan angka halaman
+    // Sort page numbers
     const sortedPages = Array.from(pages).sort((a, b) => a - b);
     const finalItems: (number | string)[] = [];
 
@@ -91,7 +90,7 @@ function ReportHistoryComponent() {
       const page = sortedPages[i];
       if (i > 0) {
         const prevPage = sortedPages[i - 1];
-        // Jika jaraknya lebih dari 1, sisipkan "..."
+        // Insert ellipsis gap
         if (page - prevPage > 1) {
           finalItems.push("...");
         }
@@ -102,7 +101,7 @@ function ReportHistoryComponent() {
     return finalItems;
   }, [currentPage, totalPages]);
 
-  // Reset ke halaman 1 jika data berubah
+  // Reset on data change
   useEffect(() => {
     setCurrentPage(1)
   }, [reports.length])
@@ -201,7 +200,7 @@ function ReportHistoryComponent() {
           return (
             <div key={report.id} className="bg-white rounded-xl border border-general-30 shadow-sm p-4 hover:shadow-md transition-shadow">
               
-              {/* Header Kartu: Tanggal & Status */}
+              {/* Card header */}
               <div className="flex justify-between items-start mb-3">
                 <div className="text-xs font-medium text-general-50 bg-general-20 px-2 py-1 rounded-lg">
                   {formatDate(report.createdAt)}
@@ -211,14 +210,14 @@ function ReportHistoryComponent() {
                 </span>
               </div>
               
-              {/* Content Utama: Lokasi */}
+              {/* Location content */}
               <div className="mb-4">
                 <h4 className="font-heading font-bold text-general-100 text-sm leading-tight">
                   {report.location}
                 </h4>
               </div>
 
-              {/* Footer Kartu: Kategori & ID */}
+              {/* Category and ID */}
               <div className="flex items-center justify-between pt-3 border-t border-general-30 border-dashed">
                 <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-medium bg-red-20 text-red-100 border border-red-30">
                   <AlertCircle className="w-3 h-3 mr-1" />
@@ -236,25 +235,25 @@ function ReportHistoryComponent() {
       {totalPages > 1 && (
         <div className="p-4 border-t border-general-30 bg-general-20/30 flex items-center justify-center gap-2 select-none mt-auto">
           
-          {/* First Page (<<) : HIDDEN ON MOBILE */}
-          <button 
-            onClick={handleFirstPage} 
+          {/* First page button */}
+          <button
+            onClick={handleFirstPage}
             disabled={currentPage === 1}
             className="hidden sm:flex p-2 rounded-lg border border-general-30 bg-white text-general-60 hover:bg-blue-20 hover:text-blue-100 hover:border-blue-30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <ChevronsLeft className="w-4 h-4" />
           </button>
 
-          {/* Prev Page (<) */}
-          <button 
-            onClick={() => handlePageChange(currentPage - 1)} 
+          {/* Previous page */}
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
             className="p-2 rounded-lg border border-general-30 bg-white text-general-60 hover:bg-blue-20 hover:text-blue-100 hover:border-blue-30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          {/* Page Numbers Mapping */}
+          {/* Page numbers */}
           <div className="flex gap-1 mx-1 sm:mx-2">
             {paginationItems.map((item, idx) => {
               if (item === "...") {
@@ -284,16 +283,16 @@ function ReportHistoryComponent() {
             })}
           </div>
 
-          {/* Next Page (>) */}
-          <button 
-            onClick={() => handlePageChange(currentPage + 1)} 
+          {/* Next page */}
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
             className="p-2 rounded-lg border border-general-30 bg-white text-general-60 hover:bg-blue-20 hover:text-blue-100 hover:border-blue-30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
 
-          {/* Last Page (>>) : HIDDEN ON MOBILE */}
+          {/* Last page button */}
           <button 
             onClick={handleLastPage} 
             disabled={currentPage === totalPages}

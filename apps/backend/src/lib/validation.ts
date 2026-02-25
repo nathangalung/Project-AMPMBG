@@ -1,26 +1,26 @@
 import { z } from "zod"
 
-// Phone: 9-12 digits (will be prefixed with +62)
+// Phone input format
 export const phoneInputSchema = z.string()
   .min(9, "Nomor telepon minimal 9 digit")
   .max(12, "Nomor telepon maksimal 12 digit")
   .regex(/^\d{9,12}$/, "Nomor telepon harus 9-12 angka")
   .transform((val) => `+62${val}`)
 
-// Phone stored format (+62 + 9-12 digits)
+// Stored phone format
 export const phoneSchema = z.string()
   .min(12, "Nomor telepon tidak valid")
   .max(15, "Nomor telepon tidak valid")
   .regex(/^\+62\d{9,12}$/, "Format nomor telepon tidak valid")
 
-// Password: min 8 chars, 1 uppercase, 1 lowercase, 1 number
+// Password requirements
 export const passwordSchema = z.string()
   .min(8, "Password minimal 8 karakter")
   .regex(/[A-Z]/, "Password harus mengandung minimal 1 huruf besar")
   .regex(/[a-z]/, "Password harus mengandung minimal 1 huruf kecil")
   .regex(/[0-9]/, "Password harus mengandung minimal 1 angka")
 
-// Email: must contain @ and .
+// Email format
 export const emailSchema = z.string()
   .email("Email tidak valid")
   .regex(/@.*\./, "Email harus mengandung @ dan .")
@@ -65,7 +65,7 @@ export const reportStatusSchema = z.enum([
   "pending", "analyzing", "needs_evidence", "invalid", "in_progress", "resolved"
 ])
 
-// User role (admin or public)
+// User role
 export const userRoleSchema = z.enum(["admin", "public"])
 
 // Credibility level
@@ -91,7 +91,7 @@ export const locationTextSchema = z.string()
   .min(5, "Lokasi minimal 5 karakter")
   .max(255, "Lokasi maksimal 255 karakter")
 
-// Sanitize string (basic XSS prevention)
+// Basic XSS prevention
 export function sanitizeString(str: string): string {
   return str
     .replace(/</g, "&lt;")
@@ -107,7 +107,7 @@ export function isValidFileExtension(filename: string, allowedExtensions: string
   return ext ? allowedExtensions.includes(ext) : false
 }
 
-// Format phone number with +62 prefix
+// Format phone +62 prefix
 export function formatPhoneNumber(phone: string): string {
   const cleaned = phone.replace(/\D/g, "")
   if (cleaned.startsWith("0")) {

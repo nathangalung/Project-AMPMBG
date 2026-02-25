@@ -1,7 +1,7 @@
 import { api, setToken, removeToken } from "@/lib/api"
 import { queryClient } from "@/lib/query-client"
 
-// App-specific storage key
+// Storage key
 const ADMIN_KEY = "admin_currentUser"
 
 export interface Admin {

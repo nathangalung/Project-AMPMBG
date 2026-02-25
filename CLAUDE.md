@@ -11,8 +11,8 @@ Please design the folder structure and configuration based on the following stra
    - Root folder handles dependency management (shared node_modules).
    - Unified scripts in the root to run dev servers (FE & BE) in parallel or build both.
 2. **Deployment Strategy:**
-   - **Domain:** Cloudflare.
-   - **VPS:** DigitalOcean ($6/mo droplet).
+   - **Domain:** Hostinger -> Cloudflare (lapormbg.com).
+   - **VPS:** Hostinger KVM2.
    - **Server Management:** Dokploy.
 3. **CI/CD Pipelines:**
    - **Frontend:** Auto-deploy to Cloudflare Pages (via GitHub Apps integration).

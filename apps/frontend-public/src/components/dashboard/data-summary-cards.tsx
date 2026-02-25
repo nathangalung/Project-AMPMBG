@@ -145,7 +145,7 @@ function DataSummaryCardsComponent() {
   return (
     <div className="mb-8">
       
-      {/* HEADER + TOMBOL TOGGLE (Blue Theme) */}
+      {/* Header and toggle */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
         <div>
           <h3 className="text-lg font-bold text-blue-100">Ringkasan Statistik</h3>
@@ -166,7 +166,7 @@ function DataSummaryCardsComponent() {
         </button>
       </div>
 
-      {/* PANEL LEGENDA (Clean White & Blue Borders) */}
+      {/* Legend panel */}
       <div 
         className={`overflow-hidden transition-all duration-500 ease-in-out ${
           showLegend ? 'max-h-[800px] opacity-100 mb-8' : 'max-h-0 opacity-0'
@@ -175,7 +175,7 @@ function DataSummaryCardsComponent() {
         <div className="bg-white rounded-2xl p-6 border border-blue-30/50 shadow-sm">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
 
-            {/* KOLOM KIRI */}
+            {/* Left column */}
             <div className="flex flex-col h-full">
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-general-30">
                 <AlertTriangle className="w-4 h-4 text-blue-100" />
@@ -196,7 +196,7 @@ function DataSummaryCardsComponent() {
               </div>
             </div>
 
-            {/* KOLOM KANAN */}
+            {/* Right column */}
             <div className="flex flex-col h-full">
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-general-30">
                 <ClipboardCheck className="w-4 h-4 text-blue-100" />

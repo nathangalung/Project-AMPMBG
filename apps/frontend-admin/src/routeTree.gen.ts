@@ -73,11 +73,11 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/dashboard/manajemen-kebutuhan': typeof DashboardManajemenKebutuhanRoute
   '/dashboard/permintaan-kebutuhan-dapur': typeof DashboardPermintaanKebutuhanDapurRoute
-  '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/laporan/$id': typeof DashboardLaporanIdRoute
-  '/dashboard/akun-admin': typeof DashboardAkunAdminIndexRoute
-  '/dashboard/akun-anggota': typeof DashboardAkunAnggotaIndexRoute
-  '/dashboard/laporan': typeof DashboardLaporanIndexRoute
+  '/dashboard/akun-admin/': typeof DashboardAkunAdminIndexRoute
+  '/dashboard/akun-anggota/': typeof DashboardAkunAnggotaIndexRoute
+  '/dashboard/laporan/': typeof DashboardLaporanIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,11 +109,11 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/dashboard/manajemen-kebutuhan'
     | '/dashboard/permintaan-kebutuhan-dapur'
-    | '/dashboard'
+    | '/dashboard/'
     | '/dashboard/laporan/$id'
-    | '/dashboard/akun-admin'
-    | '/dashboard/akun-anggota'
-    | '/dashboard/laporan'
+    | '/dashboard/akun-admin/'
+    | '/dashboard/akun-anggota/'
+    | '/dashboard/laporan/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -162,7 +162,7 @@ declare module '@tanstack/react-router' {
     '/dashboard/': {
       id: '/dashboard/'
       path: '/dashboard'
-      fullPath: '/dashboard'
+      fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -190,21 +190,21 @@ declare module '@tanstack/react-router' {
     '/dashboard/laporan/': {
       id: '/dashboard/laporan/'
       path: '/dashboard/laporan'
-      fullPath: '/dashboard/laporan'
+      fullPath: '/dashboard/laporan/'
       preLoaderRoute: typeof DashboardLaporanIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/akun-anggota/': {
       id: '/dashboard/akun-anggota/'
       path: '/dashboard/akun-anggota'
-      fullPath: '/dashboard/akun-anggota'
+      fullPath: '/dashboard/akun-anggota/'
       preLoaderRoute: typeof DashboardAkunAnggotaIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/akun-admin/': {
       id: '/dashboard/akun-admin/'
       path: '/dashboard/akun-admin'
-      fullPath: '/dashboard/akun-admin'
+      fullPath: '/dashboard/akun-admin/'
       preLoaderRoute: typeof DashboardAkunAdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }

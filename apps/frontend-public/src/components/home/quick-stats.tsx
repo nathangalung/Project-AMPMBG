@@ -1,17 +1,17 @@
 import { memo, useMemo } from "react"
-import { FileText, Users, UserCheck, Loader2, Building2 } from "lucide-react" // Ditambahkan Building2
+import { FileText, Users, UserCheck, Loader2, Building2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { reportsService } from "@/services/reports"
 
 function QuickStatsComponent() {
-  // Data Fetching
+  // Fetch stats data
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["reports", "summary"],
     queryFn: () => reportsService.getSummary(),
     staleTime: 30000,
   })
 
-  // Data Formatting
+  // Format stats items
   const statsItems = useMemo(() => {
     return [
       {
@@ -38,7 +38,7 @@ function QuickStatsComponent() {
   }, [stats])
 
   return (
-    // Section Container
+    // Section container
     <section className="bg-blue-90 py-12 md:py-20 relative overflow-hidden">
       
       <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
@@ -46,7 +46,7 @@ function QuickStatsComponent() {
       </div>
 
       <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24 relative z-10">
-        {/* UPDATED: grid-cols-3 menjadi grid-cols-4 agar muat 4 item */}
+        {/* 4-column grid layout */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12 divide-y md:divide-y-0 md:divide-x divide-blue-80/50">
           {statsItems.map((stat, index) => (
             <div 
@@ -61,11 +61,11 @@ function QuickStatsComponent() {
                 )}
               </div>
               
-              {/* Stat Value Display */}
+              {/* Stat value */}
               <p className="font-heading font-bold text-3xl md:text-4xl lg:text-5xl text-general-20 mb-2">
                   {stat.value}
               </p>
-              {/* Stat Label Display */}
+              {/* Stat label */}
               <p className="body-sm text-blue-20 font-medium tracking-wide uppercase">
                   {stat.label}
               </p>

@@ -5,7 +5,8 @@ import { eq, and, gt } from "drizzle-orm"
 import { db, schema } from "../db"
 import { hashPassword, verifyPassword } from "../lib/password"
 import { signToken } from "../lib/jwt"
-import { authMiddleware, adminMiddleware } from "../middleware/auth"
+import { authMiddleware, adminMiddleware, tempAuthMiddleware, hashToken } from "../middleware/auth"
+import { rateLimiter } from "../middleware/rate-limit"
 import { randomBytes } from "crypto"
 import { sendEmail, getPasswordResetEmailHtml } from "../lib/email"
 import type { AuthUser, AuthAdmin } from "../types"
@@ -16,6 +17,37 @@ type AdminVariables = { admin: AuthAdmin }
 const auth = new Hono<{ Variables: UserVariables & AdminVariables }>()
 
 const generateToken = () => randomBytes(32).toString("hex")
+const SESSION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
+
+// Create user session
+async function createUserSession(c: any, publicId: string, token: string) {
+  try {
+    await db.insert(schema.sessions).values({
+      publicId,
+      token: hashToken(token),
+      expiresAt: new Date(Date.now() + SESSION_EXPIRY_MS),
+      userAgent: c.req.header("user-agent") || null,
+      ipAddress: c.req.header("x-forwarded-for") || null,
+    })
+  } catch {
+    // Duplicate token, skip
+  }
+}
+
+// Create admin session
+async function createAdminSession(c: any, adminId: string, token: string) {
+  try {
+    await db.insert(schema.adminSessions).values({
+      adminId,
+      token: hashToken(token),
+      expiresAt: new Date(Date.now() + SESSION_EXPIRY_MS),
+      userAgent: c.req.header("user-agent") || null,
+      ipAddress: c.req.header("x-forwarded-for") || null,
+    })
+  } catch {
+    // Duplicate token, skip
+  }
+}
 
 // ============================================
 // VALIDATORS
@@ -146,27 +178,28 @@ function formatPhone(rawPhone: string): string {
 // ADMIN AUTH ROUTES
 // ============================================
 
-auth.post("/admin/login", zValidator("json", adminLoginSchema), async (c) => {
+auth.post("/admin/login", rateLimiter(10, 15 * 60 * 1000), zValidator("json", adminLoginSchema), async (c) => {
   const { email, password } = c.req.valid("json")
 
   const admin = await db.query.admins.findFirst({
     where: eq(schema.admins.email, email.toLowerCase()),
   })
 
-  if (!admin) return c.json({ error: "Email atau password salah" }, 401)
-  if (!admin.isActive) return c.json({ error: "Akun Anda telah dinonaktifkan" }, 403)
+  if (!admin) return c.json({ error: "Invalid email or password" }, 401)
+  if (!admin.isActive) return c.json({ error: "Account has been deactivated" }, 403)
 
   const isValid = await verifyPassword(password, admin.password)
-  if (!isValid) return c.json({ error: "Email atau password salah" }, 401)
+  if (!isValid) return c.json({ error: "Invalid email or password" }, 401)
 
   await db.update(schema.admins)
     .set({ lastLoginAt: new Date() })
     .where(eq(schema.admins.id, admin.id))
 
   const token = await signToken({ sub: admin.id, email: admin.email, type: "admin" })
+  await createAdminSession(c, admin.id, token)
 
   return c.json({
-    message: "Login berhasil",
+    message: "Login successful",
     admin: { id: admin.id, email: admin.email, name: admin.name, adminRole: admin.adminRole },
     token,
   })
@@ -180,7 +213,7 @@ auth.get("/admin/me", adminMiddleware, async (c) => {
     columns: { id: true, email: true, name: true, phone: true, adminRole: true, createdAt: true },
   })
 
-  if (!admin) return c.json({ error: "Admin tidak ditemukan" }, 404)
+  if (!admin) return c.json({ error: "Admin not found" }, 404)
 
   return c.json({ admin })
 })
@@ -188,19 +221,19 @@ auth.get("/admin/me", adminMiddleware, async (c) => {
 auth.post("/admin/logout", adminMiddleware, async (c) => {
   const authHeader = c.req.header("Authorization")
   if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.slice(7)
+    const hashed = hashToken(authHeader.slice(7))
     await db.update(schema.adminSessions)
       .set({ isRevoked: true })
-      .where(eq(schema.adminSessions.token, token))
+      .where(eq(schema.adminSessions.token, hashed))
   }
-  return c.json({ message: "Logout berhasil" })
+  return c.json({ message: "Logout successful" })
 })
 
 // ============================================
 // PUBLIC AUTH ROUTES
 // ============================================
 
-auth.post("/signup", zValidator("json", userSignupSchema), async (c) => {
+auth.post("/signup", rateLimiter(5, 15 * 60 * 1000), zValidator("json", userSignupSchema), async (c) => {
   const { email, password, name, phone: rawPhone } = c.req.valid("json")
 
   const formattedPhone = formatPhone(rawPhone)
@@ -211,7 +244,7 @@ auth.post("/signup", zValidator("json", userSignupSchema), async (c) => {
 
   if (existingPublic) {
     if (existingPublic.password) {
-      return c.json({ error: "Email sudah terdaftar" }, 400)
+      return c.json({ error: "Email already registered" }, 400)
     }
     const hashedPassword = await hashPassword(password)
     await db.update(schema.publics)
@@ -219,8 +252,9 @@ auth.post("/signup", zValidator("json", userSignupSchema), async (c) => {
       .where(eq(schema.publics.id, existingPublic.id))
 
     const token = await signToken({ sub: existingPublic.id, email: existingPublic.email, type: "user" })
+    await createUserSession(c, existingPublic.id, token)
     return c.json({
-      message: "Password ditambahkan ke akun Anda",
+      message: "Password added to your account",
       user: { id: existingPublic.id, email: existingPublic.email, phone: formattedPhone, name: existingPublic.name },
       token,
     })
@@ -229,7 +263,7 @@ auth.post("/signup", zValidator("json", userSignupSchema), async (c) => {
   const existingPhone = await db.query.publics.findFirst({
     where: eq(schema.publics.phone, formattedPhone),
   })
-  if (existingPhone) return c.json({ error: "Nomor telepon sudah terdaftar" }, 400)
+  if (existingPhone) return c.json({ error: "Phone number already registered" }, 400)
 
   const hashedPassword = await hashPassword(password)
 
@@ -246,15 +280,16 @@ auth.post("/signup", zValidator("json", userSignupSchema), async (c) => {
   })
 
   const token = await signToken({ sub: publicUser.id, email: publicUser.email, type: "user" })
+  await createUserSession(c, publicUser.id, token)
 
   return c.json({
-    message: "Registrasi berhasil",
+    message: "Registration successful",
     user: { id: publicUser.id, email: publicUser.email, phone: publicUser.phone, name: publicUser.name },
     token,
   }, 201)
 })
 
-auth.post("/login", zValidator("json", userLoginSchema), async (c) => {
+auth.post("/login", rateLimiter(10, 15 * 60 * 1000), zValidator("json", userLoginSchema), async (c) => {
   const { identifier, password } = c.req.valid("json")
 
   let phoneWithPrefix = identifier
@@ -273,26 +308,27 @@ auth.post("/login", zValidator("json", userLoginSchema), async (c) => {
 
   const foundPublic = publicUser || publicByPhone
 
-  if (!foundPublic) return c.json({ error: "Email/telepon atau password salah" }, 401)
+  if (!foundPublic) return c.json({ error: "Invalid credentials" }, 401)
 
   if (!foundPublic.password) {
     if (foundPublic.googleId) {
-      return c.json({ error: "Akun ini terdaftar menggunakan Google. Silakan login dengan Google atau buat password." }, 403)
+      return c.json({ error: "This account uses Google sign-in. Please login with Google or create a password." }, 403)
     }
-    return c.json({ error: "Akun ini tidak memiliki password" }, 403)
+    return c.json({ error: "This account has no password" }, 403)
   }
 
   const isValid = await verifyPassword(password, foundPublic.password)
-  if (!isValid) return c.json({ error: "Email/telepon atau password salah" }, 401)
+  if (!isValid) return c.json({ error: "Invalid credentials" }, 401)
 
   await db.update(schema.publics)
     .set({ lastLoginAt: new Date() })
     .where(eq(schema.publics.id, foundPublic.id))
 
   const token = await signToken({ sub: foundPublic.id, email: foundPublic.email, type: "user" })
+  await createUserSession(c, foundPublic.id, token)
 
   return c.json({
-    message: "Login berhasil",
+    message: "Login successful",
     user: {
       id: foundPublic.id,
       email: foundPublic.email,
@@ -320,7 +356,7 @@ auth.get("/me", authMiddleware, async (c) => {
     },
   })
 
-  if (!publicUser) return c.json({ error: "User tidak ditemukan" }, 404)
+  if (!publicUser) return c.json({ error: "User not found" }, 404)
 
   return c.json({
     user: {
@@ -344,25 +380,25 @@ auth.get("/me", authMiddleware, async (c) => {
 auth.post("/logout", authMiddleware, async (c) => {
   const authHeader = c.req.header("Authorization")
   if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.slice(7)
+    const hashed = hashToken(authHeader.slice(7))
     await db.update(schema.sessions)
       .set({ isRevoked: true })
-      .where(eq(schema.sessions.token, token))
+      .where(eq(schema.sessions.token, hashed))
   }
-  return c.json({ message: "Logout berhasil" })
+  return c.json({ message: "Logout successful" })
 })
 
 // ============================================
 // GOOGLE AUTH ROUTES
 // ============================================
 
-auth.post("/google/code", zValidator("json", googleCodeSchema), async (c) => {
+auth.post("/google/code", rateLimiter(10, 15 * 60 * 1000), zValidator("json", googleCodeSchema), async (c) => {
   const { code } = c.req.valid("json")
 
   const googleUser = await exchangeGoogleCode(code)
-  if (!googleUser) return c.json({ error: "Kode Google tidak valid" }, 401)
+  if (!googleUser) return c.json({ error: "Invalid Google code" }, 401)
 
-  // Check if Google account already linked
+  // Check existing Google link
   const existingByGoogleId = await db.query.publics.findFirst({
     where: eq(schema.publics.googleId, googleUser.sub),
   })
@@ -372,7 +408,7 @@ auth.post("/google/code", zValidator("json", googleCodeSchema), async (c) => {
       return c.json({
         requiresPhone: true,
         tempToken: await signToken({ sub: existingByGoogleId.id, email: existingByGoogleId.email, type: "user", temp: true }),
-        message: "Silakan lengkapi nomor telepon",
+        message: "Please complete your phone number",
       })
     }
 
@@ -381,8 +417,9 @@ auth.post("/google/code", zValidator("json", googleCodeSchema), async (c) => {
       .where(eq(schema.publics.id, existingByGoogleId.id))
 
     const token = await signToken({ sub: existingByGoogleId.id, email: existingByGoogleId.email, type: "user" })
+    await createUserSession(c, existingByGoogleId.id, token)
     return c.json({
-      message: "Login berhasil",
+      message: "Login successful",
       user: {
         id: existingByGoogleId.id,
         email: existingByGoogleId.email,
@@ -395,7 +432,7 @@ auth.post("/google/code", zValidator("json", googleCodeSchema), async (c) => {
     })
   }
 
-  // Check if email exists (link Google to existing account)
+  // Link Google to email
   const existingByEmail = await db.query.publics.findFirst({
     where: eq(schema.publics.email, googleUser.email),
   })
@@ -409,7 +446,7 @@ auth.post("/google/code", zValidator("json", googleCodeSchema), async (c) => {
       return c.json({
         requiresPhone: true,
         tempToken: await signToken({ sub: existingByEmail.id, email: existingByEmail.email, type: "user", temp: true }),
-        message: "Silakan lengkapi nomor telepon",
+        message: "Please complete your phone number",
       })
     }
 
@@ -418,8 +455,9 @@ auth.post("/google/code", zValidator("json", googleCodeSchema), async (c) => {
       .where(eq(schema.publics.id, existingByEmail.id))
 
     const token = await signToken({ sub: existingByEmail.id, email: existingByEmail.email, type: "user" })
+    await createUserSession(c, existingByEmail.id, token)
     return c.json({
-      message: "Google terhubung ke akun Anda",
+      message: "Google linked to your account",
       user: {
         id: existingByEmail.id,
         email: existingByEmail.email,
@@ -432,7 +470,7 @@ auth.post("/google/code", zValidator("json", googleCodeSchema), async (c) => {
     })
   }
 
-  // Create new account via Google
+  // New Google account
   const [newPublic] = await db.insert(schema.publics).values({
     email: googleUser.email,
     name: googleUser.name,
@@ -448,11 +486,11 @@ auth.post("/google/code", zValidator("json", googleCodeSchema), async (c) => {
   return c.json({
     requiresPhone: true,
     tempToken: await signToken({ sub: newPublic.id, email: newPublic.email, type: "user", temp: true }),
-    message: "Silakan lengkapi nomor telepon",
+    message: "Please complete your phone number",
   }, 201)
 })
 
-auth.post("/google/complete-phone", authMiddleware, zValidator("json", completePhoneSchema), async (c) => {
+auth.post("/google/complete-phone", tempAuthMiddleware, zValidator("json", completePhoneSchema), async (c) => {
   const authUser = c.get("user")
   const { phone: rawPhone } = c.req.valid("json")
 
@@ -460,16 +498,16 @@ auth.post("/google/complete-phone", authMiddleware, zValidator("json", completeP
     where: eq(schema.publics.id, authUser.id),
   })
 
-  if (!publicUser) return c.json({ error: "User tidak ditemukan" }, 404)
-  if (!publicUser.googleId) return c.json({ error: "Fitur ini hanya untuk akun Google" }, 400)
-  if (publicUser.phone) return c.json({ error: "Nomor telepon sudah terisi" }, 400)
+  if (!publicUser) return c.json({ error: "User not found" }, 404)
+  if (!publicUser.googleId) return c.json({ error: "This feature is for Google accounts only" }, 400)
+  if (publicUser.phone) return c.json({ error: "Phone number already set" }, 400)
 
   const formattedPhone = formatPhone(rawPhone)
 
   const existingPhone = await db.query.publics.findFirst({
     where: eq(schema.publics.phone, formattedPhone),
   })
-  if (existingPhone) return c.json({ error: "Nomor telepon sudah digunakan" }, 400)
+  if (existingPhone) return c.json({ error: "Phone number already in use" }, 400)
 
   const [updatedPublic] = await db.update(schema.publics)
     .set({ phone: formattedPhone, lastLoginAt: new Date(), updatedAt: new Date() })
@@ -482,9 +520,10 @@ auth.post("/google/complete-phone", authMiddleware, zValidator("json", completeP
     })
 
   const token = await signToken({ sub: updatedPublic.id, email: updatedPublic.email, type: "user" })
+  await createUserSession(c, updatedPublic.id, token)
 
   return c.json({
-    message: "Nomor telepon berhasil ditambahkan",
+    message: "Phone number added successfully",
     user: { ...updatedPublic, hasPassword: !!publicUser.password, isGoogleLinked: true },
     token,
   })
@@ -494,7 +533,7 @@ auth.post("/google/complete-phone", authMiddleware, zValidator("json", completeP
 // PASSWORD RESET ROUTES
 // ============================================
 
-auth.post("/forgot-password", zValidator("json", forgotPasswordSchema), async (c) => {
+auth.post("/forgot-password", rateLimiter(3, 15 * 60 * 1000), zValidator("json", forgotPasswordSchema), async (c) => {
   const { email } = c.req.valid("json")
 
   const publicUser = await db.query.publics.findFirst({
@@ -502,11 +541,11 @@ auth.post("/forgot-password", zValidator("json", forgotPasswordSchema), async (c
   })
 
   if (!publicUser) {
-    return c.json({ message: "Jika email terdaftar, kami akan mengirimkan link reset password" })
+    return c.json({ message: "If the email is registered, a reset link will be sent" })
   }
 
   if (!publicUser.password && publicUser.googleId) {
-    return c.json({ error: "Akun ini terdaftar menggunakan Google. Silakan login dengan Google atau buat password terlebih dahulu." }, 400)
+    return c.json({ error: "This account uses Google sign-in. Please login with Google or create a password first." }, 400)
   }
 
   await db.delete(schema.passwordResetTokens)
@@ -521,7 +560,7 @@ auth.post("/forgot-password", zValidator("json", forgotPasswordSchema), async (c
     expiresAt,
   })
 
-  // Use request origin to determine correct frontend URL
+  // Determine frontend URL
   const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173").split(",")
   const requestOrigin = c.req.header("origin") || c.req.header("referer")?.replace(/\/$/, "").split("/").slice(0, 3).join("/")
   const frontendUrl = allowedOrigins.includes(requestOrigin || "") ? requestOrigin : allowedOrigins[0]
@@ -540,17 +579,14 @@ auth.post("/forgot-password", zValidator("json", forgotPasswordSchema), async (c
     console.log("[Forgot Password] Email sent successfully to:", publicUser.email)
   }
 
-  // Return token in dev mode for testing
-  const isDev = process.env.NODE_ENV !== "production"
   return c.json({
     message: emailSent
-      ? "Link reset password telah dikirim ke email Anda"
-      : "Jika email terdaftar, kami akan mengirimkan link reset password",
-    ...(isDev && { token, resetUrl, emailSent }),
+      ? "Password reset link has been sent to your email"
+      : "If the email is registered, a reset link will be sent",
   })
 })
 
-auth.get("/verify-reset-token/:token", async (c) => {
+auth.get("/verify-reset-token/:token", rateLimiter(5, 15 * 60 * 1000), async (c) => {
   const token = c.req.param("token")
 
   const resetToken = await db.query.passwordResetTokens.findFirst({
@@ -561,13 +597,13 @@ auth.get("/verify-reset-token/:token", async (c) => {
   })
 
   if (!resetToken || resetToken.usedAt) {
-    return c.json({ error: "Token tidak valid atau sudah kadaluarsa" }, 400)
+    return c.json({ error: "Invalid or expired token" }, 400)
   }
 
   return c.json({ valid: true })
 })
 
-auth.post("/reset-password", zValidator("json", resetPasswordSchema), async (c) => {
+auth.post("/reset-password", rateLimiter(5, 15 * 60 * 1000), zValidator("json", resetPasswordSchema), async (c) => {
   const { token, password } = c.req.valid("json")
 
   const resetToken = await db.query.passwordResetTokens.findFirst({
@@ -579,7 +615,7 @@ auth.post("/reset-password", zValidator("json", resetPasswordSchema), async (c) 
   })
 
   if (!resetToken || resetToken.usedAt) {
-    return c.json({ error: "Token tidak valid atau sudah kadaluarsa" }, 400)
+    return c.json({ error: "Invalid or expired token" }, 400)
   }
 
   const hashedPassword = await hashPassword(password)
@@ -596,7 +632,7 @@ auth.post("/reset-password", zValidator("json", resetPasswordSchema), async (c) 
       .where(eq(schema.sessions.publicId, resetToken.publicId)),
   ])
 
-  return c.json({ message: "Password berhasil direset" })
+  return c.json({ message: "Password reset successful" })
 })
 
 // ============================================
@@ -616,7 +652,7 @@ auth.put("/profile", authMiddleware, zValidator("json", updateProfileSchema), as
   if (phone) {
     formattedPhone = `+62${phone}`
     const existing = await db.query.publics.findFirst({ where: eq(schema.publics.phone, formattedPhone) })
-    if (existing && existing.id !== authUser.id) return c.json({ error: "Nomor telepon sudah digunakan" }, 400)
+    if (existing && existing.id !== authUser.id) return c.json({ error: "Phone number already in use" }, 400)
   }
 
   const updateData: Record<string, unknown> = { updatedAt: new Date() }
@@ -628,7 +664,7 @@ auth.put("/profile", authMiddleware, zValidator("json", updateProfileSchema), as
     .where(eq(schema.publics.id, authUser.id))
     .returning({ id: schema.publics.id, email: schema.publics.email, phone: schema.publics.phone, name: schema.publics.name })
 
-  return c.json({ user: updated, message: "Profil berhasil diperbarui" })
+  return c.json({ user: updated, message: "Profile updated successfully" })
 })
 
 auth.put("/change-password", authMiddleware, zValidator("json", z.object({
@@ -643,19 +679,19 @@ auth.put("/change-password", authMiddleware, zValidator("json", z.object({
   const { currentPassword, newPassword } = c.req.valid("json")
 
   const publicUser = await db.query.publics.findFirst({ where: eq(schema.publics.id, authUser.id) })
-  if (!publicUser) return c.json({ error: "User tidak ditemukan" }, 404)
-  if (!publicUser.password) return c.json({ error: "Akun ini tidak memiliki password. Gunakan Buat Kata Sandi." }, 400)
+  if (!publicUser) return c.json({ error: "User not found" }, 404)
+  if (!publicUser.password) return c.json({ error: "This account has no password. Use Create Password." }, 400)
 
   const isValid = await verifyPassword(currentPassword, publicUser.password)
-  if (!isValid) return c.json({ error: "Password saat ini salah" }, 400)
+  if (!isValid) return c.json({ error: "Current password is incorrect" }, 400)
 
   const hashedPassword = await hashPassword(newPassword)
   await db.update(schema.publics).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(schema.publics.id, authUser.id))
 
-  return c.json({ message: "Password berhasil diubah" })
+  return c.json({ message: "Password changed successfully" })
 })
 
-// Create password for Google-only users
+// Create password (Google users)
 auth.post("/create-password", authMiddleware, zValidator("json", z.object({
   password: passwordValidator,
   confirmPassword: z.string(),
@@ -667,13 +703,13 @@ auth.post("/create-password", authMiddleware, zValidator("json", z.object({
   const { password } = c.req.valid("json")
 
   const publicUser = await db.query.publics.findFirst({ where: eq(schema.publics.id, authUser.id) })
-  if (!publicUser) return c.json({ error: "User tidak ditemukan" }, 404)
-  if (publicUser.password) return c.json({ error: "Akun ini sudah memiliki password. Gunakan Ubah Kata Sandi." }, 400)
+  if (!publicUser) return c.json({ error: "User not found" }, 404)
+  if (publicUser.password) return c.json({ error: "This account already has a password. Use Change Password." }, 400)
 
   const hashedPassword = await hashPassword(password)
   await db.update(schema.publics).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(schema.publics.id, authUser.id))
 
-  return c.json({ message: "Password berhasil dibuat" })
+  return c.json({ message: "Password created successfully" })
 })
 
 // ============================================
@@ -693,7 +729,7 @@ auth.post("/apply-member", authMiddleware, zValidator("json", applyMemberSchema)
   const authUser = c.get("user")
   const data = c.req.valid("json")
 
-  // Check for duplicate organization name + email combination
+  // Check duplicate org
   const existingMember = await db.query.members.findFirst({
     where: and(
       eq(schema.members.publicId, authUser.id),
@@ -703,7 +739,7 @@ auth.post("/apply-member", authMiddleware, zValidator("json", applyMemberSchema)
   })
 
   if (existingMember) {
-    return c.json({ error: "Anda sudah mendaftarkan organisasi dengan nama dan email yang sama" }, 400)
+    return c.json({ error: "Organization with same name and email already registered" }, 400)
   }
 
   await db.insert(schema.members).values({
@@ -717,7 +753,7 @@ auth.post("/apply-member", authMiddleware, zValidator("json", applyMemberSchema)
   })
 
   return c.json({
-    message: "Pendaftaran sebagai anggota AMP MBG sedang diproses. Silakan tunggu verifikasi dari admin.",
+    message: "Member registration is being processed. Please wait for admin verification.",
   })
 })
 

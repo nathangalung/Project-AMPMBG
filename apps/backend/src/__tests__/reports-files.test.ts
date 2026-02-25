@@ -131,8 +131,9 @@ describe("Reports File Operations", () => {
     })
 
     test("uploads valid file successfully", async () => {
+      const jpegHeader = new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0])
       const formData = new FormData()
-      formData.append("files", new File(["test content"], "test.jpg", { type: "image/jpeg" }))
+      formData.append("files", new File([jpegHeader], "test.jpg", { type: "image/jpeg" }))
 
       const res = await testRequest(app, "POST", `/api/reports/${reportId}/files`, {
         token: userToken,
@@ -193,7 +194,7 @@ describe("Reports File Operations", () => {
     })
 
     test("owner can delete their file", async () => {
-      // Create a new file for this test
+      // New file for test
       const [newFile] = await db.insert(reportFiles).values({
         reportId,
         fileName: "owner-delete.jpg",

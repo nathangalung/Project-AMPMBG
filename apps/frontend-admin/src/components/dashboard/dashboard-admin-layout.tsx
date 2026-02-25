@@ -26,7 +26,7 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // Auth Guard
+  // Auth guard
   useEffect(() => {
     const userStr = localStorage.getItem("admin_currentUser")
     if (userStr) {
@@ -100,7 +100,7 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
   return (
     <div className="flex h-screen w-full bg-general-20 font-sans text-general-100 overflow-hidden">
       
-      {/* MOBILE OVERLAY */}
+      {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm transition-opacity"
@@ -108,14 +108,13 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
         />
       )}
 
-      {/* --- SIDEBAR --- */}
+      {/* Sidebar */}
       <aside className={cn(
         "fixed inset-y-0 left-0 z-40 w-64 bg-general-20 border-r border-general-30 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         
-        {/* LOGO AREA SIDEBAR */}
-        {/* Update: lg:justify-center agar di desktop logo ke tengah, justify-between untuk mobile agar ada space antara logo dan tombol X */}
+        {/* Logo area */}
         <div className="h-16 lg:h-20 flex items-center justify-between lg:justify-center px-6 border-b border-general-30 shrink-0 bg-general-20 relative">
            <img
              src="/logo_hijau.webp"
@@ -132,7 +131,7 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
            </button>
         </div>
 
-        {/* NAVIGATION */}
+        {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-general-30">
           {navItems.map((item) => {
             const active = isActive(item.to, item.exact)
@@ -154,7 +153,7 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
           })}
         </nav>
 
-        {/* USER PROFILE */}
+        {/* User Profile */}
         <div className="p-4 border-t border-general-30 shrink-0 bg-general-20">
           <div className="flex items-center gap-3 px-2">
             <div className="flex-1 min-w-0">
@@ -176,11 +175,10 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
         </div>
       </aside>
 
-      {/* --- CONTENT WRAPPER --- */}
+      {/* Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 h-full transition-all duration-300 lg:ml-64">
         
-        {/* MOBILE HEADER */}
-        {/* Update: Tambahkan 'relative' dan posisikan img secara absolute di tengah */}
+        {/* Mobile Header */}
         <header className="lg:hidden h-16 flex items-center px-4 border-b border-general-30 bg-general-20 sticky top-0 z-20 shrink-0 relative">
           <div className="flex items-center gap-3">
              <button 
@@ -192,7 +190,7 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
              <span className="font-heading font-bold text-lg text-general-100">Dashboard</span>
           </div>
           
-          {/* Logo Tengah Absolut */}
+          {/* Centered logo */}
           <img
              src="/logo_hijau.webp"
              alt="Logo"
@@ -200,13 +198,13 @@ export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps
            /> 
         </header>
 
-        {/* MAIN SCROLL AREA */}
+        {/* Main content */}
         <main className="flex-1 overflow-y-auto bg-general-20 w-full">
            {children}
         </main>
       </div>
 
-      {/* --- MODAL LOGOUT --- */}
+      {/* Logout Modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-general-20 rounded-2xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100 border border-general-30">

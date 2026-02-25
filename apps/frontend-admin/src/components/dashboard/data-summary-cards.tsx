@@ -28,7 +28,7 @@ function DataSummaryCardsComponent() {
     const medium = stats?.mediumRisk || 0 
     const low = stats?.lowRisk || 0       
 
-    // BARIS 1: Status & Kategori (Paling Penting)
+    // Row 1: status, category
     const row1 = [
       {
         icon: ClipboardCheck,
@@ -44,7 +44,7 @@ function DataSummaryCardsComponent() {
       }
     ]
 
-    // BARIS 2: Detail Risiko (Breakdown)
+    // Row 2: risk breakdown
     const row2 = [
       {
         icon: AlertTriangle,
@@ -69,7 +69,7 @@ function DataSummaryCardsComponent() {
     return { row1Data: row1, row2Data: row2 }
   }, [stats])
 
-  // Helper function untuk merender kartu agar kodenya tidak berulang
+  // Reusable card renderer
   const renderCard = (item: any, index: number) => (
     <div 
       key={index} 
@@ -97,12 +97,12 @@ function DataSummaryCardsComponent() {
   return (
     <div className="space-y-4 mb-8">
       
-      {/* BARIS PERTAMA: 2 Kolom (Verifikasi & Kategori) */}
+      {/* Row 1 cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {row1Data.map(renderCard)}
       </div>
 
-      {/* BARIS KEDUA: 3 Kolom (Risiko Tinggi, Sedang, Rendah) */}
+      {/* Row 2 cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {row2Data.map(renderCard)}
       </div>

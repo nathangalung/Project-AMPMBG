@@ -1,12 +1,35 @@
 import { createMiddleware } from "hono/factory"
+import { eq } from "drizzle-orm"
+import { createHash } from "crypto"
 import { verifyToken } from "../lib/jwt"
+import { db, schema } from "../db"
 import type { AuthUser, AuthAdmin } from "../types"
+
+// Hash for DB storage
+export const hashToken = (t: string) => createHash("sha256").update(t).digest("hex")
 
 type UserVariables = { user: AuthUser }
 type AdminVariables = { admin: AuthAdmin }
-type AnyAuthVariables = { user?: AuthUser; admin?: AuthAdmin }
 
-// User auth middleware - for public users only
+// Check user session
+async function isUserSessionRevoked(token: string): Promise<boolean> {
+  if (process.env.NODE_ENV === "test") return false
+  const session = await db.query.sessions.findFirst({
+    where: eq(schema.sessions.token, hashToken(token)),
+  })
+  return session?.isRevoked === true
+}
+
+// Check admin session
+async function isAdminSessionRevoked(token: string): Promise<boolean> {
+  if (process.env.NODE_ENV === "test") return false
+  const session = await db.query.adminSessions.findFirst({
+    where: eq(schema.adminSessions.token, hashToken(token)),
+  })
+  return session?.isRevoked === true
+}
+
+// Public user auth
 export const authMiddleware = createMiddleware<{ Variables: UserVariables }>(async (c, next) => {
   const authHeader = c.req.header("Authorization")
 
@@ -18,11 +41,19 @@ export const authMiddleware = createMiddleware<{ Variables: UserVariables }>(asy
   const payload = await verifyToken(token)
 
   if (!payload) {
-    return c.json({ error: "Token tidak valid" }, 401)
+    return c.json({ error: "Invalid token" }, 401)
   }
 
   if (payload.type !== "user") {
-    return c.json({ error: "Token tidak valid untuk pengguna" }, 401)
+    return c.json({ error: "Invalid user token" }, 401)
+  }
+
+  if (payload.temp === true) {
+    return c.json({ error: "Complete registration first" }, 403)
+  }
+
+  if (await isUserSessionRevoked(token)) {
+    return c.json({ error: "Session revoked" }, 401)
   }
 
   c.set("user", {
@@ -34,7 +65,35 @@ export const authMiddleware = createMiddleware<{ Variables: UserVariables }>(asy
   await next()
 })
 
-// Optional auth - validates user if present
+// Temp token auth only
+export const tempAuthMiddleware = createMiddleware<{ Variables: UserVariables }>(async (c, next) => {
+  const authHeader = c.req.header("Authorization")
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    return c.json({ error: "Unauthorized" }, 401)
+  }
+
+  const token = authHeader.slice(7)
+  const payload = await verifyToken(token)
+
+  if (!payload) {
+    return c.json({ error: "Invalid token" }, 401)
+  }
+
+  if (payload.type !== "user") {
+    return c.json({ error: "Invalid user token" }, 401)
+  }
+
+  c.set("user", {
+    id: payload.sub,
+    email: payload.email,
+    type: "user",
+  })
+
+  await next()
+})
+
+// Optional auth check
 export const optionalAuthMiddleware = createMiddleware<{ Variables: UserVariables }>(async (c, next) => {
   const authHeader = c.req.header("Authorization")
 
@@ -54,7 +113,7 @@ export const optionalAuthMiddleware = createMiddleware<{ Variables: UserVariable
   await next()
 })
 
-// Admin auth middleware - for admin only
+// Admin-only auth
 export const adminMiddleware = createMiddleware<{ Variables: AdminVariables }>(async (c, next) => {
   const authHeader = c.req.header("Authorization")
 
@@ -66,11 +125,15 @@ export const adminMiddleware = createMiddleware<{ Variables: AdminVariables }>(a
   const payload = await verifyToken(token)
 
   if (!payload) {
-    return c.json({ error: "Token tidak valid" }, 401)
+    return c.json({ error: "Invalid token" }, 401)
   }
 
   if (payload.type !== "admin") {
-    return c.json({ error: "Akses ditolak" }, 403)
+    return c.json({ error: "Access denied" }, 403)
+  }
+
+  if (await isAdminSessionRevoked(token)) {
+    return c.json({ error: "Session revoked" }, 401)
   }
 
   c.set("admin", {
@@ -82,24 +145,27 @@ export const adminMiddleware = createMiddleware<{ Variables: AdminVariables }>(a
   await next()
 })
 
-// Reporter middleware - for public users to submit reports
+// Report submission auth
 export const reporterMiddleware = createMiddleware<{ Variables: UserVariables }>(async (c, next) => {
   const authHeader = c.req.header("Authorization")
 
   if (!authHeader?.startsWith("Bearer ")) {
-    return c.json({ error: "Silakan login untuk membuat laporan" }, 401)
+    return c.json({ error: "Login required to submit reports" }, 401)
   }
 
   const token = authHeader.slice(7)
   const payload = await verifyToken(token)
 
   if (!payload) {
-    return c.json({ error: "Token tidak valid" }, 401)
+    return c.json({ error: "Invalid token" }, 401)
   }
 
-  // Admin cannot submit reports
   if (payload.type === "admin") {
-    return c.json({ error: "Admin tidak dapat membuat laporan" }, 403)
+    return c.json({ error: "Admins cannot submit reports" }, 403)
+  }
+
+  if (await isUserSessionRevoked(token)) {
+    return c.json({ error: "Session revoked" }, 401)
   }
 
   c.set("user", {

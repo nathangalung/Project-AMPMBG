@@ -1,6 +1,6 @@
 # AMP MBG Makefile
 
-.PHONY: help setup setup-fresh run stop install build clean db-up db-down db-push db-seed db-reset db-studio docker-build docker-up docker-down docker-logs test
+.PHONY: help setup setup-fresh run stop install build clean db-up db-down db-push db-seed db-reset db-studio mail-up mail-down docker-build docker-up docker-down docker-logs test
 
 DOCKER_COMPOSE = docker compose
 DOCKER_COMPOSE_PROD = docker compose -f docker-compose.prod.yml
@@ -22,6 +22,9 @@ help:
 	@echo "  make db-seed      Seed data"
 	@echo "  make db-reset     Reset database"
 	@echo "  make db-studio    Open Drizzle Studio"
+	@echo ""
+	@echo "  make mail-up      Start Stalwart mail server"
+	@echo "  make mail-down    Stop Stalwart mail server"
 	@echo ""
 	@echo "  make docker-build Build production image"
 	@echo "  make docker-up    Start production"
@@ -85,6 +88,14 @@ db-reset: db-down
 
 db-studio:
 	bun run db:studio
+
+mail-up:
+	@$(DOCKER_COMPOSE) --profile mail up -d stalwart
+	@echo "Stalwart ready at :8080"
+
+mail-down:
+	@$(DOCKER_COMPOSE) --profile mail down
+	@echo "Stalwart stopped"
 
 test:
 	bun --cwd apps/backend test

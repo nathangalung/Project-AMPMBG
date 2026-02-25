@@ -9,7 +9,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className="h-screen w-full flex bg-general-20 overflow-hidden">
       
-      {/* PANEL KIRI (Desktop Only) */}
+      {/* Left panel (desktop) */}
       <div className="hidden lg:flex lg:w-[40%] h-full relative">
         <img
           src="/siswa_makan_mbg_2.webp"
@@ -32,18 +32,13 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         </div>
       </div>
 
-      {/* PANEL KANAN */}
-      {/* PERUBAHAN 1: Hapus Padding (px/py) dan Flex dari sini. Biarkan dia murni sebagai Scroll Container */}
+      {/* Right panel */}
       <div className="w-full lg:w-[60%] h-full bg-general-20 overflow-y-auto scrollbar-hide">
         
-        {/* PERUBAHAN 2: Pindahkan Padding ke sini. 
-            - 'min-h-full' memastikan tinggi minimal setinggi layar.
-            - 'lg:justify-center' memastikan konten benar-benar di tengah secara vertikal.
-            - Padding (px-6 py-12...) sekarang menempel pada container flex ini, sehingga kalkulasi tengahnya akurat.
-        */}
+        {/* Content wrapper */}
         <div className="min-h-full w-full flex flex-col lg:justify-center px-6 py-12 lg:px-16 xl:px-24">
             
-            {/* Logo Mobile */}
+            {/* Mobile logo */}
             <div className="lg:hidden flex justify-center mb-10 mt-8">
               <Link to="/" className="flex flex-col items-center gap-4">
                   <div className="bg-blue-100 rounded-full w-40 h-40 md:w-52 md:h-52 flex items-center justify-center p-8 shadow-xl shrink-0">
@@ -61,7 +56,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
               </Link>
             </div>
 
-            {/* Form Container */}
+            {/* Form container */}
             <div className="w-full mx-auto pb-10">
                 {children}
             </div>

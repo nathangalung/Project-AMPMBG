@@ -11,7 +11,6 @@ interface StepLocationCategoryProps {
 }
 
 function StepLocationCategoryComponent({ formData, updateFormData }: StepLocationCategoryProps) {
-  // Fetch categories from API
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
@@ -21,7 +20,6 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
     staleTime: 1000 * 60 * 60,
   })
 
-  // Fetch provinces from API
   const { data: provincesData, isLoading: provincesLoading } = useQuery({
     queryKey: ["provinces"],
     queryFn: async () => {
@@ -31,7 +29,6 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
     staleTime: 1000 * 60 * 60,
   })
 
-  // Fetch cities based on selected province
   const { data: citiesData, isLoading: citiesLoading } = useQuery({
     queryKey: ["cities", formData.province],
     queryFn: async () => {
@@ -43,7 +40,6 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
     staleTime: 1000 * 60 * 30,
   })
 
-  // Fetch districts based on selected city
   const { data: districtsData, isLoading: districtsLoading } = useQuery({
     queryKey: ["districts", formData.city],
     queryFn: async () => {
@@ -126,7 +122,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
   return (
     <div className="space-y-6">
       
-      {/* JUDUL LAPORAN (Maksimal 10 Kata) */}
+      {/* REPORT TITLE */}
       <div>
         <div className="flex justify-between items-center mb-2">
           <label htmlFor="title" className="block body-sm font-medium text-general-80">
@@ -186,7 +182,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
         </div>
       </div>
 
-      {/* Grid Tanggal & Waktu */}
+      {/* DATE & TIME */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
             <label htmlFor="date" className="block body-sm font-medium text-general-80 mb-2">
@@ -253,7 +249,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
         </div>
       </div>
 
-      {/* Grid Wilayah */}
+      {/* REGION */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
           <label htmlFor="province" className="block body-sm font-medium text-general-80 mb-2">
@@ -319,7 +315,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
 
          <div className="md:col-span-2">
           <label htmlFor="district" className="block body-sm font-medium text-general-80 mb-2">
-            Kecamatan <span className="text-red-100">*</span>
+            Kecamatan <span className="text-general-50 text-xs font-normal">(Opsional)</span>
           </label>
           <div className="relative">
             <select
@@ -355,7 +351,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
         </div>
       </div>
 
-      {/* Specific Location */}
+      {/* SPECIFIC LOCATION */}
       <div>
         <div className="flex justify-between items-center mb-2">
           <label htmlFor="location" className="block body-sm font-medium text-general-80">

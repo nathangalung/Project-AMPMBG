@@ -18,7 +18,11 @@ if (process.env.NODE_ENV !== "production") {
   app.use("*", logger())
 }
 
-// CORS: Support multiple origins
+// CORS production guard
+if (process.env.NODE_ENV === "production" && !process.env.CORS_ORIGIN) {
+  throw new Error("CORS_ORIGIN required in production")
+}
+
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:5174").split(",")
 
 app.use(
@@ -30,6 +34,15 @@ app.use(
     allowHeaders: ["Content-Type", "Authorization"],
   })
 )
+
+// Security headers
+app.use("*", async (c, next) => {
+  await next()
+  c.header("X-Content-Type-Options", "nosniff")
+  c.header("X-Frame-Options", "DENY")
+  c.header("Referrer-Policy", "strict-origin-when-cross-origin")
+  c.header("X-XSS-Protection", "1; mode=block")
+})
 
 // Serve local uploads in development
 if (process.env.STORAGE_TYPE === "local") {

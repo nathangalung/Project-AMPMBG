@@ -48,7 +48,7 @@ const MONTH_OPTIONS = [
   { value: 12, label: "Desember" },
 ]
 
-// --- KONSTANTA MATRIKS ---
+// Matrix constants
 const RISK_LEGEND = [
   {
     label: "Tingkat Tinggi",
@@ -121,14 +121,10 @@ function DashboardAnggota() {
 
   return (
     <DashboardAnggotaLayout>
-      {/* FLUID CONTAINER:
-          - w-full + max-w-[2400px]: Agar konten tidak pecah di layar ultrawide (zoom 50%).
-          - px-4 sm:px-6 lg:px-8 xl:px-12: Padding bertahap agar rapi dari HP (33%) sampai Monitor Besar.
-      */}
+      {/* Fluid container */}
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6 lg:py-8 max-w-[2400px]">
 
-        {/* --- Header Section --- */}
-        {/* 'lg:flex-row' memastikan di laptop kecil/tablet landscape layout sudah side-by-side */}
+        {/* Header Section */}
         <div className="flex flex-col lg:flex-row gap-6 mb-8">
             
             {/* Title Box */}
@@ -139,7 +135,7 @@ function DashboardAnggota() {
                 <p className="body-sm text-general-60">
                     Pantau sebaran masalah program MBG secara real-time.
                 </p>
-                {/* flex-wrap: Mencegah tombol turun berantakan saat layar sempit/HP */}
+                {/* Flex wrap buttons */}
                 <div className="mt-4 flex flex-wrap gap-3">
                     <div className="px-3 py-1.5 bg-general-30/50 rounded-lg text-xs font-medium text-general-80 whitespace-nowrap">
                         Total Laporan: <span className="text-general-100 font-bold">{stats?.reports.total || 0}</span>
@@ -151,7 +147,6 @@ function DashboardAnggota() {
             </div>
 
             {/* Action Needed Card */}
-            {/* lg:w-1/3 xl:w-1/4: Proporsi tetap di layar besar, w-full di HP */}
             <div className="w-full lg:w-1/3 xl:w-1/4 bg-orange-50 border border-orange-200 rounded-xl p-6 shadow-sm flex items-center justify-between">
                 <div>
                     <p className="text-orange-800 text-xs font-bold uppercase tracking-wider mb-1">Perlu Tindakan</p>
@@ -175,7 +170,7 @@ function DashboardAnggota() {
         ) : (
           <div className="space-y-6 xl:space-y-8">
 
-            {/* --- SECTION 0: KETERANGAN MATRIKS --- */}
+            {/* Risk matrix legend */}
             <div>
                 <div className="flex justify-end mb-4">
                     <button
@@ -198,10 +193,10 @@ function DashboardAnggota() {
                     }`}
                 >
                     <div className="bg-white rounded-2xl p-4 sm:p-6 border border-blue-30/50 shadow-sm">
-                        {/* Grid: 1 kolom di HP, 2 kolom di Laptop */}
+                        {/* Responsive grid */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
 
-                            {/* KOLOM KIRI */}
+                            {/* Left column */}
                             <div className="flex flex-col h-full">
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-general-30">
                                 <AlertTriangle className="w-4 h-4 text-blue-100" />
@@ -222,7 +217,7 @@ function DashboardAnggota() {
                             </div>
                             </div>
 
-                            {/* KOLOM KANAN */}
+                            {/* Right column */}
                             <div className="flex flex-col h-full">
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-general-30">
                                 <ClipboardCheck className="w-4 h-4 text-blue-100" />
@@ -234,7 +229,7 @@ function DashboardAnggota() {
                                 <div className="flex justify-center mb-1"><Lightbulb className="w-4 h-4 text-blue-100" /></div>
                                 <p className="text-xs text-blue-100 font-medium">Total skor dihitung dari penjumlahan poin 6 indikator (skala 0-3).</p>
                             </div>
-                            {/* Grid indikator: Responsif 1 -> 2 kolom */}
+                            {/* Indicator grid */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 content-start">
                                 {SCORING_INDICATORS.map((indicator, idx) => (
                                 <div key={idx} className="flex items-center gap-3 p-3 bg-general-20/30 rounded-xl border border-general-30 shadow-sm hover:border-blue-30 transition-colors">
@@ -250,8 +245,7 @@ function DashboardAnggota() {
                 </div>
             </div>
             
-            {/* --- SECTION 1: RISIKO MASALAH --- */}
-            {/* Responsif Grid: 1 (HP) -> 2 (Tablet) -> 3 (Laptop/Desktop) */}
+            {/* Risk level cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 xl:gap-6">
                 <div className="bg-red-20 border border-red-30 rounded-xl p-5 shadow-sm relative overflow-hidden">
                     <div className="absolute right-0 top-0 p-4 opacity-10"><AlertTriangle className="w-16 h-16 text-red-100" /></div>
@@ -265,7 +259,7 @@ function DashboardAnggota() {
                     <p className="h2 text-orange-400">{riskCounts.medium}</p>
                 </div>
 
-                {/* col-span-2 pada layar 'sm' (tablet) agar grid tidak bolong, kembali ke col-span-1 di 'lg' */}
+                {/* Spans two on tablet */}
                 <div className="bg-green-20 border border-green-30 rounded-xl p-5 shadow-sm relative overflow-hidden sm:col-span-2 lg:col-span-1">
                     <div className="absolute right-0 top-0 p-4 opacity-10"><AlertTriangle className="w-16 h-16 text-green-100" /></div>
                     <p className="body-sm font-bold text-green-100 uppercase tracking-wider mb-1">Risiko Rendah</p>
@@ -273,10 +267,10 @@ function DashboardAnggota() {
                 </div>
             </div>
 
-            {/* --- SECTION 2: CHART & CATEGORIES --- */}
+            {/* Chart and categories */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8">
 
-                {/* Left: Chart (2/3 width on Desktop) */}
+                {/* Chart section */}
                 <div className="lg:col-span-2 bg-general-20 border border-general-30 rounded-xl p-6 shadow-sm">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                         <h3 className="h6 text-general-100 flex items-center gap-2">
@@ -310,7 +304,7 @@ function DashboardAnggota() {
                             </div>
                         </div>
                     </div>
-                    {/* Responsive Height: h-64 (HP), lg:h-80 (Laptop), 2xl:h-96 (Ultrawide/Zoom Out) */}
+                    {/* Responsive chart height */}
                     <div className="h-64 lg:h-80 2xl:h-96 mt-4 transition-all duration-300">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
@@ -330,7 +324,7 @@ function DashboardAnggota() {
                                 <Tooltip
                                     contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e5e7eb" }}
                                     labelFormatter={(label) => selectedMonth === 0 ? `Bulan: ${label}` : `Tanggal: ${label}`}
-                                    formatter={(value: number) => [`${value} Laporan`, "Jumlah"]}
+                                    formatter={(value: number | undefined) => [`${value ?? 0} Laporan`, "Jumlah"]}
                                 />
                                 <Line
                                     type="monotone"
@@ -345,7 +339,7 @@ function DashboardAnggota() {
                     </div>
                 </div>
 
-                {/* Right: Top Categories */}
+                {/* Top Categories */}
                 <div className="bg-general-20 border border-general-30 rounded-xl p-6 shadow-sm flex flex-col">
                     <h3 className="h6 text-general-100 flex items-center gap-2 mb-4">
                         <FileText className="w-5 h-5 text-blue-100" />
@@ -376,14 +370,14 @@ function DashboardAnggota() {
                 </div>
             </div>
 
-            {/* --- SECTION 3: BREAKDOWN LOKASI --- */}
+            {/* Location breakdown */}
             <div>
                 <h3 className="h6 text-general-100 mb-4 flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-general-60" />
                     Wilayah dengan Laporan Terbanyak
                 </h3>
                 
-                {/* 1 Kolom (HP), 2 Kolom (Tablet), 3 Kolom (Laptop) */}
+                {/* Responsive location grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 xl:gap-8">
                     
                     <LocationCard 
@@ -421,7 +415,7 @@ function DashboardAnggota() {
   )
 }
 
-// Reusable Location List Card
+// Location list card
 function LocationCard({ title, data }: { title: string, data: { name: string; sub?: string; count: number }[] }) {
     return (
         <div className="bg-general-20 border border-general-30 rounded-xl overflow-hidden shadow-sm flex flex-col h-full">
@@ -432,12 +426,12 @@ function LocationCard({ title, data }: { title: string, data: { name: string; su
                 {data.length > 0 ? (
                     data.map((item, idx) => (
                         <div key={idx} className="p-4 flex justify-between items-center hover:bg-general-30/20 transition-colors">
-                            {/* Tambahkan overflow-hidden agar teks panjang tidak merusak layout */}
+                            {/* Overflow hidden wrapper */}
                             <div className="flex items-center gap-3 overflow-hidden">
                                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${idx < 3 ? 'bg-blue-100 text-general-20' : 'bg-general-30 text-general-60'}`}>
                                     {idx + 1}
                                 </span>
-                                {/* min-w-0 dan truncate sangat penting untuk responsifitas (layar 33%) */}
+                                {/* Truncated text */}
                                 <div className="min-w-0 flex-1">
                                     <p className="body-sm text-general-80 truncate">{item.name}</p>
                                     {item.sub && <p className="text-[10px] text-general-50 truncate">{item.sub}</p>}

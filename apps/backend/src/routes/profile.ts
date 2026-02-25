@@ -36,7 +36,7 @@ profile.get("/", async (c) => {
     }).from(schema.reports).where(eq(schema.reports.publicId, authUser.id)),
   ])
 
-  if (!publicUser) return c.json({ error: "User tidak ditemukan" }, 404)
+  if (!publicUser) return c.json({ error: "User not found" }, 404)
 
   return c.json({
     user: {
@@ -88,7 +88,7 @@ profile.patch("/", zValidator("json", updateProfileSchema), async (c) => {
       where: eq(schema.publics.phone, phone),
     })
     if (existingPhone && existingPhone.id !== authUser.id) {
-      return c.json({ error: "Nomor telepon sudah digunakan" }, 400)
+      return c.json({ error: "Phone number already in use" }, 400)
     }
   }
 
@@ -97,7 +97,7 @@ profile.patch("/", zValidator("json", updateProfileSchema), async (c) => {
       where: eq(schema.publics.email, email),
     })
     if (existingEmail && existingEmail.id !== authUser.id) {
-      return c.json({ error: "Email sudah digunakan" }, 400)
+      return c.json({ error: "Email already in use" }, 400)
     }
   }
 
@@ -118,7 +118,7 @@ profile.patch("/", zValidator("json", updateProfileSchema), async (c) => {
 
   return c.json({
     user: updated,
-    message: "Profil berhasil diperbarui",
+    message: "Profile updated successfully",
   })
 })
 
@@ -145,14 +145,14 @@ profile.put("/password", zValidator("json", changePasswordSchema), async (c) => 
     where: eq(schema.publics.id, authUser.id),
   })
 
-  if (!publicUser) return c.json({ error: "User tidak ditemukan" }, 404)
+  if (!publicUser) return c.json({ error: "User not found" }, 404)
 
   if (!publicUser.password) {
-    return c.json({ error: "Anda login dengan Google. Silakan set password terlebih dahulu." }, 400)
+    return c.json({ error: "You signed in with Google. Please set a password first." }, 400)
   }
 
   const isValid = await verifyPassword(currentPassword, publicUser.password)
-  if (!isValid) return c.json({ error: "Password saat ini salah" }, 400)
+  if (!isValid) return c.json({ error: "Current password is incorrect" }, 400)
 
   const hashedPassword = await hashPassword(newPassword)
 
@@ -165,7 +165,7 @@ profile.put("/password", zValidator("json", changePasswordSchema), async (c) => 
       .where(eq(schema.sessions.publicId, authUser.id)),
   ])
 
-  return c.json({ message: "Password berhasil diubah" })
+  return c.json({ message: "Password changed successfully" })
 })
 
 const setPasswordSchema = z.object({
@@ -184,10 +184,10 @@ profile.post("/password", zValidator("json", setPasswordSchema), async (c) => {
     where: eq(schema.publics.id, authUser.id),
   })
 
-  if (!publicUser) return c.json({ error: "User tidak ditemukan" }, 404)
+  if (!publicUser) return c.json({ error: "User not found" }, 404)
 
   if (publicUser.password) {
-    return c.json({ error: "Password sudah diset. Gunakan fitur ubah password." }, 400)
+    return c.json({ error: "Password already set. Use Change Password." }, 400)
   }
 
   const hashedPassword = await hashPassword(newPassword)
@@ -196,7 +196,7 @@ profile.post("/password", zValidator("json", setPasswordSchema), async (c) => {
     .set({ password: hashedPassword, updatedAt: new Date() })
     .where(eq(schema.publics.id, authUser.id))
 
-  return c.json({ message: "Password berhasil diset" })
+  return c.json({ message: "Password set successfully" })
 })
 
 const reportHistorySchema = z.object({
@@ -274,7 +274,7 @@ profile.get("/reports/:id", async (c) => {
     },
   })
 
-  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
+  if (!report) return c.json({ error: "Report not found" }, 404)
 
   return c.json({
     data: {
@@ -297,22 +297,22 @@ profile.get("/reports/:id", async (c) => {
 profile.delete("/", async (c) => {
   const authUser = c.get("user")
 
-  // Delete all related data in order
+  // Delete related data
   await Promise.all([
-    // Revoke and delete sessions
+    // Delete sessions
     db.delete(schema.sessions).where(eq(schema.sessions.publicId, authUser.id)),
     // Delete password reset tokens
     db.delete(schema.passwordResetTokens).where(eq(schema.passwordResetTokens.publicId, authUser.id)),
-    // Delete member record if exists
+    // Delete member record
     db.delete(schema.members).where(eq(schema.members.publicId, authUser.id)),
   ])
 
-  // Set reports publicId to null (keep reports for data integrity)
+  // Nullify report ownership
   await db.update(schema.reports)
     .set({ publicId: null })
     .where(eq(schema.reports.publicId, authUser.id))
 
-  // Set kitchen needs requests publicId to null
+  // Nullify request ownership
   await db.update(schema.kitchenNeedsRequests)
     .set({ publicId: null })
     .where(eq(schema.kitchenNeedsRequests.publicId, authUser.id))
@@ -320,7 +320,7 @@ profile.delete("/", async (c) => {
   // Delete the user account
   await db.delete(schema.publics).where(eq(schema.publics.id, authUser.id))
 
-  return c.json({ message: "Akun berhasil dihapus" })
+  return c.json({ message: "Account deleted successfully" })
 })
 
 export default profile

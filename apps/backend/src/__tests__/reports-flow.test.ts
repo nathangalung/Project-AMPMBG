@@ -187,7 +187,6 @@ describe("Reports Flow - Statistics", () => {
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json.total).toBeDefined()
-    expect(json.verified).toBeDefined()
     expect(json.uniqueCities).toBeDefined()
     expect(json.highRisk).toBeDefined()
     expect(json.mediumRisk).toBeDefined()

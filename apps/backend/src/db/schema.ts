@@ -52,7 +52,7 @@ export const admins = pgTable("admins", {
 })
 
 // ============================================
-// PUBLICS TABLE (Public users - NOT admin)
+// PUBLIC USERS TABLE
 // ============================================
 
 export const publics = pgTable("publics", {

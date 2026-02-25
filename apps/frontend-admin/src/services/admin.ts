@@ -1,7 +1,7 @@
 import { api } from "@/lib/api"
 import type { Report, ReportDetail, ReportStatus, ReportCategory, PaginatedResponse } from "./reports"
 
-// --- EXISTING INTERFACES ---
+// Service interfaces
 export interface DashboardStats {
   users: {
     total: number
@@ -65,7 +65,7 @@ export interface AdminReportsQuery {
   search?: string
 }
 
-// Kitchen content interface
+// Kitchen content
 export interface KitchenNeedItem {
   id: string
   title: string
@@ -75,7 +75,7 @@ export interface KitchenNeedItem {
   sortOrder?: number
 }
 
-// Kitchen request interface
+// Kitchen request
 export interface KitchenRequest {
   id: string
   category: string
@@ -181,7 +181,7 @@ export const adminService = {
     return api.get(`/admin/analytics${query}`)
   },
 
-  // Kitchen content management
+  // Kitchen content
   kitchen: {
     getAll: async (): Promise<KitchenNeedItem[]> => {
       const response = await api.get<{ data: KitchenNeedItem[] }>("/kitchen-needs/admin/all")
@@ -210,7 +210,7 @@ export const adminService = {
       return true
     },
 
-    // Requests management
+    // Requests
     getRequests: async (query: KitchenRequestsQuery = {}): Promise<PaginatedResponse<KitchenRequest>> => {
       return api.get(`/kitchen-needs/admin/requests${buildQueryString(query)}`)
     },

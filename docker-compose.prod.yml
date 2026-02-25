@@ -1,9 +1,9 @@
-# Production Docker Compose for DigitalOcean VPS
+# Production Docker Compose
 # Usage: make docker-up
 
 services:
   postgres:
-    image: postgres:18.1-bookworm
+    image: postgres:17-bookworm
     container_name: ampmbg-postgres-prod
     restart: always
     environment:
@@ -38,12 +38,33 @@ services:
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
       S3_BUCKET: ${S3_BUCKET}
       S3_PUBLIC_URL: ${S3_PUBLIC_URL}
+      SMTP_HOST: stalwart
+      SMTP_PORT: 587
+      SMTP_SECURE: "false"
+      SMTP_FROM: ${SMTP_FROM:-noreply@lapormbg.com}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
 
+  stalwart:
+    image: stalwartlabs/stalwart:latest
+    container_name: ampmbg-stalwart-prod
+    restart: always
+    ports:
+      - "25:25"
+      - "587:587"
+      - "465:465"
+      - "993:993"
+      - "8080:8080"
+    volumes:
+      - stalwart_data:/opt/stalwart
+
 volumes:
   postgres_prod_data:
     name: ampmbg-postgres-prod-data
+  stalwart_data:
+    name: ampmbg-stalwart-prod-data

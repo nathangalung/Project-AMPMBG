@@ -6,7 +6,7 @@ import { ArrowRight, Loader2, AlertCircle } from "lucide-react"
 import { reportsService } from "@/services/reports"
 import { CATEGORY_LABELS, CATEGORY_VARIANTS, RELATION_LABELS } from "@/hooks/use-categories"
 
-// Configuration for consistent date formatting throughout the feed
+// Date format config
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = { day: "2-digit", month: "long", year: "numeric" }
 
 function ReportFeedComponent() {

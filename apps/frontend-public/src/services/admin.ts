@@ -1,7 +1,7 @@
 import { api } from "@/lib/api"
 import type { Report, ReportDetail, ReportStatus, ReportCategory, PaginatedResponse } from "./reports"
 
-// --- EXISTING INTERFACES ---
+// Existing interfaces
 export interface DashboardStats {
   users: {
     total: number

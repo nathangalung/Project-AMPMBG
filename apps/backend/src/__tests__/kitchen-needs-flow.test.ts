@@ -84,7 +84,7 @@ describe("Kitchen Needs Flow - Admin Operations", () => {
       adminToken = await signToken({ sub: admin.id, email: admin.email, type: "admin" })
     }
 
-    // Get existing request for status update
+    // Get request for update
     const request = await db.query.kitchenNeedsRequests.findFirst()
     if (request) testRequestId = request.id
   })

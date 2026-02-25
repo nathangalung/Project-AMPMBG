@@ -78,20 +78,20 @@ function DataLaporanPage() {
               Data & Statistik <span className="text-blue-100">Laporan MBG</span>
             </h1>
             
-            {/* UPDATED: Menghapus 'max-w-3xl' dan menggabungkan kalimat */}
+            {/* Description text */}
             <p className="body-md text-general-60 w-full leading-relaxed">
               Pantau perkembangan laporan masyarakat secara transparan, data ini diperbarui secara berkala untuk memastikan akuntabilitas program.
             </p>
           </div>
           
           <div className="space-y-8">
-            {/* Summary Cards */}
+            {/* Summary cards */}
             <DataSummaryCards />
             
-            {/* Filter Section */}
+            {/* Filter section */}
             <DataFilters onFilter={handleFilterChange} />
             
-            {/* Table Content */}
+            {/* Table content */}
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-general-30 shadow-sm">
                 <Loader2 className="w-10 h-10 animate-spin text-blue-100 mb-4" />

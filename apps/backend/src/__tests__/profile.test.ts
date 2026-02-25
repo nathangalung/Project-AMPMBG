@@ -103,7 +103,7 @@ describe("Profile Routes", () => {
         token: publicToken,
         body: { phone: "628123456780" },
       })
-      // Will succeed or fail with duplicate
+      // May fail if duplicate
       expect([200, 400]).toContain(res.status)
     })
 

@@ -68,7 +68,7 @@ function DataTableComponent({ data }: DataTableProps) {
     }
   }, [data, currentPage])
 
-  // --- LOGIKA SMART PAGINATION (1 2 ... Last) ---
+  // Smart pagination logic
   const paginationItems = useMemo(() => {
     if (totalPages <= 4) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -103,7 +103,7 @@ function DataTableComponent({ data }: DataTableProps) {
         <h2 className="text-lg font-bold text-general-100">Daftar Laporan</h2>
       </div>
 
-      {/* TABEL */}
+      {/* Table */}
       <div className="overflow-x-auto w-full">
         <table className="w-full min-w-[900px]">
           <thead className="bg-blue-20/40 border-b border-blue-30/50">
@@ -159,10 +159,10 @@ function DataTableComponent({ data }: DataTableProps) {
           Menampilkan <span className="font-bold text-blue-100">{data.length > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, data.length)}</span> dari <span className="font-bold text-blue-100">{data.length}</span> laporan
         </p>
         
-        {/* Gap diatur lebih kecil (gap-1) di HP agar muat */}
+        {/* Pagination buttons */}
         <div className="flex items-center gap-1 sm:gap-2 select-none justify-center w-full sm:w-auto">
           
-          {/* First Page (<<) : HIDDEN DI HP */}
+          {/* First page button */}
           <button 
             onClick={handleFirstPage} 
             disabled={currentPage === 1}
@@ -171,7 +171,7 @@ function DataTableComponent({ data }: DataTableProps) {
             <ChevronsLeft className="w-4 h-4" />
           </button>
 
-          {/* Prev Page (<) : Selalu Muncul */}
+          {/* Previous page button */}
           <button 
             onClick={handlePrevPage} 
             disabled={currentPage === 1}
@@ -180,7 +180,7 @@ function DataTableComponent({ data }: DataTableProps) {
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          {/* Page Numbers Mapping */}
+          {/* Page numbers */}
           <div className="flex gap-1 mx-1 sm:mx-2">
             {paginationItems.map((item, idx) => {
               if (item === "...") {
@@ -210,7 +210,7 @@ function DataTableComponent({ data }: DataTableProps) {
             })}
           </div>
 
-          {/* Next Page (>) : Selalu Muncul */}
+          {/* Next page button */}
           <button 
             onClick={handleNextPage} 
             disabled={currentPage === totalPages}
@@ -219,7 +219,7 @@ function DataTableComponent({ data }: DataTableProps) {
             <ChevronRight className="w-4 h-4" />
           </button>
 
-          {/* Last Page (>>) : HIDDEN DI HP */}
+          {/* Last page button */}
           <button 
             onClick={handleLastPage} 
             disabled={currentPage === totalPages}

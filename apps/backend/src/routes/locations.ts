@@ -1,5 +1,5 @@
 import { Hono } from "hono"
-import { eq, ilike, sql } from "drizzle-orm"
+import { eq, ilike, and } from "drizzle-orm"
 import { db, schema } from "../db"
 
 const locations = new Hono()
@@ -34,7 +34,61 @@ locations.get("/cities/:cityId/districts", async (c) => {
   return c.json({ data })
 })
 
-// Optimized search with SQL ILIKE
+// Reverse geocode name lookup
+locations.get("/lookup", async (c) => {
+  const province = c.req.query("province")?.trim()
+  const city = c.req.query("city")?.trim()
+  const district = c.req.query("district")?.trim()
+
+  if (!province && !city && !district) {
+    return c.json({ data: null })
+  }
+
+  let provinceId: string | null = null
+  let cityId: string | null = null
+  let districtId: string | null = null
+
+  if (province) {
+    const found = await db.query.provinces.findFirst({
+      where: ilike(schema.provinces.name, `%${province}%`),
+    })
+    if (found) provinceId = found.id
+  }
+
+  if (city && provinceId) {
+    const found = await db.query.cities.findFirst({
+      where: and(
+        eq(schema.cities.provinceId, provinceId),
+        ilike(schema.cities.name, `%${city}%`)
+      ),
+    })
+    if (found) cityId = found.id
+  } else if (city) {
+    const found = await db.query.cities.findFirst({
+      where: ilike(schema.cities.name, `%${city}%`),
+    })
+    if (found) {
+      cityId = found.id
+      provinceId = found.provinceId
+    }
+  }
+
+  if (district && cityId) {
+    const found = await db.query.districts.findFirst({
+      where: and(
+        eq(schema.districts.cityId, cityId),
+        ilike(schema.districts.name, `%${district}%`)
+      ),
+    })
+    if (found) districtId = found.id
+  }
+
+  return c.json({
+    data: { provinceId, cityId, districtId },
+  })
+})
+
+// ILIKE location search
 locations.get("/search", async (c) => {
   const query = c.req.query("q")?.trim() || ""
   const type = c.req.query("type") || "all"
@@ -46,7 +100,7 @@ locations.get("/search", async (c) => {
   const searchPattern = `%${query}%`
   const results: { type: string; id: string; name: string; parent?: string }[] = []
 
-  // Search with SQL ILIKE for better performance
+  // ILIKE search query
   if (type === "all" || type === "province") {
     const provinces = await db.select({ id: schema.provinces.id, name: schema.provinces.name })
       .from(schema.provinces)

@@ -63,7 +63,7 @@ async function seed() {
   const [cityCount] = await db.select({ count: sql<number>`count(*)` }).from(schema.cities)
   const [distCount] = await db.select({ count: sql<number>`count(*)` }).from(schema.districts)
 
-  // Create admin users in admins table
+  // Create admin users
   console.log("Creating admin users...")
   const adminUsersData = [
     { email: "admin@ampmbg.id", phone: "+62812345678901", name: "Administrator", adminRole: "Super Admin" },
@@ -122,8 +122,6 @@ async function seed() {
       const [user] = await db.insert(schema.publics).values({
         ...userData,
         password: hashedPassword,
-        isVerified: true,
-        isActive: true,
       }).returning()
       userIds.push(user.id)
       console.log(`- User: ${userData.email} / Test@123!`)
@@ -132,18 +130,17 @@ async function seed() {
     }
   }
 
-  // Create member applications (link existing users to member records)
-  // Members are PUBLIC USERS who applied to become organization members
+  // Create member applications
   console.log("Creating member applications...")
 
-  // Foundation members - use some existing public users
+  // Foundation members
   const foundationMembersData = [
     { userIndex: 0, memberType: "foundation" as const, organizationName: "Yayasan Peduli Bangsa", organizationEmail: "contact@pedulibangsa.org", organizationPhone: "+62215550001", roleInOrganization: "Direktur Eksekutif", organizationMbgRole: "Penyedia bahan baku sayuran organik untuk program MBG", isVerified: true },
     { userIndex: 1, memberType: "foundation" as const, organizationName: "Yayasan Kasih Ibu", organizationEmail: "info@kasihibu.org", organizationPhone: "+62215550002", roleInOrganization: "Ketua Yayasan", organizationMbgRole: "Pengelola dapur umum untuk distribusi makanan", isVerified: true },
     { userIndex: 2, memberType: "foundation" as const, organizationName: "Yayasan Cerdas Indonesia", organizationEmail: "hello@cerdasindonesia.org", organizationPhone: "+62215550003", roleInOrganization: "Program Manager", organizationMbgRole: "Monitoring dan evaluasi program gizi sekolah", isVerified: true },
   ]
 
-  // Other member types - use remaining public users
+  // Other member types
   const otherMembersData = [
     { userIndex: 3, memberType: "supplier" as const, organizationName: "PT Pangan Makmur", organizationEmail: "info@panganmakmur.com", organizationPhone: "+62215551001", roleInOrganization: "Manager Pengadaan", organizationMbgRole: "Supplier bahan baku protein hewani", isVerified: true },
     { userIndex: 4, memberType: "caterer" as const, organizationName: "CV Katering Sehat Selalu", organizationEmail: "order@kateringsehat.com", organizationPhone: "+62215551002", roleInOrganization: "Owner", organizationMbgRole: "Jasa katering untuk sekolah", isVerified: true },
@@ -159,7 +156,7 @@ async function seed() {
     const userId = userIds[memberData.userIndex]
     if (!userId) continue
 
-    // Check if member record already exists for this user
+    // Check existing member
     const existingMember = await db.query.members.findFirst({ where: eq(schema.members.publicId, userId) })
     if (!existingMember) {
       await db.insert(schema.members).values({

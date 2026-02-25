@@ -10,7 +10,6 @@ interface StepIdentityConfirmationProps {
 }
 
 function StepIdentityConfirmationComponent({ formData, updateFormData }: StepIdentityConfirmationProps) {
-  // Fetch relations from API
   const { data: relationsData, isLoading: relationsLoading } = useQuery({
     queryKey: ["relations"],
     queryFn: async () => {
@@ -20,7 +19,6 @@ function StepIdentityConfirmationComponent({ formData, updateFormData }: StepIde
     staleTime: 1000 * 60 * 60,
   })
 
-  // Fetch categories for label mapping
   const { data: categoriesData } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
@@ -45,7 +43,7 @@ function StepIdentityConfirmationComponent({ formData, updateFormData }: StepIde
   return (
     <div className="space-y-6">
       
-      {/* 1. Relation to MBG */}
+      {/* 1. Identity Input */}
       <div>
         <label htmlFor="relation" className="block body-sm font-medium text-general-80 mb-2">
           Relasi dengan MBG <span className="text-red-100">*</span>
@@ -76,14 +74,12 @@ function StepIdentityConfirmationComponent({ formData, updateFormData }: StepIde
           </div>
         </div>
 
-        {/* INPUT TAMBAHAN: Muncul hanya jika pilih "Lainnya" */}
         {formData.relation === "other" && (
             <div className="mt-3 animate-fadeIn">
                 <input
                     type="text"
                     placeholder="Sebutkan peran spesifik Anda (Opsional)"
-                    // Pastikan Anda sudah menambahkan field 'relationDetail' di interface ReportFormData
-                    value={formData.relationDetail || ""} 
+                    value={formData.relationDetail || ""}
                     onChange={handleRelationDetailChange}
                     className="w-full px-4 py-3 bg-general-20 border border-general-30 rounded-lg text-general-100 placeholder:text-general-40 focus:ring-2 focus:ring-blue-100 focus:border-blue-100 transition-colors body-sm"
                 />
@@ -95,7 +91,7 @@ function StepIdentityConfirmationComponent({ formData, updateFormData }: StepIde
         </p>
       </div>
 
-      {/* 2. Agreement Checkbox */}
+      {/* AGREEMENT */}
       <div 
         className={`rounded-lg p-4 border transition-colors cursor-pointer ${
             formData.agreement 
@@ -115,13 +111,12 @@ function StepIdentityConfirmationComponent({ formData, updateFormData }: StepIde
         </div>
       </div>
 
-      {/* 3. Summary Box (Ringkasan) */}
+      {/* REPORT SUMMARY */}
       <div className="bg-blue-20 rounded-lg p-5 border border-blue-30">
         <h3 className="h6 text-blue-100 mb-3 font-bold">Ringkasan Laporan Anda:</h3>
         <ul className="body-sm text-general-80 space-y-2">
           <li className="flex justify-between border-b border-blue-30/50 pb-2">
             <span className="text-general-60">Kategori:</span>
-            {/* Menggunakan Helper function agar muncul Label (Keracunan), bukan Value (poisoning) */}
             <span className="font-medium text-right text-general-100">
                 {getCategoryLabel(formData.category) || "-"}
             </span>

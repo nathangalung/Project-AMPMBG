@@ -43,7 +43,7 @@ beforeAll(async () => {
     publicToken = await generateTestToken(publicUser.id, publicUser.email, "user")
   }
 
-  // Get seeded admin from admins table
+  // Get seeded admin
   const adminUser = await db.query.admins.findFirst({
     where: eq(admins.email, "admin@ampmbg.id"),
   })

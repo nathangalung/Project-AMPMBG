@@ -119,7 +119,7 @@ export function useStatuses() {
   }
 }
 
-// Static exports for sync usage
+// Static sync exports
 export {
   CATEGORY_LABELS,
   CATEGORY_LABELS_SHORT,

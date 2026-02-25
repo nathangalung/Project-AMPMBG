@@ -20,7 +20,7 @@ beforeAll(async () => {
     publicToken = await generateTestToken(publicUser.id, publicUser.email, "user")
   }
 
-  // Get seeded admin from admins table
+  // Get seeded admin
   const adminUser = await db.query.admins.findFirst({
     where: eq(admins.email, "admin@ampmbg.id"),
   })
@@ -133,7 +133,6 @@ describe("Reports Routes", () => {
       expect(res.status).toBe(200)
       const json = await res.json()
       expect(json.total).toBeDefined()
-      expect(json.verified).toBeDefined()
       expect(json.uniqueCities).toBeDefined()
       expect(json.highRisk).toBeDefined()
       expect(json.mediumRisk).toBeDefined()

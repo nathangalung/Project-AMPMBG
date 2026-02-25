@@ -26,7 +26,6 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
   const [category, setCategory] = useState("")
   const [error, setError] = useState("")
 
-  // --- API QUERIES ---
   const { data: provincesData, isLoading: provincesLoading } = useQuery({
     queryKey: ["provinces"],
     queryFn: async () => {
@@ -72,7 +71,6 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
   const districts = districtsData || []
   const categories = categoriesData || []
 
-  // --- HANDLERS ---
   const today = new Date().toISOString().split("T")[0]
   const minDate = "2024-01-01"
 
@@ -134,10 +132,8 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
         )}
       </div>
       
-      {/* GRID LAYOUT (12 Columns System) */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 gap-y-4 items-end">
         
-        {/* --- BARIS 1: TANGGAL --- */}
         <div className="md:col-span-6">
           <label htmlFor="startDate" className="block body-sm font-medium text-general-80 mb-1.5">
             Tanggal Mulai
@@ -176,7 +172,6 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
           />
         </div>
 
-        {/* --- BARIS 2: LOKASI (Provinsi, Kota, Kecamatan) --- */}
         <div className="md:col-span-4">
           <label htmlFor="province" className="block body-sm font-medium text-general-80 mb-1.5">
             Provinsi
@@ -250,7 +245,6 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
           </div>
         </div>
 
-        {/* --- BARIS 3: KATEGORI & SEARCH --- */}
         <div className="md:col-span-8">
           <label htmlFor="category" className="block body-sm font-medium text-general-80 mb-1.5">
             Kategori

@@ -18,10 +18,7 @@ function ProfileFormComponent() {
   })
   const [showPasswordForm, setShowPasswordForm] = useState(false)
 
-  // --- VALIDASI ---
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-  
-  // Validasi Telepon: Hanya angka, min 9, max 12
   const isPhoneValid = /^\d{9,12}$/.test(formData.phone)
 
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
@@ -38,7 +35,6 @@ function ProfileFormComponent() {
 
   useEffect(() => {
     if (profileData?.user) {
-      // Logic pembersihan nomor telepon agar tidak double +62 di UI
       let cleanPhone = profileData.user.phone || "";
       if (cleanPhone.startsWith("+62")) {
         cleanPhone = cleanPhone.substring(3);
@@ -58,8 +54,7 @@ function ProfileFormComponent() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
-      // Format ulang ke +62 saat simpan
-      const finalPhone = formData.phone.startsWith("0") 
+      const finalPhone = formData.phone.startsWith("0")
         ? `+62${formData.phone.slice(1)}` 
         : `+62${formData.phone}`;
 
@@ -189,7 +184,7 @@ function ProfileFormComponent() {
         )}
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* NAMA */}
+          {/* Name field */}
           <div>
             <label htmlFor="name" className="block text-xs font-bold text-general-80 mb-2 uppercase tracking-wide">Nama Lengkap</label>
             <input
@@ -202,7 +197,7 @@ function ProfileFormComponent() {
             />
           </div>
 
-          {/* EMAIL */}
+          {/* Email field */}
           <div>
             <label htmlFor="email" className="block text-xs font-bold text-general-80 mb-2 uppercase tracking-wide">Email</label>
             <input
@@ -220,7 +215,7 @@ function ProfileFormComponent() {
             )}
           </div>
 
-          {/* PHONE */}
+          {/* Phone field */}
           <div>
             <label htmlFor="phone" className="block text-xs font-bold text-general-80 mb-2 uppercase tracking-wide">Nomor Telepon</label>
             <div className={`flex items-center gap-3 bg-white border rounded-xl px-4 py-2.5 transition-all ${
@@ -245,7 +240,7 @@ function ProfileFormComponent() {
           </div>
         </div>
 
-        {/* PASSWORD SECTION */}
+        {/* Password section */}
         <div className="mt-8 pt-6 border-t border-general-30">
           {/* Google Connected Indicator */}
           {isGoogleLinked && (
@@ -269,8 +264,7 @@ function ProfileFormComponent() {
               {hasPassword ? "Ubah Kata Sandi" : "Buat Kata Sandi"}
             </button>
           ) : (
-            // PERUBAHAN: w-full (Agar lebar penuh mengikuti container parent)
-            <div className="bg-general-20/50 rounded-xl p-5 border border-general-30 w-full">
+                  <div className="bg-general-20/50 rounded-xl p-5 border border-general-30 w-full">
               <h3 className="font-bold text-general-100 mb-4">{hasPassword ? "Ubah Kata Sandi" : "Buat Kata Sandi"}</h3>
 
               {(changePasswordMutation.isError || createPasswordMutation.isError) && (
@@ -301,7 +295,6 @@ function ProfileFormComponent() {
                       passwordData.newPassword.length > 0 && !isNewPasswordValid ? "border-red-100 focus:ring-red-100" : "border-general-30 focus:ring-blue-100"
                     }`}
                   />
-                  {/* Validation Hints */}
                   {passwordData.newPassword.length > 0 && !isNewPasswordValid && (
                     <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1">
                       {[

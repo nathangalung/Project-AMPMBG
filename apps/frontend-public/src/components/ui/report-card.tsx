@@ -3,7 +3,7 @@ import { memo } from "react"
 export interface ReportData {
   id: string
   category: string
-  // categoryVariant tidak perlu dipakai lagi di sini, tapi dibiarkan di interface agar tidak error di parent
+  // Kept for parent compat
   categoryVariant: "danger" | "warning" | "info" | "success" | "neutral"
   title: string
   location: string

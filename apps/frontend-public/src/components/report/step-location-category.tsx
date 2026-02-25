@@ -1,9 +1,11 @@
-import { memo, useCallback, useMemo, Suspense, lazy, useState, useRef, useEffect } from "react"
-import { ChevronDown, AlertCircle, Loader2, Check } from "lucide-react"
+import { memo, useCallback, useMemo, Suspense, lazy } from "react"
+import { AlertCircle, Loader2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import type { ReportFormData, Timezone } from "./report-form"
+import type { ResolvedAddress } from "./location-map-preview"
 import { categoriesService } from "@/services/categories"
 import { locationsService } from "@/services/locations"
+import { CustomSelect } from "@/components/ui/custom-select"
 import { cn } from "@/lib/utils"
 
 const LocationMapPreview = lazy(() =>
@@ -20,102 +22,6 @@ const TIMEZONES: { value: Timezone; label: string; offset: number }[] = [
   { value: "WITA", label: "WITA", offset: 8 },
   { value: "WIT", label: "WIT", offset: 9 },
 ]
-
-// --- KOMPONEN CUSTOM SELECT (Diadaptasi dari DataFilters) ---
-interface Option {
-  id?: string | number
-  value?: string | number
-  name?: string
-  label?: string
-}
-
-interface CustomSelectProps {
-  value: string
-  options: Option[]
-  onChange: (value: string) => void
-  disabled?: boolean
-  loading?: boolean
-  placeholder?: string
-}
-
-function CustomSelect({ value, options, onChange, disabled, loading, placeholder }: CustomSelectProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  const selectedLabel = options.find(opt => String(opt.id || opt.value) === value)?.name || 
-                        options.find(opt => String(opt.id || opt.value) === value)?.label || 
-                        placeholder
-
-  return (
-    <div className="relative w-full" ref={containerRef}>
-      <button
-        type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className={`
-          w-full h-[50px] px-4 py-3 text-left bg-white border rounded-xl text-base font-normal
-          flex items-center justify-between transition-all duration-200
-          ${isOpen ? 'border-blue-100 ring-2 ring-blue-100/50' : 'border-general-30 focus:border-blue-100'}
-          ${disabled ? 'bg-general-20 text-general-60 cursor-not-allowed' : 'text-general-100 cursor-pointer'}
-        `}
-      >
-        <span className={`truncate block mr-2 ${!value ? 'text-general-40' : ''}`}>
-          {loading ? "Memuat..." : (value ? selectedLabel : placeholder)}
-        </span>
-        <div className="text-general-60 shrink-0">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />}
-        </div>
-      </button>
-
-      {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-general-30 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 left-0 right-0">
-          {/* Max height disesuaikan agar tampil 5 item */}
-          <div className="max-h-[200px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-general-30 scrollbar-track-transparent">
-            {options.length > 0 ? (
-              options.map((opt) => {
-                const optValue = String(opt.id || opt.value)
-                const optLabel = opt.name || opt.label
-                const isSelected = optValue === value
-
-                return (
-                  <button
-                    key={optValue}
-                    type="button"
-                    onClick={() => {
-                      onChange(optValue)
-                      setIsOpen(false)
-                    }}
-                    className={`
-                      w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center justify-between
-                      ${isSelected ? 'bg-blue-100/10 text-blue-100 font-bold' : 'text-general-80 hover:bg-general-20'}
-                    `}
-                  >
-                    <span className="truncate">{optLabel}</span>
-                    {isSelected && <Check className="w-4 h-4 shrink-0" />}
-                  </button>
-                )
-              })
-            ) : (
-              <div className="px-4 py-3 text-sm text-general-50 text-center italic">
-                Tidak ada data
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
 
 function StepLocationCategoryComponent({ formData, updateFormData }: StepLocationCategoryProps) {
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
@@ -169,22 +75,19 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
     const currentWords = inputValue.trim().split(/\s+/).filter(Boolean)
     const wordCount = currentWords.length
     
-    // Cek apakah input terakhir adalah spasi
     const endsWithSpace = inputValue.endsWith(" ")
 
-    // JIKA sudah 10 kata DAN user mencoba menambah spasi, maka BLOK (jangan update state)
     if (wordCount >= MAX_TITLE_WORDS && endsWithSpace) {
       return
     }
 
-    // Izinkan update jika masih dalam batas kata
     if (wordCount <= MAX_TITLE_WORDS) {
       updateFormData({ title: inputValue })
     }
   }, [updateFormData, MAX_TITLE_WORDS])
 
-  // FIX: Menambahkan h-[50px] agar input tidak gepeng di mobile
-  const commonInputClass = "w-full h-[50px] px-4 py-3 bg-white border rounded-xl text-general-100 placeholder:text-general-40 focus:outline-none focus:ring-2 focus:ring-blue-100/50 focus:border-blue-100 transition-all duration-200 disabled:bg-general-20 disabled:cursor-not-allowed"
+  // Fixed mobile input height
+  const commonInputClass ="w-full h-[50px] px-4 py-3 bg-white border rounded-xl text-general-100 placeholder:text-general-40 focus:outline-none focus:ring-2 focus:ring-blue-100/50 focus:border-blue-100 transition-all duration-200 disabled:bg-general-20 disabled:cursor-not-allowed"
   const labelClass = "block text-sm font-bold text-general-80 mb-2"
 
   const locationNames = useMemo(() => ({
@@ -195,7 +98,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
 
   return (
     <div className="space-y-6">
-      {/* JUDUL LAPORAN */}
+      {/* REPORT TITLE */}
       <div>
         <div className="flex justify-between items-end mb-2">
           <label htmlFor="title" className={labelClass}>Judul Laporan <span className="text-red-100">*</span></label>
@@ -224,7 +127,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
         )}
       </div>
 
-      {/* KATEGORI */}
+      {/* CATEGORY */}
       <div>
         <label htmlFor="category" className={labelClass}>Kategori Masalah <span className="text-red-100">*</span></label>
         <div className="relative z-50">
@@ -238,7 +141,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
         </div>
       </div>
 
-      {/* TANGGAL & WAKTU */}
+      {/* DATE & TIME */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="date" className={labelClass}>Tanggal Kejadian <span className="text-red-100">*</span></label>
@@ -275,7 +178,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
         </div>
       </div>
 
-      {/* WILAYAH */}
+      {/* REGION */}
       <div className="space-y-4 pt-2">
         <p className="text-sm font-bold text-general-100 border-b border-general-30 pb-2">Detail Lokasi</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -301,7 +204,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
                 />
             </div>
             <div className="relative md:col-span-2 z-10">
-                <label className={labelClass}>Kecamatan <span className="text-red-100">*</span></label>
+                <label className={labelClass}>Kecamatan <span className="text-general-50 text-xs font-normal">(Opsional)</span></label>
                 <CustomSelect
                     value={formData.district}
                     onChange={(val) => updateFormData({ district: val, latitude: undefined, longitude: undefined })}
@@ -314,7 +217,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
         </div>
       </div>
 
-      {/* LOKASI SPESIFIK */}
+      {/* SPECIFIC LOCATION */}
       <div>
         <div className="flex justify-between items-end mb-2">
             <label htmlFor="location" className={labelClass}>Lokasi Spesifik <span className="text-red-100">*</span></label>
@@ -331,20 +234,29 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
       </div>
 
       {/* MAP PREVIEW */}
-      {formData.district && (
-        <div className="pt-2">
-            <label className={labelClass}>Titik Peta (Opsional)</label>
-            <Suspense fallback={<div className="h-[400px] bg-general-20 rounded-xl flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-100" /></div>}>
-                <LocationMapPreview
-                    provinceName={locationNames.province}
-                    cityName={locationNames.city}
-                    districtName={locationNames.district}
-                    specificLocation={formData.location}
-                    onCoordinatesChange={(lat, lng) => updateFormData({ latitude: lat, longitude: lng })}
-                />
-            </Suspense>
-        </div>
-      )}
+      <div className="pt-2">
+          <label className={labelClass}>Titik Peta (Opsional)</label>
+          <Suspense fallback={<div className="h-[400px] bg-general-20 rounded-xl flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-100" /></div>}>
+              <LocationMapPreview
+                  provinceName={locationNames.province}
+                  cityName={locationNames.city}
+                  districtName={locationNames.district}
+                  specificLocation={formData.location}
+                  onCoordinatesChange={(lat, lng) => updateFormData({ latitude: lat, longitude: lng })}
+                  onAddressResolved={async (addr: ResolvedAddress) => {
+                    const result = await locationsService.lookupByName(
+                      addr.state, addr.city || addr.county, addr.suburb || addr.village
+                    )
+                    const d = result.data
+                    const updates: Partial<ReportFormData> = {}
+                    if (d.provinceId) updates.province = d.provinceId
+                    if (d.cityId) updates.city = d.cityId
+                    if (d.districtId) updates.district = d.districtId
+                    if (Object.keys(updates).length > 0) updateFormData(updates)
+                  }}
+              />
+          </Suspense>
+      </div>
     </div>
   )
 }

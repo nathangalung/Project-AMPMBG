@@ -103,17 +103,15 @@ function ReportFormComponent() {
     },
   })
 
-  // --- PERBAIKAN VALIDASI ---
   const isStepValid = useMemo(() => {
     if (currentStep === 1) {
       return (
-        formData.title.trim().length >= 10 && // FIX: Wajib minimal 10 karakter baru bisa next
+        formData.title.trim().length >= 10 &&
         formData.category &&
         formData.date &&
         formData.time &&
         formData.province &&
         formData.city &&
-        formData.district &&
         formData.location
       )
     }
@@ -192,7 +190,6 @@ function ReportFormComponent() {
         </div>
 
         {submitError && (
-          // FIX: Hapus tanda titik (div w-1.5 h-1.5)
           <div className="mt-6 md:mt-8 p-4 bg-red-20 border border-red-100 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
             <p className="text-red-100 body-sm font-medium">{submitError}</p>
           </div>

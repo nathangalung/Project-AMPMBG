@@ -3,12 +3,21 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-lea
 import { Icon, type LatLngExpression } from "leaflet"
 import { MapPin, Loader2, Search, AlertCircle } from "lucide-react"
 
+export interface ResolvedAddress {
+  state?: string
+  city?: string
+  county?: string
+  suburb?: string
+  village?: string
+}
+
 interface LocationMapPreviewProps {
   provinceName: string
   cityName: string
   districtName: string
   specificLocation: string
   onCoordinatesChange?: (lat: number, lng: number, address?: string) => void
+  onAddressResolved?: (address: ResolvedAddress) => void
 }
 
 interface NominatimResult {
@@ -65,6 +74,7 @@ function LocationMapPreviewComponent({
   districtName,
   specificLocation,
   onCoordinatesChange,
+  onAddressResolved,
 }: LocationMapPreviewProps) {
   const [position, setPosition] = useState<LatLngExpression | null>(null)
   const [mapCenter, setMapCenter] = useState<LatLngExpression>(DEFAULT_CENTER)
@@ -73,6 +83,7 @@ function LocationMapPreviewComponent({
   const [addressInfo, setAddressInfo] = useState<string | null>(null)
   const [postalCode, setPostalCode] = useState<string | null>(null)
   const [searchError, setSearchError] = useState<string | null>(null)
+  const [manualQuery, setManualQuery] = useState("")
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const searchLocation = useCallback(async (query: string) => {
@@ -105,6 +116,16 @@ function LocationMapPreviewComponent({
         setPostalCode(result.address?.postcode || null)
 
         onCoordinatesChange?.(lat, lng, result.display_name)
+
+        if (result.address) {
+          onAddressResolved?.({
+            state: result.address.state,
+            city: result.address.city || result.address.town,
+            county: result.address.county,
+            suburb: result.address.suburb,
+            village: result.address.village,
+          })
+        }
       } else {
         setSearchError("Lokasi tidak ditemukan. Klik peta untuk menentukan lokasi.")
       }
@@ -113,7 +134,13 @@ function LocationMapPreviewComponent({
     } finally {
       setIsSearching(false)
     }
-  }, [onCoordinatesChange])
+  }, [onCoordinatesChange, onAddressResolved])
+
+  const handleManualSearch = useCallback(() => {
+    if (manualQuery.trim().length >= 3) {
+      searchLocation(manualQuery.trim() + ", Indonesia")
+    }
+  }, [manualQuery, searchLocation])
 
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
@@ -130,10 +157,20 @@ function LocationMapPreviewComponent({
       setAddressInfo(data.display_name)
       setPostalCode(data.address?.postcode || null)
       onCoordinatesChange?.(lat, lng, data.display_name)
+
+      if (data.address) {
+        onAddressResolved?.({
+          state: data.address.state,
+          city: data.address.city || data.address.town,
+          county: data.address.county,
+          suburb: data.address.suburb,
+          village: data.address.village,
+        })
+      }
     } catch {
-      // Silently fail
+      // Silent fail
     }
-  }, [onCoordinatesChange])
+  }, [onCoordinatesChange, onAddressResolved])
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
     setPosition([lat, lng])
@@ -141,14 +178,14 @@ function LocationMapPreviewComponent({
     reverseGeocode(lat, lng)
   }, [reverseGeocode])
 
-  // Auto-search when location fields change
+  // Auto-search on change
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
 
     const parts = [specificLocation, districtName, cityName, provinceName].filter(Boolean)
-    if (parts.length < 2) return
+    if (parts.length < 1) return
 
     const query = parts.join(", ") + ", Indonesia"
 
@@ -178,7 +215,28 @@ function LocationMapPreviewComponent({
         )}
       </div>
 
-      {/* Map Container */}
+      {/* Search input */}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={manualQuery}
+          onChange={(e) => setManualQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
+          placeholder="Cari lokasi (contoh: SDN 1 Jakarta)"
+          className="flex-1 px-3 py-2 text-sm border border-general-30 rounded-lg bg-white text-general-100 placeholder:text-general-40 focus:outline-none focus:ring-2 focus:ring-blue-100/50 focus:border-blue-100"
+        />
+        <button
+          type="button"
+          onClick={handleManualSearch}
+          disabled={isSearching || manualQuery.trim().length < 3}
+          className="px-3 py-2 bg-blue-100 text-white rounded-lg text-sm font-medium hover:bg-blue-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+        >
+          <Search className="w-3.5 h-3.5" />
+          Cari
+        </button>
+      </div>
+
+      {/* Map container */}
       <div className="relative rounded-lg overflow-hidden border border-general-30 h-[400px]">
         <MapContainer
           center={DEFAULT_CENTER}
@@ -195,7 +253,7 @@ function LocationMapPreviewComponent({
           {position && <Marker position={position} icon={markerIcon} />}
         </MapContainer>
 
-        {/* Click hint overlay */}
+        {/* Click hint */}
         {!position && !isSearching && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/5 pointer-events-none">
             <div className="bg-general-20/90 px-3 py-2 rounded-lg shadow-sm">
@@ -208,7 +266,7 @@ function LocationMapPreviewComponent({
         )}
       </div>
 
-      {/* Error message */}
+      {/* Error */}
       {searchError && (
         <div className="flex items-center gap-2 text-red-100">
           <AlertCircle className="w-4 h-4" />
@@ -216,7 +274,7 @@ function LocationMapPreviewComponent({
         </div>
       )}
 
-      {/* Address info */}
+      {/* Address details */}
       {addressInfo && (
         <div className="bg-general-30/30 rounded-lg p-3 space-y-2">
           <p className="text-xs text-general-70 line-clamp-2">{addressInfo}</p>

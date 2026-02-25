@@ -21,7 +21,7 @@ class ApiError extends Error {
 // App-specific storage key
 const TOKEN_KEY = "public_token"
 
-// Cache token to avoid localStorage reads
+// Cached token value
 let cachedToken: string | null = null
 
 function getToken(): string | null {

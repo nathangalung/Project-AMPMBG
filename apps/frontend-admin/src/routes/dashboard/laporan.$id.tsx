@@ -87,7 +87,7 @@ const SCORING_LABELS: Record<string, string> = {
   scoreSimilarity: "Kesesuaian Laporan Lain",
 }
 
-// --- KOMPONEN CUSTOM SELECT (SAMA DENGAN FILTER) ---
+// Custom select component
 interface Option {
   value: string
   label: string
@@ -146,7 +146,7 @@ function CustomSelect({ label, value, options, onChange, disabled, loading, plac
 
       {isOpen && !disabled && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-general-30 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 left-0 right-0">
-          {/* Max height dan scroll */}
+          {/* Scrollable options */}
           <div className="max-h-[200px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-general-30 scrollbar-track-transparent">
             {options.map((opt) => {
               const isSelected = opt.value === value
@@ -175,7 +175,7 @@ function CustomSelect({ label, value, options, onChange, disabled, loading, plac
   )
 }
 
-// --- MODAL HISTORY ---
+// User history modal
 function UserHistoryModal({ user, onClose }: { user: { name: string; email: string }; onClose: () => void }) {
   const { data: historyData, isLoading } = useQuery({
     queryKey: ["admin", "reports", "user-history", user.email],
@@ -355,7 +355,7 @@ function LaporanDetail() {
     )
   }
 
-  // --- HELPER UNTUK MENGGABUNGKAN NAMA ---
+  // Combine related party names
   const relatedParties = [
     (report as any).schoolName || report.location, 
     (report as any).kitchenName                   
@@ -363,7 +363,7 @@ function LaporanDetail() {
 
   return (
     <DashboardAnggotaLayout>
-      {/* FLUID CONTAINER: Responsif 100% mengikuti standar Dashboard utama */}
+      {/* Fluid container */}
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6 lg:py-8 max-w-[2400px]">
 
         {/* Header */}
@@ -384,13 +384,13 @@ function LaporanDetail() {
           </div>
         </div>
 
-        {/* Content Wrapper */}
+        {/* Content */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             
-            {/* Left Column (Detail Info) */}
+            {/* Detail Info */}
             <div className="xl:col-span-2 space-y-6">
 
-                {/* 1. Informasi Pelapor (Blue Accents) */}
+                {/* Reporter Info */}
                 <div className="bg-general-20 border border-blue-20 rounded-xl p-6 shadow-sm relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-blue-20/50 rounded-bl-full -mr-6 -mt-6 pointer-events-none" />
                     <h4 className="h4 text-general-100 mb-5 flex items-center gap-2 relative z-10">
@@ -428,9 +428,9 @@ function LaporanDetail() {
                     )}
                 </div>
 
-                {/* 2. PIHAK YANG TERKAIT (Orange Accents) */}
+                {/* Related Parties */}
                 <div className="bg-general-20 border border-general-30 rounded-xl p-6 shadow-sm relative overflow-hidden">
-                    {/* Decorative Orange element */}
+                    {/* Decorative element */}
                     <div className="absolute top-0 right-0 w-24 h-24 bg-warning/10 rounded-bl-full -mr-6 -mt-6 pointer-events-none" />
                     
                     <h4 className="h4 text-general-100 mb-5 flex items-center gap-2 relative z-10">
@@ -449,7 +449,7 @@ function LaporanDetail() {
                     </div>
                 </div>
 
-                {/* 3. Detail Kejadian (Neutral) */}
+                {/* Incident Details */}
                 <div className="bg-general-20 border border-general-30 rounded-xl p-6 shadow-sm">
                     <h4 className="h4 text-general-100 mb-5 flex items-center gap-2 border-b border-general-30 pb-3">
                         <FileText className="w-5 h-5 text-general-100" />
@@ -526,10 +526,10 @@ function LaporanDetail() {
 
             </div>
 
-            {/* Right Column (Actions & Scoring) */}
+            {/* Actions and Scoring */}
             <div className="space-y-6">
 
-                {/* PANEL ADMIN: UPDATE STATUS (UPDATED WITH CUSTOM SELECT) */}
+                {/* Admin Status Panel */}
                 <div className="bg-general-20 border border-blue-20 shadow-md shadow-blue-20/10 rounded-xl p-6 relative overflow-visible z-20">
                     <h4 className="h4 text-general-100 mb-5 flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5 text-blue-100" />
@@ -653,7 +653,7 @@ function LaporanDetail() {
         </div>
       </div>
 
-      {/* User History Modal */}
+      {/* History Modal */}
       {viewingUserHistory && <UserHistoryModal user={viewingUserHistory} onClose={() => setViewingUserHistory(null)} />}
 
       {/* Success Modal */}

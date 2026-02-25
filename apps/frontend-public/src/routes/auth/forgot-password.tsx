@@ -14,7 +14,7 @@ function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
-  // Validasi Email Sederhana
+  // Simple email validation
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,7 +38,7 @@ function ForgotPasswordPage() {
     <AuthLayout>
       
       {isSubmitted ? (
-        // TAMPILAN SETELAH KIRIM EMAIL (SUKSES)
+        // Success view
         <div className="text-center animate-in fade-in duration-300">
           <div className="w-20 h-20 bg-green-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
             <CheckCircle2 className="w-10 h-10 text-green-100" />
@@ -66,7 +66,7 @@ function ForgotPasswordPage() {
           </button>
         </div>
       ) : (
-        // TAMPILAN FORMULIR
+        // Form view
         <>
           <div className="animate-in fade-in duration-300">
             <div className="mb-8">
@@ -128,7 +128,7 @@ function ForgotPasswordPage() {
             </form>
           </div>
 
-          {/* Footer / Tombol Kembali */}
+          {/* Back button */}
           <div className="mt-8 pt-6 border-t border-general-30 text-center">
             <Link 
               to="/auth/login" 

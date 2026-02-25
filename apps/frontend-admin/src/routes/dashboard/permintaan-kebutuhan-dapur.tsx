@@ -34,7 +34,7 @@ const STATUS_OPTIONS = [
   { value: "not_found", label: "Tidak Ditemukan" },
 ]
 
-// --- LOGIKA STYLE ---
+// Status style logic
 const getStatusStyle = (status: string) => {
   const variantStyles: Record<string, string> = {
     orange: "bg-orange-20 text-orange-100 border-orange-30",
@@ -56,7 +56,7 @@ const getStatusStyle = (status: string) => {
   return variantStyles[variant]
 }
 
-// --- KOMPONEN CUSTOM SELECT ---
+// Custom select component
 interface Option {
   value: string
   label: string
@@ -148,7 +148,7 @@ function PermintaanKebutuhanDapurPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
   
-  // --- STATE PAGINATION ---
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -159,7 +159,7 @@ function PermintaanKebutuhanDapurPage() {
     queryFn: () => adminService.kitchen.getRequests({ status: filterStatus || undefined }),
   })
 
-  // Filter Logic
+  // Filter logic
   const allRequests = (requestsData?.data || []).filter((item) => {
     const matchSearch =
       item.sppgName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -168,7 +168,7 @@ function PermintaanKebutuhanDapurPage() {
     return matchSearch
   })
 
-  // --- LOGIKA PAGINATION SLICING ---
+  // Pagination slicing
   const totalPages = Math.ceil(allRequests.length / itemsPerPage)
   
   const currentRequests = useMemo(() => {
@@ -176,12 +176,12 @@ function PermintaanKebutuhanDapurPage() {
     return allRequests.slice(start, start + itemsPerPage)
   }, [currentPage, allRequests])
 
-  // Reset page saat filter berubah
+  // Reset page on filter
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm, filterStatus])
 
-  // --- LOGIKA SMART PAGINATION (1 2 ... Last) ---
+  // Smart pagination logic
   const paginationItems = useMemo(() => {
     if (totalPages <= 3) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -189,7 +189,7 @@ function PermintaanKebutuhanDapurPage() {
     const items: (number | string)[] = [1];
     if (totalPages > 1) items.push(2);
     
-    // Logic gap
+    // Gap logic
     if (currentPage > 2 && currentPage < totalPages) {
       if (currentPage > 3) items.push("...");
       items.push(currentPage);
@@ -200,8 +200,7 @@ function PermintaanKebutuhanDapurPage() {
 
     if (totalPages > 2) items.push(totalPages);
     
-    // Sort & Unique (Simple approach: rebuild cleanly)
-    // Versi lebih bersih yang pasti urut:
+    // Clean sorted rebuild
     const pages = new Set([1, 2, totalPages]);
     if (currentPage > 2 && currentPage < totalPages) pages.add(currentPage);
     
@@ -311,7 +310,7 @@ function PermintaanKebutuhanDapurPage() {
                   {currentRequests.map((req, idx) => {
                     const statusClass = getStatusStyle(req.status)
                     const StatusLabel = STATUS_OPTIONS.find(s => s.value === req.status)?.label || req.status
-                    // Hitung nomor urut berdasarkan page
+                    // Row number by page
                     const itemNumber = (currentPage - 1) * itemsPerPage + idx + 1
 
                     return (
@@ -385,7 +384,7 @@ function PermintaanKebutuhanDapurPage() {
               
               <div className="flex items-center gap-1">
                 
-                {/* First Page (<<) : HIDDEN ON MOBILE */}
+                {/* First page, hidden mobile */}
                 <button 
                   onClick={goToFirst} 
                   disabled={currentPage === 1}
@@ -403,7 +402,7 @@ function PermintaanKebutuhanDapurPage() {
                   <ChevronLeft className="w-4 h-4" />
                 </button>
 
-                {/* Page Numbers Mapping */}
+                {/* Page Numbers */}
                 <div className="flex gap-1 mx-2">
                   {paginationItems.map((item, idx) => {
                     if (item === "...") {
@@ -441,7 +440,7 @@ function PermintaanKebutuhanDapurPage() {
                   <ChevronRight className="w-4 h-4" />
                 </button>
 
-                {/* Last Page (>>) : HIDDEN ON MOBILE */}
+                {/* Last page, hidden mobile */}
                 <button 
                   onClick={goToLast} 
                   disabled={currentPage === totalPages}
@@ -456,7 +455,7 @@ function PermintaanKebutuhanDapurPage() {
         </div>
       </div>
 
-      {/* Modal Detail & Update */}
+      {/* Detail Modal */}
       {detailRequest && (
         <RequestDetailModal
           request={detailRequest}
@@ -472,7 +471,7 @@ function PermintaanKebutuhanDapurPage() {
   )
 }
 
-// Modal detail for admin view
+// Admin request detail modal
 function RequestDetailModal({
   request,
   onClose,
@@ -570,7 +569,7 @@ function RequestDetailModal({
             </div>
           </div>
 
-          {/* Panel Status Admin - Overflow Visible untuk Dropdown */}
+          {/* Admin status panel */}
           <div className="bg-white border border-blue-100 shadow-md shadow-blue-100/10 rounded-xl p-6 relative overflow-visible z-20">
             <h4 className="body-sm font-bold text-general-100 mb-4 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-blue-100" /> Tindak Lanjut Admin

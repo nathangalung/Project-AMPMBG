@@ -8,7 +8,7 @@ import { HeroSection } from "@/components/home/hero-section"
 const QuickStats = lazy(() =>
   import("@/components/home/quick-stats").then((m) => ({ default: m.QuickStats }))
 )
-// Tambahkan KeyBenefits dengan Lazy Load
+// Lazy load KeyBenefits
 const KeyBenefits = lazy(() =>
   import("@/components/home/key-benefits").then((m) => ({ default: m.KeyBenefits }))
 )
@@ -33,7 +33,7 @@ function HomePage() {
           <QuickStats />
         </Suspense>
 
-        {/* 3. Key Benefits (BARU) */}
+        {/* 3. Key Benefits */}
         <Suspense fallback={<div className="h-96 bg-white" />}>
           <KeyBenefits />
         </Suspense>

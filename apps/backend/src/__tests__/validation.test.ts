@@ -11,6 +11,8 @@ import {
   reportStatusSchema,
   credibilityLevelSchema,
   relationSchema,
+  dateSchema,
+  pastDateSchema,
   formatPhoneNumber,
   isValidPhoneNumber,
   sanitizeString,
@@ -267,6 +269,37 @@ describe("Utility Functions", () => {
 
     test("handles no extension", () => {
       expect(isValidFileExtension("test", ["jpg", "png"])).toBe(false)
+    })
+  })
+
+  describe("dateSchema", () => {
+    test("accepts valid date string", () => {
+      const result = dateSchema.safeParse("2025-01-15")
+      expect(result.success).toBe(true)
+    })
+
+    test("rejects invalid date string", () => {
+      const result = dateSchema.safeParse("not-a-date")
+      expect(result.success).toBe(false)
+    })
+  })
+
+  describe("pastDateSchema", () => {
+    test("accepts past date", () => {
+      const result = pastDateSchema.safeParse("2024-01-01")
+      expect(result.success).toBe(true)
+    })
+
+    test("rejects future date", () => {
+      const futureDate = new Date()
+      futureDate.setFullYear(futureDate.getFullYear() + 1)
+      const result = pastDateSchema.safeParse(futureDate.toISOString())
+      expect(result.success).toBe(false)
+    })
+
+    test("rejects invalid date", () => {
+      const result = pastDateSchema.safeParse("invalid")
+      expect(result.success).toBe(false)
     })
   })
 })

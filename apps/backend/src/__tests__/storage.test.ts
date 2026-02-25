@@ -3,71 +3,86 @@ import { validateFile, uploadFile, deleteFile } from "../lib/storage"
 import { mkdir, rm } from "fs/promises"
 import { existsSync } from "fs"
 
+// Valid file headers
+const JPEG_HEADER = new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0])
+const PNG_HEADER = new Uint8Array([0x89, 0x50, 0x4E, 0x47])
+const GIF_HEADER = new Uint8Array([0x47, 0x49, 0x46, 0x38])
+const WEBP_HEADER = new Uint8Array([0x52, 0x49, 0x46, 0x46])
+const PDF_HEADER = new Uint8Array([0x25, 0x50, 0x44, 0x46])
+
 describe("Storage Library", () => {
   describe("validateFile", () => {
-    test("accepts valid JPEG file", () => {
-      const file = new File(["test"], "test.jpg", { type: "image/jpeg" })
+    test("accepts valid JPEG file", async () => {
+      const file = new File([JPEG_HEADER], "test.jpg", { type: "image/jpeg" })
       Object.defineProperty(file, "size", { value: 1024 })
-      const result = validateFile(file)
+      const result = await validateFile(file)
       expect(result.valid).toBe(true)
     })
 
-    test("accepts valid PNG file", () => {
-      const file = new File(["test"], "test.png", { type: "image/png" })
+    test("accepts valid PNG file", async () => {
+      const file = new File([PNG_HEADER], "test.png", { type: "image/png" })
       Object.defineProperty(file, "size", { value: 1024 })
-      const result = validateFile(file)
+      const result = await validateFile(file)
       expect(result.valid).toBe(true)
     })
 
-    test("accepts valid GIF file", () => {
-      const file = new File(["test"], "test.gif", { type: "image/gif" })
+    test("accepts valid GIF file", async () => {
+      const file = new File([GIF_HEADER], "test.gif", { type: "image/gif" })
       Object.defineProperty(file, "size", { value: 1024 })
-      const result = validateFile(file)
+      const result = await validateFile(file)
       expect(result.valid).toBe(true)
     })
 
-    test("accepts valid WebP file", () => {
-      const file = new File(["test"], "test.webp", { type: "image/webp" })
+    test("accepts valid WebP file", async () => {
+      const file = new File([WEBP_HEADER], "test.webp", { type: "image/webp" })
       Object.defineProperty(file, "size", { value: 1024 })
-      const result = validateFile(file)
+      const result = await validateFile(file)
       expect(result.valid).toBe(true)
     })
 
-    test("accepts valid PDF file", () => {
-      const file = new File(["test"], "test.pdf", { type: "application/pdf" })
+    test("accepts valid PDF file", async () => {
+      const file = new File([PDF_HEADER], "test.pdf", { type: "application/pdf" })
       Object.defineProperty(file, "size", { value: 1024 })
-      const result = validateFile(file)
+      const result = await validateFile(file)
       expect(result.valid).toBe(true)
     })
 
-    test("rejects file exceeding 10MB", () => {
-      const file = new File(["test"], "test.jpg", { type: "image/jpeg" })
+    test("rejects file exceeding 10MB", async () => {
+      const file = new File([JPEG_HEADER], "test.jpg", { type: "image/jpeg" })
       Object.defineProperty(file, "size", { value: 11 * 1024 * 1024 })
-      const result = validateFile(file)
+      const result = await validateFile(file)
       expect(result.valid).toBe(false)
       expect(result.error).toContain("10MB")
     })
 
-    test("rejects disallowed file type", () => {
+    test("rejects disallowed file type", async () => {
       const file = new File(["test"], "test.exe", { type: "application/x-executable" })
       Object.defineProperty(file, "size", { value: 1024 })
-      const result = validateFile(file)
+      const result = await validateFile(file)
       expect(result.valid).toBe(false)
-      expect(result.error).toContain("tidak diizinkan")
+      expect(result.error).toContain("not allowed")
     })
 
-    test("rejects text file type", () => {
+    test("rejects text file type", async () => {
       const file = new File(["test"], "test.txt", { type: "text/plain" })
       Object.defineProperty(file, "size", { value: 1024 })
-      const result = validateFile(file)
+      const result = await validateFile(file)
       expect(result.valid).toBe(false)
     })
 
-    test("accepts file at exactly 10MB", () => {
-      const file = new File(["test"], "test.jpg", { type: "image/jpeg" })
+    test("accepts file at exactly 10MB", async () => {
+      const file = new File([JPEG_HEADER], "test.jpg", { type: "image/jpeg" })
       Object.defineProperty(file, "size", { value: 10 * 1024 * 1024 })
-      const result = validateFile(file)
+      const result = await validateFile(file)
       expect(result.valid).toBe(true)
+    })
+
+    test("rejects spoofed MIME type", async () => {
+      const file = new File(["fake content"], "evil.jpg", { type: "image/jpeg" })
+      Object.defineProperty(file, "size", { value: 1024 })
+      const result = await validateFile(file)
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain("mismatch")
     })
   })
 
@@ -151,12 +166,10 @@ describe("Storage Library", () => {
 
       await deleteFile(key)
 
-      // Should not throw
       expect(true).toBe(true)
     })
 
     test("handles non-existent file gracefully", async () => {
-      // Should not throw when file doesn't exist
       await deleteFile("non-existent/file.jpg")
 
       expect(true).toBe(true)

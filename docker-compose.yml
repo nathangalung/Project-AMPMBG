@@ -1,5 +1,12 @@
 # Development Docker Compose
 # Usage: make db-up
+#
+# DNS for lapormbg.com:
+#   A: mail.lapormbg.com -> VPS IP
+#   MX: lapormbg.com -> mail.lapormbg.com
+#   TXT (SPF): v=spf1 include:amazonses.com ~all
+#   TXT (DKIM): via Stalwart admin
+#   TXT (DMARC): v=DMARC1; p=quarantine
 
 services:
   postgres:
@@ -34,6 +41,23 @@ services:
     profiles:
       - tools
 
+  stalwart:
+    image: stalwartlabs/stalwart:latest
+    container_name: ampmbg-stalwart
+    restart: unless-stopped
+    ports:
+      - "25:25"
+      - "587:587"
+      - "465:465"
+      - "993:993"
+      - "8080:8080"
+    volumes:
+      - stalwart_data:/opt/stalwart
+    profiles:
+      - mail
+
 volumes:
   postgres_data:
     name: ampmbg-postgres-data
+  stalwart_data:
+    name: ampmbg-stalwart-data

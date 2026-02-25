@@ -1,8 +1,9 @@
-import { useState, useCallback, memo, useRef, useEffect } from "react"
+import { useState, useCallback, memo } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Search, ChevronDown, AlertCircle, Loader2, Check, RotateCcw } from "lucide-react"
+import { Search, AlertCircle, RotateCcw } from "lucide-react"
 import { locationsService } from "@/services/locations"
 import { categoriesService } from "@/services/categories"
+import { CustomSelect } from "@/components/ui/custom-select"
 
 export interface FilterValues {
   startDate: string
@@ -27,106 +28,6 @@ const REPORT_STATUSES = [
   { value: "resolved", label: "Selesai Ditangani" },
 ]
 
-// --- KOMPONEN CUSTOM SELECT ---
-interface Option {
-  id?: string | number
-  value?: string | number
-  name?: string
-  label?: string
-}
-
-interface CustomSelectProps {
-  label: string
-  value: string
-  options: Option[]
-  onChange: (value: string) => void
-  disabled?: boolean
-  loading?: boolean
-  placeholder?: string
-}
-
-function CustomSelect({ label, value, options, onChange, disabled, loading, placeholder }: CustomSelectProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  const selectedLabel = options.find(opt => String(opt.id || opt.value) === value)?.name || 
-                        options.find(opt => String(opt.id || opt.value) === value)?.label || 
-                        placeholder
-
-  return (
-    <div className="relative w-full" ref={containerRef}>
-      <label className="block text-xs md:text-sm font-medium text-general-80 mb-1.5">
-        {label}
-      </label>
-      
-      <button
-        type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className={`
-          w-full h-[42px] px-3 text-left bg-white border rounded-lg text-sm font-medium 
-          flex items-center justify-between transition-all duration-200
-          ${isOpen ? 'border-blue-100 ring-2 ring-blue-100/20' : 'border-general-30 hover:border-blue-100'}
-          ${disabled ? 'bg-general-20 text-general-60 cursor-not-allowed' : 'text-general-100 cursor-pointer'}
-        `}
-      >
-        <span className="truncate block mr-2 text-sm">
-          {loading ? "Memuat..." : (value ? selectedLabel : placeholder)}
-        </span>
-        <div className="text-general-60 shrink-0">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />}
-        </div>
-      </button>
-
-      {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-general-30 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 left-0 right-0">
-          <div className="max-h-[200px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-general-30 scrollbar-track-transparent">
-            {options.length > 0 ? (
-              options.map((opt) => {
-                const optValue = String(opt.id || opt.value)
-                const optLabel = opt.name || opt.label
-                const isSelected = optValue === value
-
-                return (
-                  <button
-                    key={optValue}
-                    type="button"
-                    onClick={() => {
-                      onChange(optValue)
-                      setIsOpen(false)
-                    }}
-                    className={`
-                      w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center justify-between
-                      ${isSelected ? 'bg-blue-100/10 text-blue-100 font-bold' : 'text-general-80 hover:bg-general-20'}
-                    `}
-                  >
-                    <span className="truncate">{optLabel}</span>
-                    {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
-                  </button>
-                )
-              })
-            ) : (
-              <div className="px-4 py-3 text-xs text-general-50 text-center italic">
-                Tidak ada data
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 function DataFiltersComponent({ onFilter }: DataFiltersProps) {
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
@@ -137,7 +38,6 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
   const [status, setStatus] = useState("") 
   const [error, setError] = useState("")
 
-  // --- DATA FETCHING ---
   const { data: provincesData, isLoading: provincesLoading } = useQuery({
     queryKey: ["provinces"],
     queryFn: async () => (await locationsService.getProvinces()).data,
@@ -169,7 +69,6 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
   const districts = districtsData || []
   const categories = categoriesData || []
 
-  // --- HANDLERS ---
   const today = new Date().toISOString().split("T")[0]
   const minDate = "2024-01-01"
 
@@ -198,7 +97,6 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
     onFilter({ startDate, endDate, province, city, district, category, status })
   }, [startDate, endDate, province, city, district, category, status, onFilter])
 
-  // --- RESET HANDLER BARU ---
   const handleReset = useCallback(() => {
     setStartDate("")
     setEndDate("")
@@ -221,8 +119,8 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
 
   const isDateError = error !== ""
 
-  // FIX: Menambahkan h-[42px] agar tinggi input tanggal konsisten dengan tombol dan tidak gepeng di mobile
-  const dateInputClass = `w-full h-[42px] px-3 py-2 bg-white border rounded-lg focus:ring-2 text-sm transition-colors truncate appearance-none disabled:bg-general-20 disabled:text-general-60 disabled:cursor-not-allowed ${
+  // Fixed date input height
+  const dateInputClass =`w-full h-[42px] px-3 py-2 bg-white border rounded-lg focus:ring-2 text-sm transition-colors truncate appearance-none disabled:bg-general-20 disabled:text-general-60 disabled:cursor-not-allowed ${
     isDateError ? "border-red-100 focus:border-red-100 focus:ring-red-100 text-red-100" : "border-general-30 focus:border-blue-100 focus:ring-blue-100 text-general-100"
   }`
   
@@ -255,18 +153,19 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
           </div>
 
           <div className="lg:col-span-4 relative z-50">
-            <CustomSelect 
+            <CustomSelect
               label="Provinsi"
               value={province}
               options={provinces}
               onChange={handleProvinceChange}
               loading={provincesLoading}
               placeholder="Semua Provinsi"
+              size="sm"
             />
           </div>
 
           <div className="lg:col-span-4 relative z-40">
-            <CustomSelect 
+            <CustomSelect
               label="Kabupaten/Kota"
               value={city}
               options={cities}
@@ -274,11 +173,12 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
               loading={citiesLoading}
               disabled={!province}
               placeholder={!province ? "Pilih Provinsi Dulu" : "Semua Kota/Kab"}
+              size="sm"
             />
           </div>
 
           <div className="lg:col-span-4 relative z-30">
-            <CustomSelect 
+            <CustomSelect
               label="Kecamatan"
               value={district}
               options={districts}
@@ -286,31 +186,34 @@ function DataFiltersComponent({ onFilter }: DataFiltersProps) {
               loading={districtsLoading}
               disabled={!city}
               placeholder={!city ? "Pilih Kota Dulu" : "Semua Kecamatan"}
+              size="sm"
             />
           </div>
 
           <div className="lg:col-span-4 relative z-20">
-            <CustomSelect 
+            <CustomSelect
               label="Kategori"
               value={category}
               options={categories}
               onChange={handleCategoryChange}
               loading={categoriesLoading}
               placeholder="Semua Kategori"
+              size="sm"
             />
           </div>
 
           <div className="lg:col-span-4 relative z-10">
-            <CustomSelect 
+            <CustomSelect
               label="Status Laporan"
               value={status}
               options={REPORT_STATUSES}
               onChange={handleStatusChange}
               placeholder="Semua Status"
+              size="sm"
             />
           </div>
 
-          {/* AREA TOMBOL AKSI */}
+          {/* ACTION BUTTONS */}
           <div className="lg:col-span-4 sm:col-span-2 lg:col-start-auto relative z-0 flex gap-2">
             <button
               type="button"

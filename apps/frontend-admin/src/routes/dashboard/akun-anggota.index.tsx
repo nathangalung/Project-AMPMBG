@@ -58,7 +58,7 @@ const getMemberTypeLabel = (type: string | null) => {
   return found?.label || type || "-"
 }
 
-// --- KOMPONEN CUSTOM SELECT ---
+// Custom select component
 interface Option {
   value: string
   label: string
@@ -158,11 +158,11 @@ function AkunAnggotaPage() {
   const [filterRole, setFilterRole] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
 
-  // --- STATE PAGINATION ---
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  // State Modals
+  // Modal states
   const [showAddModal, setShowAddModal] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [detailMember, setDetailMember] = useState<Member | null>(null)
@@ -177,7 +177,7 @@ function AkunAnggotaPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "members"] })
       setDeleteId(null)
-      // Mundur halaman jika item terakhir dihapus
+      // Adjust page on delete
       if (currentMembers.length === 1 && currentPage > 1) {
         setCurrentPage(p => p - 1)
       }
@@ -187,11 +187,11 @@ function AkunAnggotaPage() {
     }
   })
 
-  // LOGIKA UTAMA: Filter & Sorting
+  // Filter and sort logic
   const allMembers: Member[] = useMemo(() => {
     if (!membersData?.data) return []
 
-    // 1. Filter
+    // Apply filters
     const filtered = membersData.data.filter((m: Member) => {
       const orgName = m.organizationInfo?.name?.toLowerCase() || ""
       const orgEmail = m.organizationInfo?.email?.toLowerCase() || ""
@@ -207,7 +207,7 @@ function AkunAnggotaPage() {
       return matchSearch && matchRole && matchStatus
     })
 
-    // 2. Sort A-Z
+    // Sort A-Z
     return filtered.sort((a, b) => {
       const nameA = (a.organizationInfo?.name || a.name).toLowerCase()
       const nameB = (b.organizationInfo?.name || b.name).toLowerCase()
@@ -216,18 +216,18 @@ function AkunAnggotaPage() {
 
   }, [membersData, searchTerm, filterRole, filterStatus])
 
-  // --- LOGIKA PAGINATION SLICING ---
+  // Pagination slicing
   const totalPages = Math.ceil(allMembers.length / itemsPerPage) || 1
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
   const currentMembers = allMembers.slice(indexOfFirstItem, indexOfLastItem)
 
-  // Reset page saat filter berubah
+  // Reset page on filter
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm, filterRole, filterStatus])
 
-  // --- LOGIKA SMART PAGINATION (1 2 ... Last) ---
+  // Smart pagination logic
   const paginationItems = useMemo(() => {
     if (totalPages <= 3) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -424,7 +424,7 @@ function AkunAnggotaPage() {
             </div>
           )}
 
-          {/* --- PAGINATION CONTROLS --- */}
+          {/* Pagination Controls */}
           {allMembers.length > 0 && (
             <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-general-30 text-general-60 body-sm bg-general-20 mt-auto">
               <span className="text-xs sm:text-sm text-center sm:text-left">
@@ -433,16 +433,16 @@ function AkunAnggotaPage() {
               
               <div className="flex items-center gap-1 select-none">
                 
-                {/* First Page (<<) : HIDDEN ON MOBILE */}
-                <button 
-                  onClick={goToFirst} 
+                {/* First page, hidden mobile */}
+                <button
+                  onClick={goToFirst}
                   disabled={currentPage === 1}
                   className="hidden sm:flex w-8 h-8 items-center justify-center rounded hover:bg-general-30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-general-80"
                 >
                   <ChevronsLeft className="w-4 h-4" />
                 </button>
 
-                {/* Prev Page (<) */}
+                {/* Prev Page */}
                 <button 
                   onClick={goToPrev} 
                   disabled={currentPage === 1}
@@ -451,7 +451,7 @@ function AkunAnggotaPage() {
                   <ChevronLeft className="w-4 h-4" />
                 </button>
 
-                {/* Page Numbers Mapping */}
+                {/* Page Numbers */}
                 <div className="flex gap-1 mx-2">
                   {paginationItems.map((item, idx) => {
                     if (item === "...") {
@@ -489,9 +489,9 @@ function AkunAnggotaPage() {
                   <ChevronRight className="w-4 h-4" />
                 </button>
 
-                {/* Last Page (>>) : HIDDEN ON MOBILE */}
-                <button 
-                  onClick={goToLast} 
+                {/* Last page, hidden mobile */}
+                <button
+                  onClick={goToLast}
                   disabled={currentPage === totalPages}
                   className="hidden sm:flex w-8 h-8 items-center justify-center rounded hover:bg-general-30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-general-80"
                 >
@@ -504,7 +504,7 @@ function AkunAnggotaPage() {
         </div>
       </div>
 
-      {/* --- MODAL ADD --- */}
+      {/* Add Modal */}
       {showAddModal && (
         <AddMemberModal
           onClose={() => setShowAddModal(false)}
@@ -515,7 +515,7 @@ function AkunAnggotaPage() {
         />
       )}
 
-      {/* --- MODAL DELETE CONFIRM --- */}
+      {/* Delete Confirm Modal */}
       {deleteId && (
         <DeleteConfirmModal
           onClose={() => setDeleteId(null)}
@@ -524,7 +524,7 @@ function AkunAnggotaPage() {
         />
       )}
 
-      {/* --- MODAL DETAIL --- */}
+      {/* Detail Modal */}
       {detailMember && (
         <MemberDetailModal
           member={detailMember}
@@ -543,7 +543,7 @@ function AkunAnggotaPage() {
 }
 
 
-// --- MODAL DETAIL ANGGOTA ---
+// Member detail modal
 function MemberDetailModal({
   member,
   onClose,
@@ -762,7 +762,7 @@ function MemberDetailModal({
   )
 }
 
-// --- MODAL KONFIRMASI HAPUS ---
+// Delete confirmation modal
 function DeleteConfirmModal({ onClose, onConfirm, isLoading }: { onClose: () => void, onConfirm: () => void, isLoading: boolean }) {
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-general-100/40 backdrop-blur-sm animate-in fade-in duration-300">
@@ -795,7 +795,7 @@ function DeleteConfirmModal({ onClose, onConfirm, isLoading }: { onClose: () => 
   )
 }
 
-// --- MODAL TAMBAH ANGGOTA ---
+// Add member modal
 function AddMemberModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [formData, setFormData] = useState<CreateMemberData>({
     name: "",
@@ -825,7 +825,7 @@ function AddMemberModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
       return
     }
 
-    // Gabungkan +62 ke nomor telepon
+    // Prepend +62 country code
     const finalData = {
       ...formData,
       phone: `+62${formData.phone}`
@@ -882,7 +882,7 @@ function AddMemberModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
           </div>
         )}
 
-        {/* Form Body - Scrollable if needed, but container is overflow-visible for dropdowns */}
+        {/* Scrollable form body */}
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-4">
@@ -919,7 +919,7 @@ function AddMemberModal({ onClose, onSuccess }: { onClose: () => void; onSuccess
                     placeholder="email@example.com"
                   />
                 </div>
-                {/* NOMOR TELEPON DENGAN +62 */}
+                {/* Phone with +62 */}
                 <div>
                   <label className="block body-sm font-semibold text-general-80 mb-2">Nomor Telepon</label>
                   <div className="flex items-center gap-3 bg-general-20 border border-general-30 rounded-lg px-4 py-2.5 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 transition-all">

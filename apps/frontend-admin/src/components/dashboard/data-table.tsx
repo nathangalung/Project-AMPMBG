@@ -70,7 +70,7 @@ function DataTableComponent({ data }: DataTableProps) {
               <th className="px-4 py-3 text-left text-xs font-semibold text-general-60 uppercase tracking-wider font-heading w-48">
                 Lokasi
               </th>
-              {/* Kolom Kategori diperlebar agar muat teks panjang */}
+              {/* Wide category column */}
               <th className="px-4 py-3 text-left text-xs font-semibold text-general-60 uppercase tracking-wider font-heading w-1/4">
                 Kategori
               </th>
@@ -97,7 +97,7 @@ function DataTableComponent({ data }: DataTableProps) {
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    {/* UBAH: Semua variant dipaksa jadi 'danger' (Merah) */}
+                    {/* Force danger variant */}
                     <StatusBadge variant="danger">
                       {getCategoryLabel(row.category)}
                     </StatusBadge>

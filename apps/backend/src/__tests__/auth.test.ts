@@ -233,7 +233,7 @@ describe("Auth Routes - Login Tests", () => {
       const res = await testRequest(app, "POST", "/api/auth/login", {
         body: { identifier: "628123456789", password: "wrong" },
       })
-      // Will fail with 401 but validates phone format is accepted
+      // Validates phone format acceptance
       expect(res.status).toBe(401)
     })
 
@@ -263,7 +263,7 @@ describe("Auth Routes - Signup Validation", () => {
           phone: "628123456789",
         },
       })
-      // Will either succeed or fail with duplicate error
+      // May fail if duplicate
       expect([201, 400]).toContain(res.status)
     })
 

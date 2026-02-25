@@ -8,7 +8,7 @@ import { adminService } from "@/services/admin"
 
 const DATE_OPTIONS: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" }
 
-// Label Status
+// Status label map
 const STATUS_LABELS: Record<string, { label: string; variant: string }> = {
   pending: { label: "Belum Diproses", variant: "orange" },
   processed: { label: "Diproses", variant: "blue" },
@@ -36,7 +36,7 @@ const getStatusStyle = (status: string) => {
 }
 
 function KitchenNeedsHistoryComponent() {
-  // --- STATE PAGINATION ---
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
@@ -45,7 +45,7 @@ function KitchenNeedsHistoryComponent() {
     queryFn: () => adminService.kitchen.getMyRequests(),
   })
 
-  // --- LOGIKA PAGINATION ---
+  // Pagination logic
   const totalPages = Math.ceil(requests.length / itemsPerPage)
   
   const currentRequests = useMemo(() => {
@@ -53,35 +53,34 @@ function KitchenNeedsHistoryComponent() {
     return requests.slice(start, start + itemsPerPage)
   }, [currentPage, requests])
 
-  // --- LOGIKA SMART PAGINATION REVISI (1 2 ... Last) ---
+  // Smart pagination items
   const paginationItems = useMemo(() => {
-    // 1. Jika halaman cuma 1, 2, atau 3, tampilkan semua (1 2 3)
+    // Show all if few pages
     if (totalPages <= 3) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
 
-    // 2. Jika halaman 4 atau lebih, gunakan logika gap
-    // Kita gunakan Set untuk memastikan angka unik (misal 1, 2, Last, Current)
-    const pages = new Set([1, 2, totalPages]); 
+    // Use gap logic for 4+
+    const pages = new Set([1, 2, totalPages]);
 
-    // Masukkan current page jika berada di tengah (bukan 1, 2, atau Last)
+    // Add current mid page
     if (currentPage > 2 && currentPage < totalPages) {
       pages.add(currentPage);
     }
 
-    // Urutkan angka halaman
+    // Sort page numbers
     const sortedPages = Array.from(pages).sort((a, b) => a - b);
     const finalItems: (number | string)[] = [];
 
-    // Loop untuk menyisipkan "..."
+    // Insert ellipsis gaps
     for (let i = 0; i < sortedPages.length; i++) {
       const page = sortedPages[i];
-      
-      // Cek jarak dengan halaman sebelumnya
+
+      // Check gap with previous
       if (i > 0) {
         const prevPage = sortedPages[i - 1];
         if (page - prevPage > 1) {
-          finalItems.push("..."); // Sisipkan titik-titik jika ada lompatan
+          finalItems.push("...");
         }
       }
       finalItems.push(page);
@@ -90,7 +89,7 @@ function KitchenNeedsHistoryComponent() {
     return finalItems;
   }, [currentPage, totalPages]);
 
-  // Reset ke halaman 1 jika data berubah
+  // Reset on data change
   useEffect(() => {
     setCurrentPage(1)
   }, [requests.length])
@@ -192,7 +191,7 @@ function KitchenNeedsHistoryComponent() {
           return (
             <div key={req.id} className="bg-white rounded-xl border border-general-30 shadow-sm p-4 hover:shadow-md transition-shadow">
               
-              {/* Header Kartu: Tanggal & Status */}
+              {/* Card header */}
               <div className="flex justify-between items-start mb-3">
                 <div className="text-xs font-medium text-general-50 bg-general-20 px-2 py-1 rounded-lg">
                   {formatDate(req.createdAt)}
@@ -202,14 +201,14 @@ function KitchenNeedsHistoryComponent() {
                 </span>
               </div>
               
-              {/* Content Utama: Nama Kategori */}
+              {/* Category name */}
               <div className="mb-4">
                 <h4 className="font-heading font-bold text-general-100 text-sm leading-tight">
                   {req.category}
                 </h4>
               </div>
 
-              {/* Footer Kartu: SPPG Info */}
+              {/* SPPG info */}
               <div className="flex items-start gap-3 pt-3 border-t border-general-30 border-dashed">
                 <div>
                     <p className="text-[10px] font-bold text-general-50 uppercase tracking-wider mb-0.5">SPPG / Instansi</p>
@@ -222,11 +221,11 @@ function KitchenNeedsHistoryComponent() {
         })}
       </div>
 
-      {/* --- PAGINATION CONTROLS (UPDATED) --- */}
+      {/* Pagination controls */}
       {totalPages > 1 && (
         <div className="p-4 border-t border-general-30 bg-general-20/30 flex items-center justify-center gap-2 select-none mt-auto">
           
-          {/* First Page (<<) : HIDDEN ON MOBILE */}
+          {/* First page button */}
           <button 
             onClick={handleFirstPage} 
             disabled={currentPage === 1}
@@ -235,7 +234,7 @@ function KitchenNeedsHistoryComponent() {
             <ChevronsLeft className="w-4 h-4" />
           </button>
 
-          {/* Prev Page (<) */}
+          {/* Previous page */}
           <button 
             onClick={() => handlePageChange(currentPage - 1)} 
             disabled={currentPage === 1}
@@ -244,7 +243,7 @@ function KitchenNeedsHistoryComponent() {
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          {/* Page Numbers Mapping */}
+          {/* Page numbers */}
           <div className="flex gap-1 mx-1 sm:mx-2">
             {paginationItems.map((item, idx) => {
               if (item === "...") {
@@ -262,8 +261,8 @@ function KitchenNeedsHistoryComponent() {
                   onClick={() => handlePageChange(pageNum)}
                   className={`
                     w-8 h-8 rounded-lg text-xs sm:text-sm font-bold border transition-all flex items-center justify-center
-                    ${currentPage === pageNum 
-                      ? 'bg-blue-100 border-blue-100 text-white shadow-sm' 
+                    ${currentPage === pageNum
+                      ? 'bg-blue-100 border-blue-100 text-white shadow-sm'
                       : 'bg-white border-general-30 text-general-60 hover:border-blue-100 hover:text-blue-100'
                     }
                   `}
@@ -274,7 +273,7 @@ function KitchenNeedsHistoryComponent() {
             })}
           </div>
 
-          {/* Next Page (>) */}
+          {/* Next page */}
           <button 
             onClick={() => handlePageChange(currentPage + 1)} 
             disabled={currentPage === totalPages}
@@ -283,7 +282,7 @@ function KitchenNeedsHistoryComponent() {
             <ChevronRight className="w-4 h-4" />
           </button>
 
-          {/* Last Page (>>) : HIDDEN ON MOBILE */}
+          {/* Last page button */}
           <button 
             onClick={handleLastPage} 
             disabled={currentPage === totalPages}

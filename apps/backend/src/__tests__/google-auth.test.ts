@@ -15,7 +15,7 @@ describe("Google OAuth", () => {
   let googleUserId: string
 
   beforeAll(async () => {
-    // Create a user without Google (for complete-phone test)
+    // Non-Google user for testing
     const [credUser] = await db.insert(publics).values({
       email: `cred-${randomBytes(4).toString("hex")}@example.com`,
       password: "$argon2id$v=19$m=65536,t=2,p=1$test$test",
@@ -24,7 +24,7 @@ describe("Google OAuth", () => {
     }).returning()
     testUserId = credUser.id
 
-    // Create a user with Google auth (googleId directly in publics)
+    // Google auth test user
     const [gUser] = await db.insert(publics).values({
       email: `google-${randomBytes(4).toString("hex")}@example.com`,
       password: null,

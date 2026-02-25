@@ -39,7 +39,7 @@ const ADMIN_ROLE_OPTIONS = [
   { value: "Legal", label: "Legal" },
 ]
 
-// --- KOMPONEN CUSTOM SELECT ---
+// Custom select component
 interface Option {
   value: string
   label: string
@@ -136,7 +136,7 @@ function AkunAdminPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterRole, setFilterRole] = useState("")
   
-  // --- STATE PAGINATION ---
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -153,7 +153,7 @@ function AkunAdminPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "admins"] })
       setDeleteId(null)
-      // Jika item terakhir di halaman dihapus, mundur 1 halaman
+      // Adjust page on delete
       if (currentAdmins.length === 1 && currentPage > 1) {
         setCurrentPage(p => p - 1)
       }
@@ -163,7 +163,7 @@ function AkunAdminPage() {
     }
   })
 
-  // LOGIKA UTAMA: Filter & Sorting
+  // Filter and sort logic
   const allAdmins: Admin[] = useMemo(() => {
     if (!adminsData?.data) return []
 
@@ -177,18 +177,18 @@ function AkunAdminPage() {
     return filtered.sort((a, b) => a.name.localeCompare(b.name))
   }, [adminsData, searchTerm, filterRole])
 
-  // --- LOGIKA PAGINATION SLICING ---
+  // Pagination slicing
   const totalPages = Math.ceil(allAdmins.length / itemsPerPage) || 1
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
   const currentAdmins = allAdmins.slice(indexOfFirstItem, indexOfLastItem)
 
-  // Reset page saat filter berubah
+  // Reset page on filter
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm, filterRole])
 
-  // --- LOGIKA SMART PAGINATION (1 2 ... Last) ---
+  // Smart pagination logic
   const paginationItems = useMemo(() => {
     if (totalPages <= 3) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -359,7 +359,7 @@ function AkunAdminPage() {
                   
                   <div className="flex items-center gap-1 select-none">
                     
-                    {/* First Page (<<) : HIDDEN DI MOBILE */}
+                    {/* First page, hidden mobile */}
                     <button 
                       onClick={goToFirst} 
                       disabled={currentPage === 1}
@@ -414,7 +414,7 @@ function AkunAdminPage() {
                       <ChevronRight className="w-4 h-4" />
                     </button>
 
-                    {/* Last Page (>>) : HIDDEN DI MOBILE */}
+                    {/* Last page, hidden mobile */}
                     <button 
                       onClick={goToLast} 
                       disabled={currentPage === totalPages}
@@ -454,7 +454,7 @@ function AkunAdminPage() {
   )
 }
 
-// --- KOMPONEN MODAL HAPUS ---
+// Delete confirmation modal
 function DeleteConfirmModal({ onClose, onConfirm, isLoading }: { onClose: () => void, onConfirm: () => void, isLoading: boolean }) {
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-general-100/40 backdrop-blur-sm animate-in fade-in duration-300">
@@ -490,7 +490,7 @@ function DeleteConfirmModal({ onClose, onConfirm, isLoading }: { onClose: () => 
     )
 }
 
-// --- KOMPONEN TAMBAH ADMIN ---
+// Add admin modal
 function AddAdminModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [formData, setFormData] = useState<CreateAdminData>({
     name: "",

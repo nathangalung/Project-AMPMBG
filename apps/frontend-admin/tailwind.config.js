@@ -54,7 +54,6 @@ export default {
           30: "hsl(var(--blue-30))",
           20: "hsl(var(--blue-20))",
         },
-        // --- ADDED ORANGE CONFIGURATION ---
         orange: {
           100: "hsl(var(--orange-100))",
           90: "hsl(var(--orange-90))",
@@ -66,7 +65,6 @@ export default {
           30: "hsl(var(--orange-30))",
           20: "hsl(var(--orange-20))",
         },
-        // ----------------------------------
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

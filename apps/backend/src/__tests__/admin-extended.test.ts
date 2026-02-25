@@ -25,7 +25,7 @@ describe("Admin Extended - User Operations", () => {
       adminId = adminUser.id
     }
 
-    // Create a test user for delete operations
+    // Test user for deletion
     const hashedPassword = await hashPassword("Test1234")
     const [user] = await db.insert(publics).values({
       email: `delete-test-${randomBytes(4).toString("hex")}@example.com`,
@@ -89,7 +89,7 @@ describe("Admin Extended - Report Export", () => {
       const res = await testRequest(app, "GET", "/api/admin/reports/export?format=csv", { token: adminToken })
       expect(res.status).toBe(200)
       const text = await res.text()
-      expect(text).toContain("ID,Judul,Kategori")
+      expect(text).toContain("ID,Title,Category")
     })
 
     test("filters by status", async () => {
@@ -261,7 +261,7 @@ describe("Admin Extended - Member Management", () => {
       })
       const firstJson = await firstRes.json()
 
-      // Try to create with duplicate phone
+      // Duplicate phone test
       const res = await testRequest(app, "POST", "/api/admin/members", {
         token: adminToken,
         body: {

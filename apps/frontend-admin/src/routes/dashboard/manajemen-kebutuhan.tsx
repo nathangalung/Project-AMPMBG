@@ -34,24 +34,24 @@ function ManajemenKebutuhanPage() {
     mutationFn: adminService.kitchen.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "kitchen-content"] })
-      // Jika item terakhir di halaman dihapus, mundur 1 halaman
+      // Adjust page on delete
       if (currentItems.length === 1 && currentPage > 1) {
         setCurrentPage(p => p - 1)
       }
     }
   })
 
-  // Filtering, Sorting (A-Z), & Pagination Logic
+  // Filter, sort, paginate
   const filteredNeeds = useMemo(() => {
     if (!needsData) return []
     
-    // 1. Filter Pencarian
+    // Search filter
     const filtered = needsData.filter(item => 
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    // 2. Sort A-Z berdasarkan Title
+    // Sort A-Z by title
     return filtered.sort((a, b) => a.title.localeCompare(b.title))
 
   }, [needsData, searchTerm])
@@ -61,17 +61,17 @@ function ManajemenKebutuhanPage() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
   const currentItems = filteredNeeds.slice(indexOfFirstItem, indexOfLastItem)
 
-  // --- LOGIKA SMART PAGINATION (1 2 ... Last) ---
+  // Smart pagination logic
   const paginationItems = useMemo(() => {
-    // 1. Jika halaman <= 3, tampilkan semua
+    // Show all if few pages
     if (totalPages <= 3) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
 
-    // 2. Jika halaman >= 4, gunakan logika gap
-    const pages = new Set([1, 2, totalPages]); // Selalu 1, 2, dan Last
+    // Use gap logic
+    const pages = new Set([1, 2, totalPages]);
 
-    // Masukkan current page jika di tengah
+    // Add current middle page
     if (currentPage > 2 && currentPage < totalPages) {
       pages.add(currentPage);
     }
@@ -107,7 +107,7 @@ function ManajemenKebutuhanPage() {
   const handleDelete = (id: string) => {
     if (confirm("Hapus item kebutuhan ini secara permanen?")) {
       deleteMutation.mutate(id)
-      setIsModalOpen(false) // Tutup modal jika delete dari modal
+      setIsModalOpen(false) // Close modal
     }
   }
 
@@ -140,7 +140,7 @@ function ManajemenKebutuhanPage() {
           </button>
         </div>
 
-        {/* Filters Section (Search) */}
+        {/* Search Filter */}
         <div className="bg-general-20 border border-general-30 rounded-xl p-5 shadow-sm">
           <div className="grid grid-cols-1">
             <label className="block body-xs font-semibold text-general-80 mb-2 uppercase tracking-wide">Pencarian</label>
@@ -151,7 +151,7 @@ function ManajemenKebutuhanPage() {
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value)
-                  setCurrentPage(1) // Reset ke halaman 1 saat search
+                  setCurrentPage(1) // Reset page on search
                 }}
                 className="w-full pl-11 pr-4 py-2.5 bg-general-20 border border-general-30 rounded-lg focus:outline-none focus:border-blue-100 focus:ring-4 focus:ring-blue-100/10 transition-all body-sm text-general-100 placeholder:text-general-50"
               />
@@ -240,7 +240,7 @@ function ManajemenKebutuhanPage() {
                   
                   <div className="flex items-center gap-1 select-none">
                     
-                    {/* First Page (<<) : HIDDEN DI MOBILE */}
+                    {/* First page, hidden mobile */}
                     <button 
                       onClick={goToFirst} 
                       disabled={currentPage === 1} 
@@ -295,7 +295,7 @@ function ManajemenKebutuhanPage() {
                       <ChevronRight className="w-4 h-4" />
                     </button>
 
-                    {/* Last Page (>>) : HIDDEN DI MOBILE */}
+                    {/* Last page, hidden mobile */}
                     <button 
                       onClick={goToLast} 
                       disabled={currentPage === totalPages} 
@@ -311,7 +311,7 @@ function ManajemenKebutuhanPage() {
           )}
         </div>
 
-        {/* Modal Form (Detail / Edit / Add) */}
+        {/* Modal Form */}
         {isModalOpen && (
           <KitchenContentModal 
             initialData={editingItem} 
@@ -329,7 +329,7 @@ function ManajemenKebutuhanPage() {
   )
 }
 
-// --- FORM MODAL WITH UPLOAD ---
+// Form modal with upload
 function KitchenContentModal({ initialData, onClose, onDelete, onSuccess }: { initialData: KitchenNeedItem | null, onClose: () => void, onDelete: (id: string) => void, onSuccess: () => void }) {
   const [formData, setFormData] = useState<Partial<KitchenNeedItem>>({
     id: initialData?.id || "",
@@ -432,7 +432,7 @@ function KitchenContentModal({ initialData, onClose, onDelete, onSuccess }: { in
               />
             </div>
 
-            {/* Image Upload Section */}
+            {/* Image Upload */}
             <div>
               <label className={labelClass}>Foto / Ilustrasi</label>
               

@@ -123,24 +123,24 @@ function LaporanPage() {
   const indexOfFirstItem = ((pagination?.page || 1) - 1) * itemsPerPage
   const indexOfLastItem = indexOfFirstItem + (reports.length || 0)
 
-  // --- HANDLERS PAGINATION ---
+  // Pagination handlers
   const goToFirst = () => setCurrentPage(1)
   const goToLast = () => setCurrentPage(totalPages)
   const goToPrev = () => setCurrentPage(p => Math.max(1, p - 1))
   const goToNext = () => setCurrentPage(p => Math.min(totalPages, p + 1))
   const handlePageClick = (page: number) => setCurrentPage(page)
 
-  // --- LOGIKA SMART PAGINATION (1 2 ... Last) ---
+  // Smart pagination logic
   const paginationItems = useMemo(() => {
-    // 1. Jika halaman <= 3, tampilkan semua
+    // Show all if few pages
     if (totalPages <= 3) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
 
-    // 2. Jika halaman >= 4, gunakan logika gap
-    const pages = new Set([1, 2, totalPages]); // Selalu 1, 2, dan Last
+    // Use gap logic
+    const pages = new Set([1, 2, totalPages]);
 
-    // Masukkan current page jika di tengah
+    // Add current middle page
     if (currentPage > 2 && currentPage < totalPages) {
       pages.add(currentPage);
     }
@@ -270,7 +270,7 @@ function LaporanPage() {
           </div>
           )}
           
-          {/* PAGINATION */}
+          {/* Pagination */}
           {(pagination?.total || 0) > 0 && (
             <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-general-30 text-general-60 body-sm">
               <span className="text-xs sm:text-sm text-center sm:text-left">
@@ -279,7 +279,7 @@ function LaporanPage() {
               
               <div className="flex items-center gap-1">
                 
-                {/* First Page (<<) : HIDDEN DI MOBILE */}
+                {/* First page, hidden mobile */}
                 <button 
                   onClick={goToFirst} 
                   disabled={currentPage === 1} 
@@ -334,7 +334,7 @@ function LaporanPage() {
                   <ChevronRight className="w-4 h-4" />
                 </button>
 
-                {/* Last Page (>>) : HIDDEN DI MOBILE */}
+                {/* Last page, hidden mobile */}
                 <button 
                   onClick={goToLast} 
                   disabled={currentPage === totalPages} 
@@ -352,7 +352,7 @@ function LaporanPage() {
   )
 }
 
-// --- KOMPONEN CUSTOM SELECT (UI KHUSUS) ---
+// Custom select component
 interface Option {
   id?: string | number
   value?: string | number
@@ -452,7 +452,7 @@ function CustomSelect({ label, value, options, onChange, disabled, loading, plac
   )
 }
 
-// --- FILTER COMPONENT ---
+// Filter component
 const DataFiltersComponent = ({ onFilter }: { onFilter: (f: FilterValues) => void }) => {
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
@@ -473,7 +473,7 @@ const DataFiltersComponent = ({ onFilter }: { onFilter: (f: FilterValues) => voi
     return []
   }
 
-  // --- QUERIES ---
+  // Data queries
   const { data: provincesData, isLoading: provincesLoading } = useQuery({
     queryKey: ["locations", "provinces"],
     queryFn: async () => (await locationsService.getProvinces()).data,
@@ -505,11 +505,11 @@ const DataFiltersComponent = ({ onFilter }: { onFilter: (f: FilterValues) => voi
   const districts = getSafeArray(districtsData)
   const categories = getSafeArray(categoriesData)
 
-  // Options for Status & Risk
+  // Status and risk options
   const statusOptions = Object.entries(STATUS_LABELS).map(([key, { label }]) => ({ value: key, label }))
   const riskOptions = Object.entries(CREDIBILITY_LABELS).map(([key, label]) => ({ value: key, label }))
 
-  // --- HANDLERS ---
+  // Event handlers
   const handleDateInput = useCallback((e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
     const val = e.target.value
     if (val && val.split("-")[0].length > 4) return
@@ -520,7 +520,7 @@ const DataFiltersComponent = ({ onFilter }: { onFilter: (f: FilterValues) => voi
   const handleStartDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => handleDateInput(e, setStartDate), [handleDateInput])
   const handleEndDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => handleDateInput(e, setEndDate), [handleDateInput])
 
-  // Custom Select handlers pass value directly
+  // Select change handlers
   const handleProvinceChange = useCallback((val: string) => { setProvince(val); setCity(""); setDistrict("") }, [])
   const handleCityChange = useCallback((val: string) => { setCity(val); setDistrict("") }, [])
   const handleDistrictChange = useCallback((val: string) => setDistrict(val), [])
@@ -572,7 +572,7 @@ const DataFiltersComponent = ({ onFilter }: { onFilter: (f: FilterValues) => voi
           <input type="date" value={endDate} min={startDate || minDate} max={today} onChange={handleEndDateChange} className={dateInputClass} />
         </div>
 
-        {/* LOKASI */}
+        {/* Location */}
         <div className="md:col-span-4 relative z-50">
           <CustomSelect 
             label="Provinsi" 

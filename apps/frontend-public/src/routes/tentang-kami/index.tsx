@@ -55,7 +55,7 @@ function TentangKamiPage() {
     }
   }
 
-  // Filter yayasan berdasarkan search term
+  // Filter by search
   const filteredFoundations = foundations.filter((foundation) =>
     foundation.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -65,7 +65,7 @@ function TentangKamiPage() {
       <Navbar />
       <main className="flex-1">
         
-        {/* --- SECTION 1: HERO --- */}
+        {/* Section 1: Hero */}
         <section className="relative bg-blue-100 min-h-[500px] flex items-center overflow-hidden">
           <div className="absolute top-0 right-0 bottom-0 w-full md:w-[55%] lg:w-[65%] hidden md:block lg:translate-x-12 transform transition-transform">
             <img
@@ -92,11 +92,11 @@ function TentangKamiPage() {
           </div>
         </section>
 
-        {/* --- SECTION 2: VISI & MISI --- */}
+        {/* Section 2: Vision */}
         <section className="py-16 md:py-24 bg-general-20">
           <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24">
             <div className="grid md:grid-cols-2 gap-8 items-stretch">
-              {/* KARTU VISI */}
+              {/* Vision card */}
               <div className="bg-white rounded-2xl p-8 md:p-10 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-blue-30/50 hover:border-blue-100 transition-all group h-full">
                 <div className="flex flex-col h-full justify-center items-center text-center">
                   <div className="flex items-center justify-center gap-3 mb-6">
@@ -111,7 +111,7 @@ function TentangKamiPage() {
                 </div>
               </div>
 
-              {/* KARTU MISI */}
+              {/* Mission card */}
               <div className="bg-white rounded-2xl p-8 md:p-10 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-orange-30/50 hover:border-orange-100 transition-all group h-full">
                 <div className="flex flex-col h-full">
                   <div className="flex items-center gap-3 mb-6">
@@ -149,7 +149,7 @@ function TentangKamiPage() {
           </div>
         </section>
 
-        {/* --- SECTION 3: NILAI INTI --- */}
+        {/* Section 3: Core values */}
         <section className="py-16 md:py-24 bg-blue-20/30 relative overflow-hidden">
           <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24 relative z-10">
             <div className="text-center mb-12 md:mb-16">
@@ -181,7 +181,7 @@ function TentangKamiPage() {
           </div>
         </section>
 
-        {/* --- SECTION 4: YAYASAN TERDAFTAR (SCROLLABLE + SEARCH) --- */}
+        {/* Section 4: Foundations */}
         <section className="py-16 md:py-24 bg-white border-t border-general-30/50">
           <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24">
             
@@ -195,7 +195,7 @@ function TentangKamiPage() {
                 </p>
               </div>
               
-              {/* Search Bar */}
+              {/* Search bar */}
               <div className="relative w-full md:w-72">
                 <input 
                   type="text" 
@@ -208,7 +208,7 @@ function TentangKamiPage() {
               </div>
             </div>
 
-            {/* Scrollable Container */}
+            {/* Scrollable list */}
             <div className="bg-general-20/30 rounded-2xl border border-general-30 p-2">
               <div className="max-h-[400px] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-general-30 scrollbar-track-transparent">
 
@@ -246,7 +246,7 @@ function TentangKamiPage() {
               </div>
             </div>
             
-            {/* Gradient Shadow Hint (Optional Visual Cue) */}
+            {/* Scroll hint */}
             <div className="text-center mt-3">
                <p className="text-xs text-general-50">Gulir ke bawah untuk melihat lebih banyak</p>
             </div>
@@ -254,7 +254,7 @@ function TentangKamiPage() {
           </div>
         </section>
 
-        {/* --- SECTION 5: CALL TO ACTION --- */}
+        {/* Section 5: CTA */}
         <section className="py-16 md:py-24 bg-blue-100">
           <div className="max-w-4xl mx-auto px-5 sm:px-8 lg:px-16 text-center">
             <h2 className="h3 font-heading font-bold text-white mb-6">Mari Berkontribusi!</h2>

@@ -89,13 +89,13 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
-  '/cara-kerja': typeof CaraKerjaIndexRoute
-  '/daftar-anggota': typeof DaftarAnggotaIndexRoute
-  '/data-laporan': typeof DataLaporanIndexRoute
-  '/kebutuhan-dapur': typeof KebutuhanDapurIndexRoute
-  '/lapor': typeof LaporIndexRoute
-  '/profil': typeof ProfilIndexRoute
-  '/tentang-kami': typeof TentangKamiIndexRoute
+  '/cara-kerja/': typeof CaraKerjaIndexRoute
+  '/daftar-anggota/': typeof DaftarAnggotaIndexRoute
+  '/data-laporan/': typeof DataLaporanIndexRoute
+  '/kebutuhan-dapur/': typeof KebutuhanDapurIndexRoute
+  '/lapor/': typeof LaporIndexRoute
+  '/profil/': typeof ProfilIndexRoute
+  '/tentang-kami/': typeof TentangKamiIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -134,13 +134,13 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/auth/reset-password'
-    | '/cara-kerja'
-    | '/daftar-anggota'
-    | '/data-laporan'
-    | '/kebutuhan-dapur'
-    | '/lapor'
-    | '/profil'
-    | '/tentang-kami'
+    | '/cara-kerja/'
+    | '/daftar-anggota/'
+    | '/data-laporan/'
+    | '/kebutuhan-dapur/'
+    | '/lapor/'
+    | '/profil/'
+    | '/tentang-kami/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -198,49 +198,49 @@ declare module '@tanstack/react-router' {
     '/tentang-kami/': {
       id: '/tentang-kami/'
       path: '/tentang-kami'
-      fullPath: '/tentang-kami'
+      fullPath: '/tentang-kami/'
       preLoaderRoute: typeof TentangKamiIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profil/': {
       id: '/profil/'
       path: '/profil'
-      fullPath: '/profil'
+      fullPath: '/profil/'
       preLoaderRoute: typeof ProfilIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lapor/': {
       id: '/lapor/'
       path: '/lapor'
-      fullPath: '/lapor'
+      fullPath: '/lapor/'
       preLoaderRoute: typeof LaporIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kebutuhan-dapur/': {
       id: '/kebutuhan-dapur/'
       path: '/kebutuhan-dapur'
-      fullPath: '/kebutuhan-dapur'
+      fullPath: '/kebutuhan-dapur/'
       preLoaderRoute: typeof KebutuhanDapurIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/data-laporan/': {
       id: '/data-laporan/'
       path: '/data-laporan'
-      fullPath: '/data-laporan'
+      fullPath: '/data-laporan/'
       preLoaderRoute: typeof DataLaporanIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/daftar-anggota/': {
       id: '/daftar-anggota/'
       path: '/daftar-anggota'
-      fullPath: '/daftar-anggota'
+      fullPath: '/daftar-anggota/'
       preLoaderRoute: typeof DaftarAnggotaIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cara-kerja/': {
       id: '/cara-kerja/'
       path: '/cara-kerja'
-      fullPath: '/cara-kerja'
+      fullPath: '/cara-kerja/'
       preLoaderRoute: typeof CaraKerjaIndexRouteImport
       parentRoute: typeof rootRouteImport
     }

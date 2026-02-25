@@ -52,26 +52,23 @@ function CaraKerjaPage() {
       
       <main className="flex-1 pt-8 md:pt-12">
         
-        {/* --- Section 1: Hero / Bantuan --- */}
+        {/* Section 1: Help */}
         <section className="pb-8 md:pb-10">
           <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24">
             
-            {/* Card Container */}
+            {/* Card container */}
             <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-blue-30/50 overflow-hidden">
               
               <div className="p-6 md:p-10">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
                   
-                  {/* Kolom Kiri: Teks */}
+                  {/* Left column: text */}
                   <div className="order-2 lg:order-1 flex flex-col items-center lg:items-start text-center lg:text-left">
                     <h2 className="font-heading text-2xl md:text-3xl font-bold text-blue-100 mb-4">
                       Butuh Bantuan Menyusun Laporan?
                     </h2>
                     
-                    {/* PERBAIKAN: 
-                        1. Menghapus 'max-w-xl' agar teks mengisi lebar penuh di iPad/Tablet.
-                        2. Menggunakan 'text-general-60' agar warna konsisten.
-                    */}
+                    {/* Description */}
                     <p className="body-md text-general-60 mb-8 w-full leading-relaxed">
                       Tim AMP MBG siap membantu merapikan kronologi dan memastikan laporan terekam dengan baik. Kirim pesan via WhatsApp dan kami akan memberikan panduan langkah demi langkah.
                     </p>
@@ -88,7 +85,7 @@ function CaraKerjaPage() {
                       </a>
                     </div>
 
-                    {/* Info Jam Respons */}
+                    {/* Response hours */}
                     <div className="w-full text-left space-y-1.5 border-l-4 border-orange-100 pl-5 py-2 bg-orange-20/30 rounded-r-lg">
                       <p className="body-sm font-bold text-blue-100">
                         Jam Respons : Senin - Jumat (08.00 - 18.00 WIB)
@@ -99,10 +96,10 @@ function CaraKerjaPage() {
                     </div>
                   </div>
 
-                  {/* Kolom Kanan: Video (Posisi Atas di Mobile/Tablet) */}
+                  {/* Right column: video */}
                   <div className="order-1 lg:order-2 w-full">
                     <div className="bg-blue-100 rounded-2xl aspect-video flex items-center justify-center border border-blue-90 w-full relative overflow-hidden group shadow-lg">
-                      {/* Pattern Hiasan */}
+                      {/* Decorative pattern */}
                       <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
                       
                       <div className="text-center p-4 relative z-10">
@@ -120,7 +117,7 @@ function CaraKerjaPage() {
           </div>
         </section>
 
-        {/* --- Section 2: Alur Pelaporan --- */}
+        {/* Section 2: Steps */}
         <section className="py-12 md:py-16 bg-general-20 border-t border-general-30/50">
           <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24">
             <div className="text-center mb-10 md:mb-14">
@@ -156,9 +153,9 @@ function CaraKerjaPage() {
           </div>
         </section>
 
-        {/* --- Section 3: Call To Action --- */}
+        {/* Section 3: CTA */}
         <section className="py-16 md:py-24 bg-blue-100 relative overflow-hidden">
-          {/* Dekorasi Background */}
+          {/* Background decoration */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
              <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-50 rounded-full blur-3xl"></div>
              <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-orange-100 rounded-full blur-3xl"></div>

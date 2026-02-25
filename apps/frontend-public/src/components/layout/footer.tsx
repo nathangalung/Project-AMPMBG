@@ -29,14 +29,11 @@ function FooterComponent() {
 
   return (
     <footer className="bg-blue-100 text-general-20 border-t border-blue-90">
-      {/* UPDATE: 
-         Mengganti 'max-w-7xl' dengan 'w-full' dan menyesuaikan 'px' 
-         agar selaras dengan halaman Cara Kerja (px-5 -> px-24).
-      */}
+      {/* Full width container */}
       <div className="w-full mx-auto px-5 sm:px-8 lg:px-16 xl:px-24 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
           
-          {/* Logo Section */}
+          {/* Logo */}
           <div className="flex items-center justify-start">
             <img
               src="/logo_putih.webp"
@@ -49,7 +46,7 @@ function FooterComponent() {
             />
           </div>
 
-          {/* Links Section */}
+          {/* Links */}
           <div className="flex gap-12 justify-start md:justify-center w-full">
             <div className="flex flex-col gap-2">
               {LEFT_LINKS.map((link) => (
@@ -78,7 +75,7 @@ function FooterComponent() {
             </div>
           </div>
 
-          {/* Contact Section */}
+          {/* Contact */}
           <div className="flex flex-col gap-2 items-start md:items-end">
             <h4 className="text-xs uppercase tracking-widest text-blue-30 font-semibold mb-1">Hubungi Kami</h4>
             <a
@@ -91,16 +88,16 @@ function FooterComponent() {
               <span>081316423424</span>
             </a>
             <a
-              href="mailto:ampmbg.id@gmail.com"
+              href="mailto:admin@lapormbg.com"
               className="flex items-center gap-2 text-blue-20 hover:text-general-20 transition-colors body-sm"
             >
               <Mail className="w-4 h-4" />
-              <span>ampmbg.id@gmail.com</span>
+              <span>admin@lapormbg.com</span>
             </a>
           </div>
         </div>
 
-        {/* Copyright Section */}
+        {/* Copyright */}
         <div className="border-t border-blue-90/50 mt-8 pt-6 text-center">
           <p className="body-xs text-blue-30">
             &copy; {new Date().getFullYear()} AMP MBG. All Rights Reserved.

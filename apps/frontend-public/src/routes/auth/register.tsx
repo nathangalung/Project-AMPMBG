@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState, useEffect, useCallback } from "react"
-import { Eye, EyeOff, CheckCircle2, Loader2, ArrowLeft, ShieldCheck } from "lucide-react" // UserPlus dihapus dari import
+import { Eye, EyeOff, CheckCircle2, Loader2, ArrowLeft, ShieldCheck } from "lucide-react"
 import { authService } from "@/services/auth"
 
 declare global {
@@ -47,7 +47,7 @@ function RegisterPage() {
   })
   const [isAgreed, setIsAgreed] = useState(false)
 
-  // Validasi
+  // Validation
   const isPhoneValid = /^\d{9,12}$/.test(formData.phone)
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
   const isPasswordValid = passwordRegex.test(formData.password)
@@ -182,7 +182,7 @@ function RegisterPage() {
           </div>
         )}
 
-        {/* Nama Lengkap */}
+        {/* Full name */}
         <fieldset className="group bg-white border border-general-30 rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:border-blue-100 focus-within:ring-4 focus-within:ring-blue-100/10 hover:border-blue-100/50">
           <legend className="body-xs font-semibold text-general-60 px-2 bg-white group-focus-within:text-blue-100 transition-colors">
             Nama Lengkap
@@ -197,7 +197,7 @@ function RegisterPage() {
           />
         </fieldset>
 
-        {/* Surel (Email) */}
+        {/* Email */}
         <div className="space-y-1">
           <fieldset className={`group bg-white border rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:shadow-md ${
             formData.email.length > 0 && !isEmailValid
@@ -221,7 +221,7 @@ function RegisterPage() {
           )}
         </div>
 
-        {/* Nomor Telepon */}
+        {/* Phone number */}
         <div className="space-y-1">
           <fieldset className={`group bg-white border rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:shadow-md ${
               formData.phone.length > 0 && !isPhoneValid 
@@ -254,7 +254,7 @@ function RegisterPage() {
           </div>
         </div>
 
-        {/* Password & Confirm Password */}
+        {/* Password fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           <div className="flex flex-col gap-1">
             <fieldset className={`group bg-white border rounded-xl px-4 pb-2.5 pt-1 transition-all duration-300 focus-within:shadow-md ${
@@ -318,7 +318,7 @@ function RegisterPage() {
           </div>
         </div>
 
-        {/* Indikator Kekuatan Password */}
+        {/* Password strength */}
         {formData.password.length > 0 && !isPasswordValid && (
           <div className="bg-red-20/50 border border-red-100/30 p-3 rounded-xl animate-in fade-in slide-in-from-top-1">
              <div className="flex items-center gap-2 mb-2">
@@ -375,7 +375,7 @@ function RegisterPage() {
           {isLoading ? "Memproses..." : "Daftar"}
         </button>
 
-        {/* Google Signup */}
+        {/* Google signup */}
         {GOOGLE_CLIENT_ID && (
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -410,7 +410,7 @@ function RegisterPage() {
         )}
       </form>
 
-      {/* Phone Completion Modal */}
+      {/* Phone completion modal */}
       {requiresPhone && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">

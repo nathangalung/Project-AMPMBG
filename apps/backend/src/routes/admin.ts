@@ -17,7 +17,7 @@ admin.use("*", adminMiddleware)
 const userQuerySchema = z.object({
   page: z.string().optional().transform((val) => parseInt(val || "1")),
   limit: z.string().optional().transform((val) => parseInt(val || "10")),
-  search: z.string().optional(),
+  search: z.string().max(100).optional(),
   signupMethod: z.enum(["manual", "google"]).optional(),
 })
 
@@ -71,7 +71,7 @@ admin.get("/users/:id", async (c) => {
     },
   })
 
-  if (!user) return c.json({ error: "User tidak ditemukan" }, 404)
+  if (!user) return c.json({ error: "User not found" }, 404)
 
   return c.json({
     data: {
@@ -87,11 +87,11 @@ admin.delete("/users/:id", async (c) => {
   const id = c.req.param("id")
 
   const user = await db.query.publics.findFirst({ where: eq(schema.publics.id, id) })
-  if (!user) return c.json({ error: "User tidak ditemukan" }, 404)
+  if (!user) return c.json({ error: "User not found" }, 404)
 
   await db.delete(schema.publics).where(eq(schema.publics.id, id))
 
-  return c.json({ message: "User berhasil dihapus" })
+  return c.json({ message: "User deleted successfully" })
 })
 
 // Dashboard
@@ -138,7 +138,7 @@ admin.get("/dashboard", async (c) => {
       status: r.status,
       province: r.province?.name || "",
       city: r.city?.name || "",
-      reporter: r.public?.name || "Anonim",
+      reporter: r.public?.name || "Anonymous",
       createdAt: r.createdAt,
     })),
   })
@@ -149,7 +149,7 @@ admin.get("/reports/:id/history", async (c) => {
   const id = c.req.param("id")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
+  if (!report) return c.json({ error: "Report not found" }, 404)
 
   const history = await db.query.reportStatusHistory.findMany({
     where: eq(schema.reportStatusHistory.reportId, id),
@@ -181,7 +181,7 @@ const adminReportsQuerySchema = z.object({
   districtId: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  search: z.string().optional(),
+  search: z.string().max(100).optional(),
 })
 
 admin.get("/reports", zValidator("query", adminReportsQuerySchema), async (c) => {
@@ -248,7 +248,7 @@ admin.get("/reports", zValidator("query", adminReportsQuerySchema), async (c) =>
       incidentDate: r.incidentDate,
       relation: r.relation,
       relationDetail: r.relationDetail,
-      reporter: r.public?.name || "Anonim",
+      reporter: r.public?.name || "Anonymous",
       reporterEmail: r.public?.email,
       reporterPhone: r.public?.phone,
       verifiedBy: r.verifier?.name,
@@ -284,7 +284,7 @@ admin.get("/reports/export", zValidator("query", z.object({
   })
 
   if (format === "csv") {
-    const headers = "ID,Judul,Kategori,Status,Provinsi,Kota,Tanggal Kejadian,Skor,Kredibilitas,Dibuat\n"
+    const headers = "ID,Title,Category,Status,Province,City,Incident Date,Score,Credibility,Created\n"
     const rows = data.map((r) =>
       `"${r.id}","${r.title}","${r.category}","${r.status}","${r.province?.name || ""}","${r.city?.name || ""}","${r.incidentDate.toISOString()}","${r.totalScore}","${r.credibilityLevel}","${r.createdAt.toISOString()}"`
     ).join("\n")
@@ -317,7 +317,7 @@ admin.get("/reports/:id", async (c) => {
     },
   })
 
-  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
+  if (!report) return c.json({ error: "Report not found" }, 404)
 
   return c.json({
     data: {
@@ -327,7 +327,7 @@ admin.get("/reports/:id", async (c) => {
       district: report.district?.name || "",
       reporter: {
         id: report.public?.id,
-        name: report.public?.name || "Anonim",
+        name: report.public?.name || "Anonymous",
         email: report.public?.email,
         phone: report.public?.phone,
       },
@@ -360,7 +360,7 @@ admin.patch("/reports/:id/status", zValidator("json", updateReportStatusSchema),
   const currentAdmin = c.get("admin")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
+  if (!report) return c.json({ error: "Report not found" }, 404)
 
   const previousStatus = report.status
 
@@ -378,6 +378,19 @@ admin.patch("/reports/:id/status", zValidator("json", updateReportStatusSchema),
     .where(eq(schema.reports.id, id))
     .returning()
 
+  // Update verifiedReportCount
+  if (report.publicId) {
+    if (status === "resolved" && previousStatus !== "resolved") {
+      await db.update(schema.publics)
+        .set({ verifiedReportCount: sql`${schema.publics.verifiedReportCount} + 1` })
+        .where(eq(schema.publics.id, report.publicId))
+    } else if (previousStatus === "resolved" && status !== "resolved") {
+      await db.update(schema.publics)
+        .set({ verifiedReportCount: sql`GREATEST(${schema.publics.verifiedReportCount} - 1, 0)` })
+        .where(eq(schema.publics.id, report.publicId))
+    }
+  }
+
   db.insert(schema.reportStatusHistory).values({
     reportId: id,
     fromStatus: previousStatus,
@@ -386,7 +399,7 @@ admin.patch("/reports/:id/status", zValidator("json", updateReportStatusSchema),
     notes: notes || null,
   }).catch(() => {})
 
-  return c.json({ data: updated, message: "Status laporan berhasil diperbarui" })
+  return c.json({ data: updated, message: "Report status updated successfully" })
 })
 
 // Bulk update report status
@@ -405,7 +418,7 @@ admin.patch("/reports/bulk-status", zValidator("json", bulkUpdateSchema), async 
   })
 
   if (reports.length === 0) {
-    return c.json({ error: "Tidak ada laporan yang ditemukan" }, 404)
+    return c.json({ error: "No reports found" }, 404)
   }
 
   const updateData: Record<string, unknown> = { status, updatedAt: new Date() }
@@ -431,8 +444,31 @@ admin.patch("/reports/bulk-status", zValidator("json", bulkUpdateSchema), async 
     db.insert(schema.reportStatusHistory).values(historyRecords),
   ])
 
+  // Update verifiedReportCount per reporter
+  const reporterUpdates = new Map<string, number>()
+  for (const r of reports) {
+    if (!r.publicId) continue
+    const delta =
+      (status === "resolved" && r.status !== "resolved") ? 1 :
+      (r.status === "resolved" && status !== "resolved") ? -1 : 0
+    if (delta !== 0) {
+      reporterUpdates.set(r.publicId, (reporterUpdates.get(r.publicId) || 0) + delta)
+    }
+  }
+  for (const [publicId, delta] of reporterUpdates) {
+    if (delta > 0) {
+      await db.update(schema.publics)
+        .set({ verifiedReportCount: sql`${schema.publics.verifiedReportCount} + ${delta}` })
+        .where(eq(schema.publics.id, publicId))
+    } else {
+      await db.update(schema.publics)
+        .set({ verifiedReportCount: sql`GREATEST(${schema.publics.verifiedReportCount} + ${delta}, 0)` })
+        .where(eq(schema.publics.id, publicId))
+    }
+  }
+
   return c.json({
-    message: `${reports.length} laporan berhasil diperbarui`,
+    message: `${reports.length} reports updated successfully`,
     updated: reports.length,
   })
 })
@@ -442,11 +478,11 @@ admin.delete("/reports/:id", async (c) => {
   const id = c.req.param("id")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
+  if (!report) return c.json({ error: "Report not found" }, 404)
 
   await db.delete(schema.reports).where(eq(schema.reports.id, id))
 
-  return c.json({ message: "Laporan berhasil dihapus" })
+  return c.json({ message: "Report deleted successfully" })
 })
 
 // Analytics
@@ -553,7 +589,7 @@ admin.get("/analytics", zValidator("query", analyticsQuerySchema), async (c) => 
   const cityMap = new Map(cities.map((c) => [c.id, c.name]))
   const districtMap = new Map(districts.map((d) => [d.id, d.name]))
 
-  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"]
+  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
   let formattedTrends: { label: string; count: number }[]
   if (month > 0) {
@@ -653,13 +689,13 @@ admin.post("/sessions/:userId/revoke-all", async (c) => {
   const userId = c.req.param("userId")
 
   const user = await db.query.publics.findFirst({ where: eq(schema.publics.id, userId) })
-  if (!user) return c.json({ error: "User tidak ditemukan" }, 404)
+  if (!user) return c.json({ error: "User not found" }, 404)
 
   await db.update(schema.sessions)
     .set({ isRevoked: true })
     .where(eq(schema.sessions.publicId, userId))
 
-  return c.json({ message: "Semua sesi user berhasil dicabut" })
+  return c.json({ message: "All user sessions revoked" })
 })
 
 // MBG Schedule Management
@@ -669,7 +705,7 @@ const mbgScheduleQuerySchema = z.object({
   provinceId: z.string().optional(),
   cityId: z.string().optional(),
   isActive: z.enum(["true", "false"]).optional().transform((val) => val === "true"),
-  search: z.string().optional(),
+  search: z.string().max(100).optional(),
 })
 
 admin.get("/mbg-schedules", zValidator("query", mbgScheduleQuerySchema), async (c) => {
@@ -744,7 +780,7 @@ admin.post("/mbg-schedules", zValidator("json", createMbgScheduleSchema), async 
     districtId: data.districtId || null,
   }).returning()
 
-  return c.json({ data: schedule, message: "Jadwal MBG berhasil ditambahkan" }, 201)
+  return c.json({ data: schedule, message: "MBG schedule created successfully" }, 201)
 })
 
 admin.patch("/mbg-schedules/:id", zValidator("json", createMbgScheduleSchema.partial().extend({
@@ -757,14 +793,14 @@ admin.patch("/mbg-schedules/:id", zValidator("json", createMbgScheduleSchema.par
     where: eq(schema.mbgSchedules.id, id),
   })
 
-  if (!schedule) return c.json({ error: "Jadwal tidak ditemukan" }, 404)
+  if (!schedule) return c.json({ error: "Schedule not found" }, 404)
 
   const [updated] = await db.update(schema.mbgSchedules)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(schema.mbgSchedules.id, id))
     .returning()
 
-  return c.json({ data: updated, message: "Jadwal MBG berhasil diperbarui" })
+  return c.json({ data: updated, message: "MBG schedule updated successfully" })
 })
 
 admin.delete("/mbg-schedules/:id", async (c) => {
@@ -774,11 +810,11 @@ admin.delete("/mbg-schedules/:id", async (c) => {
     where: eq(schema.mbgSchedules.id, id),
   })
 
-  if (!schedule) return c.json({ error: "Jadwal tidak ditemukan" }, 404)
+  if (!schedule) return c.json({ error: "Schedule not found" }, 404)
 
   await db.delete(schema.mbgSchedules).where(eq(schema.mbgSchedules.id, id))
 
-  return c.json({ message: "Jadwal MBG berhasil dihapus" })
+  return c.json({ message: "MBG schedule deleted successfully" })
 })
 
 // Report scoring breakdown
@@ -789,25 +825,25 @@ admin.get("/reports/:id/scoring", async (c) => {
     where: eq(schema.reports.id, id),
   })
 
-  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
+  if (!report) return c.json({ error: "Report not found" }, 404)
 
   return c.json({
     data: {
-      scoreRelation: { value: report.scoreRelation, max: 3, label: "Relasi dengan MBG" },
-      scoreLocationTime: { value: report.scoreLocationTime, max: 3, label: "Validitas Lokasi & Waktu" },
-      scoreEvidence: { value: report.scoreEvidence, max: 3, label: "Bukti Pendukung" },
-      scoreNarrative: { value: report.scoreNarrative, max: 3, label: "Konsistensi Narasi" },
-      scoreReporterHistory: { value: report.scoreReporterHistory, max: 3, label: "Riwayat Pelapor" },
-      scoreSimilarity: { value: report.scoreSimilarity, max: 3, label: "Kesesuaian Laporan Lain" },
+      scoreRelation: { value: report.scoreRelation, max: 3, label: "MBG Relation" },
+      scoreLocationTime: { value: report.scoreLocationTime, max: 3, label: "Location & Time Validity" },
+      scoreEvidence: { value: report.scoreEvidence, max: 3, label: "Supporting Evidence" },
+      scoreNarrative: { value: report.scoreNarrative, max: 3, label: "Narrative Consistency" },
+      scoreReporterHistory: { value: report.scoreReporterHistory, max: 3, label: "Reporter History" },
+      scoreSimilarity: { value: report.scoreSimilarity, max: 3, label: "Similar Reports" },
       totalScore: report.totalScore,
       credibilityLevel: report.credibilityLevel,
     },
   })
 })
 
-// ADMIN ACCOUNTS management (from admins table)
+// ADMIN ACCOUNTS management
 const adminQuerySchema = z.object({
-  search: z.string().optional(),
+  search: z.string().max(100).optional(),
   isActive: z.enum(["true", "false"]).optional().transform((val) => val === "true" ? true : val === "false" ? false : undefined),
 })
 
@@ -853,7 +889,7 @@ admin.post("/admins", zValidator("json", createAdminSchema), async (c) => {
   const { name, email, password, adminRole } = c.req.valid("json")
 
   const existing = await db.query.admins.findFirst({ where: eq(schema.admins.email, email) })
-  if (existing) return c.json({ error: "Email sudah terdaftar" }, 400)
+  if (existing) return c.json({ error: "Email already registered" }, 400)
 
   const hashedPassword = await hashPassword(password)
 
@@ -865,7 +901,7 @@ admin.post("/admins", zValidator("json", createAdminSchema), async (c) => {
     isActive: true,
   }).returning({ id: schema.admins.id, name: schema.admins.name, email: schema.admins.email, adminRole: schema.admins.adminRole })
 
-  return c.json({ data: newAdmin, message: "Admin berhasil ditambahkan" }, 201)
+  return c.json({ data: newAdmin, message: "Admin created successfully" }, 201)
 })
 
 admin.patch("/admins/:id", zValidator("json", z.object({
@@ -878,11 +914,11 @@ admin.patch("/admins/:id", zValidator("json", z.object({
   const currentAdmin = c.get("admin")
 
   const adminUser = await db.query.admins.findFirst({ where: eq(schema.admins.id, id) })
-  if (!adminUser) return c.json({ error: "Admin tidak ditemukan" }, 404)
+  if (!adminUser) return c.json({ error: "Admin not found" }, 404)
 
-  // Prevent self-deactivation
+  // Block self-deactivation
   if (data.isActive === false && currentAdmin.id === id) {
-    return c.json({ error: "Tidak dapat menonaktifkan akun sendiri" }, 400)
+    return c.json({ error: "Cannot deactivate your own account" }, 400)
   }
 
   const [updated] = await db.update(schema.admins)
@@ -890,27 +926,27 @@ admin.patch("/admins/:id", zValidator("json", z.object({
     .where(eq(schema.admins.id, id))
     .returning({ id: schema.admins.id, name: schema.admins.name, adminRole: schema.admins.adminRole, isActive: schema.admins.isActive })
 
-  return c.json({ data: updated, message: "Admin berhasil diperbarui" })
+  return c.json({ data: updated, message: "Admin updated successfully" })
 })
 
 admin.delete("/admins/:id", async (c) => {
   const id = c.req.param("id")
   const currentAdmin = c.get("admin")
 
-  if (currentAdmin.id === id) return c.json({ error: "Tidak dapat menghapus akun sendiri" }, 400)
+  if (currentAdmin.id === id) return c.json({ error: "Cannot delete your own account" }, 400)
 
   const adminUser = await db.query.admins.findFirst({ where: eq(schema.admins.id, id) })
-  if (!adminUser) return c.json({ error: "Admin tidak ditemukan" }, 404)
+  if (!adminUser) return c.json({ error: "Admin not found" }, 404)
 
   await db.delete(schema.admins).where(eq(schema.admins.id, id))
-  return c.json({ message: "Admin berhasil dihapus" })
+  return c.json({ message: "Admin deleted successfully" })
 })
 
-// MEMBER management (from members + users tables)
+// MEMBER management
 const memberQuerySchema = z.object({
   status: z.enum(["verified", "pending", "all"]).optional().default("all"),
   memberType: z.enum(["supplier", "caterer", "school", "government", "foundation", "ngo", "farmer", "other"]).optional(),
-  search: z.string().optional(),
+  search: z.string().max(100).optional(),
 })
 
 admin.get("/members", zValidator("query", memberQuerySchema), async (c) => {
@@ -932,7 +968,7 @@ admin.get("/members", zValidator("query", memberQuerySchema), async (c) => {
     },
   })
 
-  // Filter by search on user name/email if provided
+  // Search filter
   let filteredData = data
   if (search) {
     const searchLower = search.toLowerCase()
@@ -972,7 +1008,7 @@ admin.get("/members", zValidator("query", memberQuerySchema), async (c) => {
   })
 })
 
-// Create member (creates user + member)
+// Create member
 const createMemberSchema = z.object({
   name: z.string().min(3).max(255),
   email: z.string().email(),
@@ -997,20 +1033,20 @@ admin.post("/members", zValidator("json", createMemberSchema), async (c) => {
     formattedPhone = "+62" + formattedPhone
   }
 
-  // Check if email already exists
+  // Check existing email
   const existingEmail = await db.query.publics.findFirst({
     where: eq(schema.publics.email, data.email),
   })
   if (existingEmail) {
-    return c.json({ error: "Email sudah terdaftar" }, 400)
+    return c.json({ error: "Email already registered" }, 400)
   }
 
-  // Check if phone already exists
+  // Check existing phone
   const existingPhone = await db.query.publics.findFirst({
     where: eq(schema.publics.phone, formattedPhone),
   })
   if (existingPhone) {
-    return c.json({ error: "Nomor telepon sudah terdaftar" }, 400)
+    return c.json({ error: "Phone number already registered" }, 400)
   }
 
   // Create user first
@@ -1020,7 +1056,7 @@ admin.post("/members", zValidator("json", createMemberSchema), async (c) => {
     phone: formattedPhone,
   }).returning()
 
-  // Create member linked to user
+  // Create linked member
   const [member] = await db.insert(schema.members).values({
     publicId: user.id,
     memberType: data.memberType,
@@ -1037,7 +1073,7 @@ admin.post("/members", zValidator("json", createMemberSchema), async (c) => {
 
   return c.json({
     data: { ...member, userId: user.id },
-    message: "Member berhasil ditambahkan",
+    message: "Member created successfully",
   }, 201)
 })
 
@@ -1053,7 +1089,7 @@ admin.get("/members/:id", async (c) => {
     },
   })
 
-  if (!member) return c.json({ error: "Anggota tidak ditemukan" }, 404)
+  if (!member) return c.json({ error: "Member not found" }, 404)
 
   return c.json({
     data: {
@@ -1090,14 +1126,14 @@ admin.patch("/members/:id/verify", async (c) => {
   const currentAdmin = c.get("admin")
 
   const member = await db.query.members.findFirst({ where: eq(schema.members.id, id) })
-  if (!member) return c.json({ error: "Anggota tidak ditemukan" }, 404)
+  if (!member) return c.json({ error: "Member not found" }, 404)
 
   const now = new Date()
   await db.update(schema.members)
     .set({ isVerified: true, verifiedAt: now, verifiedBy: currentAdmin.id, updatedAt: now })
     .where(eq(schema.members.id, id))
 
-  return c.json({ message: "Anggota berhasil diverifikasi" })
+  return c.json({ message: "Member verified successfully" })
 })
 
 // Update member status
@@ -1111,11 +1147,11 @@ admin.patch("/members/:id/status", zValidator("json", updateMemberStatusSchema),
   const currentAdmin = c.get("admin")
 
   const member = await db.query.members.findFirst({ where: eq(schema.members.id, id) })
-  if (!member) return c.json({ error: "Anggota tidak ditemukan" }, 404)
+  if (!member) return c.json({ error: "Member not found" }, 404)
 
   const now = new Date()
 
-  // Update member verification status
+  // Update verification status
   if (isVerified !== undefined) {
     const memberUpdate: Record<string, unknown> = { isVerified, updatedAt: now }
     if (isVerified) {
@@ -1125,7 +1161,7 @@ admin.patch("/members/:id/status", zValidator("json", updateMemberStatusSchema),
     await db.update(schema.members).set(memberUpdate).where(eq(schema.members.id, id))
   }
 
-  return c.json({ message: "Status anggota berhasil diperbarui" })
+  return c.json({ message: "Member status updated successfully" })
 })
 
 // Delete member
@@ -1133,12 +1169,12 @@ admin.delete("/members/:id", async (c) => {
   const id = c.req.param("id")
 
   const member = await db.query.members.findFirst({ where: eq(schema.members.id, id) })
-  if (!member) return c.json({ error: "Anggota tidak ditemukan" }, 404)
+  if (!member) return c.json({ error: "Member not found" }, 404)
 
-  // Delete member record (user account remains)
+  // Delete member only
   await db.delete(schema.members).where(eq(schema.members.id, id))
 
-  return c.json({ message: "Anggota berhasil dihapus" })
+  return c.json({ message: "Member deleted successfully" })
 })
 
 export default admin

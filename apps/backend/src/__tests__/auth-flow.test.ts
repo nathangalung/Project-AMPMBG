@@ -9,7 +9,7 @@ import { randomBytes } from "crypto"
 
 const app = createTestApp(new Hono().route("/auth", auth))
 
-// Generate unique identifiers for test users
+// Unique test identifiers
 const testId = randomBytes(4).toString("hex")
 const testEmail = `test-${testId}@example.com`
 const testPhone = `81234${testId.slice(0, 6)}`
@@ -71,7 +71,7 @@ describe("Auth Flow - Complete Signup and Login", () => {
     })
     expect(res.status).toBe(400)
     const json = await res.json()
-    expect(json.error).toContain("telepon")
+    expect(json.error).toContain("Phone")
   })
 
   test("POST /api/auth/login with email succeeds", async () => {
@@ -88,7 +88,7 @@ describe("Auth Flow - Complete Signup and Login", () => {
   })
 
   test("POST /api/auth/login with phone succeeds", async () => {
-    // Use the formatted phone from login response
+    // Formatted phone from login
     const res = await testRequest(app, "POST", "/api/auth/login", {
       body: {
         identifier: `+62${testPhone}`,
@@ -147,7 +147,7 @@ describe("Auth Flow - Password Reset", () => {
   const resetTestEmail = `reset-${randomBytes(4).toString("hex")}@example.com`
 
   beforeAll(async () => {
-    // Create test user for password reset
+    // Test user for reset
     const [user] = await db.insert(publics).values({
       email: resetTestEmail,
       password: "$argon2id$v=19$m=65536,t=2,p=1$test$test", // Dummy hash
@@ -335,6 +335,6 @@ describe("Auth Flow - Member Application", () => {
     })
     expect(res.status).toBe(200)
     const json = await res.json()
-    expect(json.message).toContain("Pendaftaran")
+    expect(json.message).toContain("Member registration")
   })
 })

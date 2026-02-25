@@ -125,7 +125,7 @@ describe("Kitchen Needs - Public Requests", () => {
     publicUserId = user.id
     publicToken = await signToken({ sub: user.id, email: user.email, type: "user" })
 
-    // Get a kitchen need for testing
+    // Get test kitchen need
     const kitchenNeed = await db.query.kitchenNeeds.findFirst()
     if (kitchenNeed) {
       kitchenNeedId = kitchenNeed.id

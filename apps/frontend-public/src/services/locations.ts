@@ -37,4 +37,14 @@ export const locationsService = {
     if (type) params.append("type", type)
     return api.get(`/locations/search?${params.toString()}`)
   },
+
+  async lookupByName(province?: string, city?: string, district?: string): Promise<{
+    data: { provinceId: string | null; cityId: string | null; districtId: string | null }
+  }> {
+    const params = new URLSearchParams()
+    if (province) params.append("province", province)
+    if (city) params.append("city", city)
+    if (district) params.append("district", district)
+    return api.get(`/locations/lookup?${params.toString()}`)
+  },
 }
