@@ -5,7 +5,7 @@ WORKDIR /app
 
 FROM base AS install
 COPY package.json bun.lock* ./
-RUN bun install --frozen-lockfile --production
+RUN bun install --frozen-lockfile
 
 FROM base AS release
 COPY --from=install --chown=bun:bun /app/node_modules ./node_modules
