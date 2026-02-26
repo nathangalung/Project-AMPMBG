@@ -71,7 +71,7 @@ describe("Auth Flow - Complete Signup and Login", () => {
     })
     expect(res.status).toBe(400)
     const json = await res.json()
-    expect(json.error).toContain("Phone")
+    expect(json.error).toContain("Nomor telepon")
   })
 
   test("POST /api/auth/login with email succeeds", async () => {
@@ -333,6 +333,6 @@ describe("Auth Flow - Member Application", () => {
     })
     expect(res.status).toBe(200)
     const json = await res.json()
-    expect(json.message).toContain("Member registration")
+    expect(json.message).toContain("Pendaftaran anggota")
   })
 })

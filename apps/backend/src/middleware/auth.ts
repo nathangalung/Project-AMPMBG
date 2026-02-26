@@ -36,26 +36,26 @@ export const authMiddleware = createMiddleware<{ Variables: UserVariables }>(asy
   const authHeader = c.req.header("Authorization")
 
   if (!authHeader?.startsWith("Bearer ")) {
-    return c.json({ error: "Unauthorized" }, 401)
+    return c.json({ error: "Tidak terautentikasi" }, 401)
   }
 
   const token = authHeader.slice(7)
   const payload = await verifyToken(token)
 
   if (!payload) {
-    return c.json({ error: "Invalid token" }, 401)
+    return c.json({ error: "Token tidak valid" }, 401)
   }
 
   if (payload.type !== "user") {
-    return c.json({ error: "Invalid user token" }, 401)
+    return c.json({ error: "Token pengguna tidak valid" }, 401)
   }
 
   if (payload.temp === true) {
-    return c.json({ error: "Complete registration first" }, 403)
+    return c.json({ error: "Selesaikan pendaftaran terlebih dahulu" }, 403)
   }
 
   if (await isUserSessionRevoked(token)) {
-    return c.json({ error: "Session revoked" }, 401)
+    return c.json({ error: "Sesi telah dicabut" }, 401)
   }
 
   c.set("user", {
@@ -72,18 +72,18 @@ export const tempAuthMiddleware = createMiddleware<{ Variables: UserVariables }>
   const authHeader = c.req.header("Authorization")
 
   if (!authHeader?.startsWith("Bearer ")) {
-    return c.json({ error: "Unauthorized" }, 401)
+    return c.json({ error: "Tidak terautentikasi" }, 401)
   }
 
   const token = authHeader.slice(7)
   const payload = await verifyToken(token)
 
   if (!payload) {
-    return c.json({ error: "Invalid token" }, 401)
+    return c.json({ error: "Token tidak valid" }, 401)
   }
 
   if (payload.type !== "user") {
-    return c.json({ error: "Invalid user token" }, 401)
+    return c.json({ error: "Token pengguna tidak valid" }, 401)
   }
 
   c.set("user", {
@@ -120,22 +120,22 @@ export const adminMiddleware = createMiddleware<{ Variables: AdminVariables }>(a
   const authHeader = c.req.header("Authorization")
 
   if (!authHeader?.startsWith("Bearer ")) {
-    return c.json({ error: "Unauthorized" }, 401)
+    return c.json({ error: "Tidak terautentikasi" }, 401)
   }
 
   const token = authHeader.slice(7)
   const payload = await verifyToken(token)
 
   if (!payload) {
-    return c.json({ error: "Invalid token" }, 401)
+    return c.json({ error: "Token tidak valid" }, 401)
   }
 
   if (payload.type !== "admin") {
-    return c.json({ error: "Access denied" }, 403)
+    return c.json({ error: "Akses ditolak" }, 403)
   }
 
   if (await isAdminSessionRevoked(token)) {
-    return c.json({ error: "Session revoked" }, 401)
+    return c.json({ error: "Sesi telah dicabut" }, 401)
   }
 
   c.set("admin", {
@@ -152,22 +152,22 @@ export const reporterMiddleware = createMiddleware<{ Variables: UserVariables }>
   const authHeader = c.req.header("Authorization")
 
   if (!authHeader?.startsWith("Bearer ")) {
-    return c.json({ error: "Login required to submit reports" }, 401)
+    return c.json({ error: "Harus masuk untuk mengirim laporan" }, 401)
   }
 
   const token = authHeader.slice(7)
   const payload = await verifyToken(token)
 
   if (!payload) {
-    return c.json({ error: "Invalid token" }, 401)
+    return c.json({ error: "Token tidak valid" }, 401)
   }
 
   if (payload.type === "admin") {
-    return c.json({ error: "Admins cannot submit reports" }, 403)
+    return c.json({ error: "Admin tidak dapat mengirim laporan" }, 403)
   }
 
   if (await isUserSessionRevoked(token)) {
-    return c.json({ error: "Session revoked" }, 401)
+    return c.json({ error: "Sesi telah dicabut" }, 401)
   }
 
   c.set("user", {

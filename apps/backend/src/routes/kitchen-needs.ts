@@ -28,7 +28,7 @@ kitchenNeeds.get("/:id", async (c) => {
     columns: { id: true, title: true, description: true, imageUrl: true },
   })
 
-  if (!item) return c.json({ error: "Content not found" }, 404)
+  if (!item) return c.json({ error: "Konten tidak ditemukan" }, 404)
 
   return c.json({ data: item })
 })
@@ -52,7 +52,7 @@ kitchenNeeds.post("/requests", authMiddleware, zValidator("json", submitRequestS
     where: eq(schema.kitchenNeeds.id, data.kitchenNeedId),
   })
 
-  if (!kitchenNeed) return c.json({ error: "Kitchen need content not found" }, 404)
+  if (!kitchenNeed) return c.json({ error: "Konten kebutuhan dapur tidak ditemukan" }, 404)
 
   const [request] = await db.insert(schema.kitchenNeedsRequests).values({
     publicId: user.id,
@@ -66,7 +66,7 @@ kitchenNeeds.post("/requests", authMiddleware, zValidator("json", submitRequestS
 
   return c.json({
     data: request,
-    message: "Request submitted successfully",
+    message: "Permintaan berhasil dikirim",
   }, 201)
 })
 
@@ -105,13 +105,13 @@ kitchenNeeds.post("/admin/upload", rateLimiter(10, 60 * 60 * 1000), adminMiddlew
   const formData = await c.req.formData()
   const file = formData.get("file") as File | null
 
-  if (!file) return c.json({ error: "File not found" }, 400)
+  if (!file) return c.json({ error: "File tidak ditemukan" }, 400)
 
   const validation = await validateFile(file)
   if (!validation.valid) return c.json({ error: validation.error }, 400)
 
   const { url } = await uploadFile(file, "kitchen-needs")
-  return c.json({ data: { imageUrl: url }, message: "Image uploaded successfully" })
+  return c.json({ data: { imageUrl: url }, message: "Gambar berhasil diunggah" })
 })
 
 // Admin: Create kitchen need
@@ -132,7 +132,7 @@ kitchenNeeds.post("/admin", adminMiddleware, zValidator("json", createKitchenNee
     sortOrder: data.sortOrder || 0,
   }).returning()
 
-  return c.json({ data: item, message: "Content created successfully" }, 201)
+  return c.json({ data: item, message: "Konten berhasil dibuat" }, 201)
 })
 
 // Admin: Update kitchen need
@@ -146,14 +146,14 @@ kitchenNeeds.patch("/admin/:id", adminMiddleware, zValidator("json", createKitch
     where: eq(schema.kitchenNeeds.id, id),
   })
 
-  if (!existing) return c.json({ error: "Content not found" }, 404)
+  if (!existing) return c.json({ error: "Konten tidak ditemukan" }, 404)
 
   const [updated] = await db.update(schema.kitchenNeeds)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(schema.kitchenNeeds.id, id))
     .returning()
 
-  return c.json({ data: updated, message: "Content updated successfully" })
+  return c.json({ data: updated, message: "Konten berhasil diperbarui" })
 })
 
 // Admin: Delete kitchen need
@@ -164,11 +164,11 @@ kitchenNeeds.delete("/admin/:id", adminMiddleware, async (c) => {
     where: eq(schema.kitchenNeeds.id, id),
   })
 
-  if (!existing) return c.json({ error: "Content not found" }, 404)
+  if (!existing) return c.json({ error: "Konten tidak ditemukan" }, 404)
 
   await db.delete(schema.kitchenNeeds).where(eq(schema.kitchenNeeds.id, id))
 
-  return c.json({ message: "Content deleted successfully" })
+  return c.json({ message: "Konten berhasil dihapus" })
 })
 
 // Admin: Get all requests
@@ -233,7 +233,7 @@ kitchenNeeds.patch("/admin/requests/:id", adminMiddleware, zValidator("json", up
     where: eq(schema.kitchenNeedsRequests.id, id),
   })
 
-  if (!existing) return c.json({ error: "Request not found" }, 404)
+  if (!existing) return c.json({ error: "Permintaan tidak ditemukan" }, 404)
 
   const updateData: Record<string, unknown> = { status, updatedAt: new Date() }
   if (adminNotes !== undefined) updateData.adminNotes = adminNotes
@@ -243,7 +243,7 @@ kitchenNeeds.patch("/admin/requests/:id", adminMiddleware, zValidator("json", up
     .where(eq(schema.kitchenNeedsRequests.id, id))
     .returning()
 
-  return c.json({ data: updated, message: "Request status updated successfully" })
+  return c.json({ data: updated, message: "Status permintaan berhasil diperbarui" })
 })
 
 export default kitchenNeeds

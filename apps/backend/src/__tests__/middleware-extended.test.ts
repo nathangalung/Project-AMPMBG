@@ -88,7 +88,7 @@ describe("Auth Middleware Extended", () => {
       )
       expect(res.status).toBe(403)
       const json = await res.json()
-      expect(json.error).toContain("Complete registration")
+      expect(json.error).toContain("Selesaikan pendaftaran")
     })
   })
 

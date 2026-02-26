@@ -158,7 +158,7 @@ describe("Auth Integration - Signup With Existing Google Account", () => {
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json.token).toBeDefined()
-    expect(json.message).toContain("Password added")
+    expect(json.message).toContain("berhasil ditambahkan")
   })
 })
 
@@ -224,7 +224,7 @@ describe("Auth Integration - Password Reset Flow", () => {
     })
     expect(res.status).toBe(200)
     const json = await res.json()
-    expect(json.message).toContain("successful")
+    expect(json.message).toContain("berhasil")
   })
 
   test("rejects used reset token", async () => {

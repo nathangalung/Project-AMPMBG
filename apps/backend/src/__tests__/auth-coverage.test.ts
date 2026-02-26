@@ -85,7 +85,7 @@ describe("Auth Coverage - Verify Reset Token", () => {
     const res = await testRequest(app, "GET", "/api/auth/verify-reset-token/invalid-token-xxx")
     expect(res.status).toBe(400)
     const json = await res.json()
-    expect(json.error).toContain("Invalid")
+    expect(json.error).toContain("tidak valid")
   })
 
   test("rejects expired token", async () => {
@@ -166,7 +166,7 @@ describe("Auth Coverage - Create Password", () => {
     })
     expect(res.status).toBe(200)
     const json = await res.json()
-    expect(json.message).toContain("created")
+    expect(json.message).toContain("berhasil dibuat")
   })
 
   test("rejects create password when already has one", async () => {

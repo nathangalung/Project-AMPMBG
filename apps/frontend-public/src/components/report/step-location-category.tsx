@@ -196,31 +196,6 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
           />
         </div>
 
-        <div>
-          <label className={labelClass}>Cari di Peta</label>
-          <p className="text-xs text-general-50 mb-2">Cari lokasi di peta untuk mengisi provinsi, kota, dan kecamatan secara otomatis.</p>
-          <Suspense fallback={<div className="h-[400px] bg-general-20 rounded-xl flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-100" /></div>}>
-              <LocationMapPreview
-                  provinceName={locationNames.province}
-                  cityName={locationNames.city}
-                  districtName={locationNames.district}
-                  specificLocation={formData.location}
-                  onCoordinatesChange={(lat, lng) => updateFormData({ latitude: lat, longitude: lng })}
-                  onAddressResolved={async (addr: ResolvedAddress) => {
-                    const result = await locationsService.lookupByName(
-                      addr.state, addr.city || addr.county, addr.suburb || addr.village
-                    )
-                    const d = result.data
-                    const updates: Partial<ReportFormData> = {}
-                    if (d.provinceId) updates.province = d.provinceId
-                    if (d.cityId) updates.city = d.cityId
-                    if (d.districtId) updates.district = d.districtId
-                    if (Object.keys(updates).length > 0) updateFormData(updates)
-                  }}
-              />
-          </Suspense>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="relative z-30">
                 <label className={labelClass}>Provinsi <span className="text-red-100">*</span></label>
@@ -254,6 +229,31 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
                     placeholder="Pilih Kecamatan"
                 />
             </div>
+        </div>
+
+        <div>
+          <label className={labelClass}>Cari di Peta</label>
+          <p className="text-xs text-general-50 mb-2">Cari lokasi di peta untuk mengisi provinsi, kota, dan kecamatan secara otomatis.</p>
+          <Suspense fallback={<div className="h-[400px] bg-general-20 rounded-xl flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-100" /></div>}>
+              <LocationMapPreview
+                  provinceName={locationNames.province}
+                  cityName={locationNames.city}
+                  districtName={locationNames.district}
+                  specificLocation={formData.location}
+                  onCoordinatesChange={(lat, lng) => updateFormData({ latitude: lat, longitude: lng })}
+                  onAddressResolved={async (addr: ResolvedAddress) => {
+                    const result = await locationsService.lookupByName(
+                      addr.state, addr.city || addr.county, addr.suburb || addr.village
+                    )
+                    const d = result.data
+                    const updates: Partial<ReportFormData> = {}
+                    if (d.provinceId) updates.province = d.provinceId
+                    if (d.cityId) updates.city = d.cityId
+                    if (d.districtId) updates.district = d.districtId
+                    if (Object.keys(updates).length > 0) updateFormData(updates)
+                  }}
+              />
+          </Suspense>
         </div>
       </div>
     </div>

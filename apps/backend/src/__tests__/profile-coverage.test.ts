@@ -59,7 +59,7 @@ describe("Profile Coverage - Set Password", () => {
     })
     expect(res.status).toBe(200)
     const json = await res.json()
-    expect(json.message).toContain("set successfully")
+    expect(json.message).toContain("berhasil dibuat")
   })
 
   test("rejects set password when already has one", async () => {
@@ -69,7 +69,7 @@ describe("Profile Coverage - Set Password", () => {
     })
     expect(res.status).toBe(400)
     const json = await res.json()
-    expect(json.error).toContain("already set")
+    expect(json.error).toContain("sudah diatur")
   })
 
   test("rejects mismatched passwords", async () => {
@@ -258,7 +258,7 @@ describe("Profile Coverage - Phone/Email Uniqueness", () => {
     })
     expect(res.status).toBe(400)
     const json = await res.json()
-    expect(json.error).toContain("Phone")
+    expect(json.error).toContain("Nomor telepon")
   })
 
   test("rejects email already in use", async () => {

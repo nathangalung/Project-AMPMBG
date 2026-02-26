@@ -72,7 +72,7 @@ admin.get("/users/:id", async (c) => {
     },
   })
 
-  if (!user) return c.json({ error: "User not found" }, 404)
+  if (!user) return c.json({ error: "Pengguna tidak ditemukan" }, 404)
 
   return c.json({
     data: {
@@ -88,11 +88,11 @@ admin.delete("/users/:id", async (c) => {
   const id = c.req.param("id")
 
   const user = await db.query.publics.findFirst({ where: eq(schema.publics.id, id) })
-  if (!user) return c.json({ error: "User not found" }, 404)
+  if (!user) return c.json({ error: "Pengguna tidak ditemukan" }, 404)
 
   await db.delete(schema.publics).where(eq(schema.publics.id, id))
 
-  return c.json({ message: "User deleted successfully" })
+  return c.json({ message: "Pengguna berhasil dihapus" })
 })
 
 // Dashboard
@@ -150,7 +150,7 @@ admin.get("/reports/:id/history", async (c) => {
   const id = c.req.param("id")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Report not found" }, 404)
+  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
 
   const history = await db.query.reportStatusHistory.findMany({
     where: eq(schema.reportStatusHistory.reportId, id),
@@ -320,7 +320,7 @@ admin.get("/reports/:id", async (c) => {
     },
   })
 
-  if (!report) return c.json({ error: "Report not found" }, 404)
+  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
 
   return c.json({
     data: {
@@ -363,7 +363,7 @@ admin.patch("/reports/:id/status", zValidator("json", updateReportStatusSchema),
   const currentAdmin = c.get("admin")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Report not found" }, 404)
+  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
 
   const previousStatus = report.status
 
@@ -402,7 +402,7 @@ admin.patch("/reports/:id/status", zValidator("json", updateReportStatusSchema),
     notes: notes || null,
   }).catch(() => {})
 
-  return c.json({ data: updated, message: "Report status updated successfully" })
+  return c.json({ data: updated, message: "Status laporan berhasil diperbarui" })
 })
 
 // Bulk update report status
@@ -421,7 +421,7 @@ admin.patch("/reports/bulk-status", zValidator("json", bulkUpdateSchema), async 
   })
 
   if (reports.length === 0) {
-    return c.json({ error: "No reports found" }, 404)
+    return c.json({ error: "Laporan tidak ditemukan" }, 404)
   }
 
   const updateData: Record<string, unknown> = { status, updatedAt: new Date() }
@@ -481,11 +481,11 @@ admin.delete("/reports/:id", async (c) => {
   const id = c.req.param("id")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Report not found" }, 404)
+  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
 
   await db.delete(schema.reports).where(eq(schema.reports.id, id))
 
-  return c.json({ message: "Report deleted successfully" })
+  return c.json({ message: "Laporan berhasil dihapus" })
 })
 
 // Analytics
@@ -693,7 +693,7 @@ admin.post("/sessions/:userId/revoke-all", async (c) => {
   const userId = c.req.param("userId")
 
   const user = await db.query.publics.findFirst({ where: eq(schema.publics.id, userId) })
-  if (!user) return c.json({ error: "User not found" }, 404)
+  if (!user) return c.json({ error: "Pengguna tidak ditemukan" }, 404)
 
   await db.update(schema.sessions)
     .set({ isRevoked: true })
@@ -784,7 +784,7 @@ admin.post("/mbg-schedules", zValidator("json", createMbgScheduleSchema), async 
     districtId: data.districtId || null,
   }).returning()
 
-  return c.json({ data: schedule, message: "MBG schedule created successfully" }, 201)
+  return c.json({ data: schedule, message: "Jadwal MBG berhasil dibuat" }, 201)
 })
 
 admin.patch("/mbg-schedules/:id", zValidator("json", createMbgScheduleSchema.partial().extend({
@@ -797,14 +797,14 @@ admin.patch("/mbg-schedules/:id", zValidator("json", createMbgScheduleSchema.par
     where: eq(schema.mbgSchedules.id, id),
   })
 
-  if (!schedule) return c.json({ error: "Schedule not found" }, 404)
+  if (!schedule) return c.json({ error: "Jadwal tidak ditemukan" }, 404)
 
   const [updated] = await db.update(schema.mbgSchedules)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(schema.mbgSchedules.id, id))
     .returning()
 
-  return c.json({ data: updated, message: "MBG schedule updated successfully" })
+  return c.json({ data: updated, message: "Jadwal MBG berhasil diperbarui" })
 })
 
 admin.delete("/mbg-schedules/:id", async (c) => {
@@ -814,11 +814,11 @@ admin.delete("/mbg-schedules/:id", async (c) => {
     where: eq(schema.mbgSchedules.id, id),
   })
 
-  if (!schedule) return c.json({ error: "Schedule not found" }, 404)
+  if (!schedule) return c.json({ error: "Jadwal tidak ditemukan" }, 404)
 
   await db.delete(schema.mbgSchedules).where(eq(schema.mbgSchedules.id, id))
 
-  return c.json({ message: "MBG schedule deleted successfully" })
+  return c.json({ message: "Jadwal MBG berhasil dihapus" })
 })
 
 // Report scoring breakdown
@@ -829,7 +829,7 @@ admin.get("/reports/:id/scoring", async (c) => {
     where: eq(schema.reports.id, id),
   })
 
-  if (!report) return c.json({ error: "Report not found" }, 404)
+  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
 
   return c.json({
     data: {
@@ -893,7 +893,7 @@ admin.post("/admins", zValidator("json", createAdminSchema), async (c) => {
   const { name, email, password, adminRole } = c.req.valid("json")
 
   const existing = await db.query.admins.findFirst({ where: eq(schema.admins.email, email) })
-  if (existing) return c.json({ error: "Email already registered" }, 400)
+  if (existing) return c.json({ error: "Email sudah terdaftar" }, 400)
 
   const hashedPassword = await hashPassword(password)
 
@@ -905,7 +905,7 @@ admin.post("/admins", zValidator("json", createAdminSchema), async (c) => {
     isActive: true,
   }).returning({ id: schema.admins.id, name: schema.admins.name, email: schema.admins.email, adminRole: schema.admins.adminRole })
 
-  return c.json({ data: newAdmin, message: "Admin created successfully" }, 201)
+  return c.json({ data: newAdmin, message: "Admin berhasil dibuat" }, 201)
 })
 
 admin.patch("/admins/:id", zValidator("json", z.object({
@@ -918,11 +918,11 @@ admin.patch("/admins/:id", zValidator("json", z.object({
   const currentAdmin = c.get("admin")
 
   const adminUser = await db.query.admins.findFirst({ where: eq(schema.admins.id, id) })
-  if (!adminUser) return c.json({ error: "Admin not found" }, 404)
+  if (!adminUser) return c.json({ error: "Admin tidak ditemukan" }, 404)
 
   // Block self-deactivation
   if (data.isActive === false && currentAdmin.id === id) {
-    return c.json({ error: "Cannot deactivate your own account" }, 400)
+    return c.json({ error: "Tidak dapat menonaktifkan akun sendiri" }, 400)
   }
 
   const [updated] = await db.update(schema.admins)
@@ -930,20 +930,20 @@ admin.patch("/admins/:id", zValidator("json", z.object({
     .where(eq(schema.admins.id, id))
     .returning({ id: schema.admins.id, name: schema.admins.name, adminRole: schema.admins.adminRole, isActive: schema.admins.isActive })
 
-  return c.json({ data: updated, message: "Admin updated successfully" })
+  return c.json({ data: updated, message: "Admin berhasil diperbarui" })
 })
 
 admin.delete("/admins/:id", async (c) => {
   const id = c.req.param("id")
   const currentAdmin = c.get("admin")
 
-  if (currentAdmin.id === id) return c.json({ error: "Cannot delete your own account" }, 400)
+  if (currentAdmin.id === id) return c.json({ error: "Tidak dapat menghapus akun sendiri" }, 400)
 
   const adminUser = await db.query.admins.findFirst({ where: eq(schema.admins.id, id) })
-  if (!adminUser) return c.json({ error: "Admin not found" }, 404)
+  if (!adminUser) return c.json({ error: "Admin tidak ditemukan" }, 404)
 
   await db.delete(schema.admins).where(eq(schema.admins.id, id))
-  return c.json({ message: "Admin deleted successfully" })
+  return c.json({ message: "Admin berhasil dihapus" })
 })
 
 // Member management
@@ -1042,7 +1042,7 @@ admin.post("/members", zValidator("json", createMemberSchema), async (c) => {
     where: eq(schema.publics.email, data.email),
   })
   if (existingEmail) {
-    return c.json({ error: "Email already registered" }, 400)
+    return c.json({ error: "Email sudah terdaftar" }, 400)
   }
 
   // Check existing phone
@@ -1050,7 +1050,7 @@ admin.post("/members", zValidator("json", createMemberSchema), async (c) => {
     where: eq(schema.publics.phone, formattedPhone),
   })
   if (existingPhone) {
-    return c.json({ error: "Phone number already registered" }, 400)
+    return c.json({ error: "Nomor telepon sudah terdaftar" }, 400)
   }
 
   // Create user first
@@ -1077,7 +1077,7 @@ admin.post("/members", zValidator("json", createMemberSchema), async (c) => {
 
   return c.json({
     data: { ...member, userId: user.id },
-    message: "Member created successfully",
+    message: "Anggota berhasil dibuat",
   }, 201)
 })
 
@@ -1093,7 +1093,7 @@ admin.get("/members/:id", async (c) => {
     },
   })
 
-  if (!member) return c.json({ error: "Member not found" }, 404)
+  if (!member) return c.json({ error: "Anggota tidak ditemukan" }, 404)
 
   return c.json({
     data: {
@@ -1130,14 +1130,14 @@ admin.patch("/members/:id/verify", async (c) => {
   const currentAdmin = c.get("admin")
 
   const member = await db.query.members.findFirst({ where: eq(schema.members.id, id) })
-  if (!member) return c.json({ error: "Member not found" }, 404)
+  if (!member) return c.json({ error: "Anggota tidak ditemukan" }, 404)
 
   const now = new Date()
   await db.update(schema.members)
     .set({ isVerified: true, verifiedAt: now, verifiedBy: currentAdmin.id, updatedAt: now })
     .where(eq(schema.members.id, id))
 
-  return c.json({ message: "Member verified successfully" })
+  return c.json({ message: "Anggota berhasil diverifikasi" })
 })
 
 // Update member status
@@ -1151,7 +1151,7 @@ admin.patch("/members/:id/status", zValidator("json", updateMemberStatusSchema),
   const currentAdmin = c.get("admin")
 
   const member = await db.query.members.findFirst({ where: eq(schema.members.id, id) })
-  if (!member) return c.json({ error: "Member not found" }, 404)
+  if (!member) return c.json({ error: "Anggota tidak ditemukan" }, 404)
 
   const now = new Date()
 
@@ -1165,7 +1165,7 @@ admin.patch("/members/:id/status", zValidator("json", updateMemberStatusSchema),
     await db.update(schema.members).set(memberUpdate).where(eq(schema.members.id, id))
   }
 
-  return c.json({ message: "Member status updated successfully" })
+  return c.json({ message: "Status anggota berhasil diperbarui" })
 })
 
 // Delete member
@@ -1173,12 +1173,12 @@ admin.delete("/members/:id", async (c) => {
   const id = c.req.param("id")
 
   const member = await db.query.members.findFirst({ where: eq(schema.members.id, id) })
-  if (!member) return c.json({ error: "Member not found" }, 404)
+  if (!member) return c.json({ error: "Anggota tidak ditemukan" }, 404)
 
   // Delete member only
   await db.delete(schema.members).where(eq(schema.members.id, id))
 
-  return c.json({ message: "Member deleted successfully" })
+  return c.json({ message: "Anggota berhasil dihapus" })
 })
 
 export default admin

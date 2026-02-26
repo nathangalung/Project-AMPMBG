@@ -178,7 +178,7 @@ describe("Profile Flow - Account Deactivation", () => {
     const res = await testRequest(app, "DELETE", "/api/profile", { token: userToken })
     expect(res.status).toBe(200)
     const json = await res.json()
-    expect(json.message).toContain("deleted")
+    expect(json.message).toContain("berhasil dihapus")
     userId = "" // Prevent afterAll deletion
   })
 })

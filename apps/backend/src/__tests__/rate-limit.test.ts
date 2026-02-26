@@ -57,7 +57,7 @@ describe("Rate Limiter", () => {
     const res3 = await req()
     expect(res3.status).toBe(429)
     const json = await res3.json()
-    expect(json.error).toBe("Too many requests")
+    expect(json.error).toBe("Terlalu banyak permintaan")
     expect(res3.headers.get("Retry-After")).toBeDefined()
 
     process.env.NODE_ENV = origEnv

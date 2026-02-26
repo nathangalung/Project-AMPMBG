@@ -148,7 +148,7 @@ export const reportsService = {
     })
 
     const data = await response.json()
-    if (!response.ok) throw new Error(data.error || "Upload failed")
+    if (!response.ok) throw new Error(data.error || "Gagal mengunggah file")
     return data
   },
 }

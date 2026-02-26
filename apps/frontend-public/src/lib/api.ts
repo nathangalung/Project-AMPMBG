@@ -64,7 +64,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   const data = await response.json()
 
   if (!response.ok) {
-    throw new ApiError(response.status, data.error || "Request failed", data)
+    throw new ApiError(response.status, data.error || "Permintaan gagal", data)
   }
 
   return data

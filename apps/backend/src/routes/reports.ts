@@ -248,7 +248,7 @@ reports.get("/:id", async (c) => {
     with: { province: true, city: true, district: true, files: true },
   })
 
-  if (!report) return c.json({ error: "Report not found" }, 404)
+  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
 
   return c.json({
     data: {
@@ -372,7 +372,7 @@ userReports.post("/", reporterMiddleware, zValidator("json", createReportSchema)
 
   return c.json({
     data: report,
-    message: "Report submitted successfully",
+    message: "Laporan berhasil dikirim",
   }, 201)
 })
 
@@ -429,18 +429,18 @@ authUserReports.post("/:id/files", rateLimiter(10, 60 * 60 * 1000), authMiddlewa
     with: { files: true },
   })
 
-  if (!report) return c.json({ error: "Report not found" }, 404)
+  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
 
   // Owner-only upload
   if (report.publicId !== user.id) {
-    return c.json({ error: "Access denied" }, 403)
+    return c.json({ error: "Akses ditolak" }, 403)
   }
 
   const formData = await c.req.formData()
   const files = formData.getAll("files") as File[]
 
-  if (!files.length) return c.json({ error: "File upload required" }, 400)
-  if (files.length > 5) return c.json({ error: "Maximum 5 files" }, 400)
+  if (!files.length) return c.json({ error: "File harus diunggah" }, 400)
+  if (files.length > 5) return c.json({ error: "Maksimal 5 file" }, 400)
 
   const uploadedFiles = []
 
@@ -483,7 +483,7 @@ authUserReports.post("/:id/files", rateLimiter(10, 60 * 60 * 1000), authMiddlewa
       .where(eq(schema.reports.id, id))
   }
 
-  return c.json({ data: uploadedFiles, message: "Files uploaded successfully" }, 201)
+  return c.json({ data: uploadedFiles, message: "File berhasil diunggah" }, 201)
 })
 
 authUserReports.delete("/:id/files/:fileId", authMiddleware, async (c) => {
@@ -491,24 +491,24 @@ authUserReports.delete("/:id/files/:fileId", authMiddleware, async (c) => {
   const user = c.get("user")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Report not found" }, 404)
+  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
 
   // Owner-only delete
   if (report.publicId !== user.id) {
-    return c.json({ error: "Forbidden" }, 403)
+    return c.json({ error: "Akses ditolak" }, 403)
   }
 
   const file = await db.query.reportFiles.findFirst({
     where: and(eq(schema.reportFiles.id, fileId), eq(schema.reportFiles.reportId, id)),
   })
-  if (!file) return c.json({ error: "File not found" }, 404)
+  if (!file) return c.json({ error: "File tidak ditemukan" }, 404)
 
   const keyMatch = file.fileUrl.match(/reports\/[a-f0-9-]+\.[a-z]+$/i)
-  if (!keyMatch) return c.json({ error: "Invalid file reference" }, 400)
+  if (!keyMatch) return c.json({ error: "Referensi file tidak valid" }, 400)
   await deleteFile(keyMatch[0])
   await db.delete(schema.reportFiles).where(eq(schema.reportFiles.id, fileId))
 
-  return c.json({ message: "File deleted successfully" })
+  return c.json({ message: "File berhasil dihapus" })
 })
 
 reports.route("/", authUserReports)
@@ -528,7 +528,7 @@ adminReports.patch("/:id/status", adminMiddleware, zValidator("json", updateStat
   const admin = c.get("admin")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Report not found" }, 404)
+  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
 
   const previousStatus = report.status
 
@@ -566,18 +566,18 @@ adminReports.patch("/:id/status", adminMiddleware, zValidator("json", updateStat
     notes: notes || null,
   })
 
-  return c.json({ data: updated, message: "Report status updated successfully" })
+  return c.json({ data: updated, message: "Status laporan berhasil diperbarui" })
 })
 
 adminReports.delete("/:id", adminMiddleware, async (c) => {
   const id = c.req.param("id")
 
   const report = await db.query.reports.findFirst({ where: eq(schema.reports.id, id) })
-  if (!report) return c.json({ error: "Report not found" }, 404)
+  if (!report) return c.json({ error: "Laporan tidak ditemukan" }, 404)
 
   await db.delete(schema.reports).where(eq(schema.reports.id, id))
 
-  return c.json({ message: "Report deleted successfully" })
+  return c.json({ message: "Laporan berhasil dihapus" })
 })
 
 reports.route("/", adminReports)

@@ -49,7 +49,7 @@ export function rateLimiter(maxRequests: number, windowMs: number) {
     if (entry.count >= maxRequests) {
       const retryAfter = Math.ceil((entry.resetAt - now) / 1000)
       c.header("Retry-After", String(retryAfter))
-      return c.json({ error: "Too many requests" }, 429)
+      return c.json({ error: "Terlalu banyak permintaan" }, 429)
     }
 
     entry.count++
