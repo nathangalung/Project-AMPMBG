@@ -4,7 +4,7 @@ import { Footer } from "@/components/layout/footer"
 import { ProfileForm } from "@/components/profile/profile-form"
 import { ReportHistory } from "@/components/profile/report-history"
 import { KitchenNeedsHistory } from "@/components/profile/kitchen-needs-history"
-import { useState, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { AlertCircle, Users, ArrowRight, LogOut } from "lucide-react"
 import { authService } from "@/services/auth"
 import { useSEO } from "@/hooks/use-seo"
@@ -17,12 +17,9 @@ function ProfilPage() {
   useSEO({ title: "Profil", description: "Kelola profil akun AMP MBG", path: "/profil/", noindex: true })
   const navigate = useNavigate()
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
-  const [canApplyMember, setCanApplyMember] = useState(false)
-
-  useEffect(() => {
+  const canApplyMember = useMemo(() => {
     const user = authService.getCurrentUser()
-    // Show member banner
-    setCanApplyMember(!!user && !user.isMember)
+    return !!user && !user.isMember
   }, [])
 
   const confirmLogout = () => {

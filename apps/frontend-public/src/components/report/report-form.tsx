@@ -86,18 +86,20 @@ function ReportFormComponent() {
       setSubmitError(null)
       queryClient.invalidateQueries({ queryKey: ["profile", "reports"] })
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       let message = "Terjadi kesalahan saat mengirim laporan."
-      if (error?.issues && Array.isArray(error.issues) && error.issues.length > 0) {
-        message = error.issues[0].message
-      } else if (typeof error?.message === 'object' && error.message !== null) {
-         if (error.message.issues && Array.isArray(error.message.issues)) {
-            message = error.message.issues[0].message
+      const err = error as Error & { issues?: { message: string }[]; message: string | { issues?: { message: string }[] } }
+      if (err.issues && Array.isArray(err.issues) && err.issues.length > 0) {
+        message = err.issues[0].message
+      } else if (typeof err.message === 'object' && err.message !== null) {
+         const nested = err.message as { issues?: { message: string }[] }
+         if (nested.issues && Array.isArray(nested.issues)) {
+            message = nested.issues[0].message
          } else {
             message = "Terjadi kesalahan validasi data."
          }
-      } else if (typeof error?.message === 'string') {
-        message = error.message
+      } else if (typeof err.message === 'string') {
+        message = err.message
       }
       setSubmitError(message)
     },

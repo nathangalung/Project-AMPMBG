@@ -94,10 +94,11 @@ function KebutuhanDapurPage() {
   const goToPrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1))
   const goToPage = (page: number) => setCurrentPage(page)
 
-  // Reset page on search
-  useEffect(() => {
+  const [prevSearchTerm, setPrevSearchTerm] = useState(searchTerm)
+  if (searchTerm !== prevSearchTerm) {
+    setPrevSearchTerm(searchTerm)
     setCurrentPage(1)
-  }, [searchTerm])
+  }
 
 
   if (isChecking || isContentLoading) {

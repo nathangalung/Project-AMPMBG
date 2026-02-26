@@ -198,7 +198,7 @@ describe("Reports File Operations", () => {
       const [newFile] = await db.insert(reportFiles).values({
         reportId,
         fileName: "owner-delete.jpg",
-        fileUrl: "/uploads/reports/owner-delete.jpg",
+        fileUrl: "/uploads/reports/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg",
         fileType: "image/jpeg",
         fileSize: "1024",
       }).returning()

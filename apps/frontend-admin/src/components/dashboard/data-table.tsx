@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, memo } from "react"
+import { useState, useMemo, useCallback, memo } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { CATEGORY_LABELS } from "@/hooks/use-categories"
@@ -24,9 +24,11 @@ function DataTableComponent({ data }: DataTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
-  useEffect(() => {
+  const [prevDataLength, setPrevDataLength] = useState(data.length)
+  if (data.length !== prevDataLength) {
+    setPrevDataLength(data.length)
     setCurrentPage(1)
-  }, [data])
+  }
 
   const { totalPages, startIndex, endIndex, currentData } = useMemo(() => {
     const total = Math.ceil(data.length / itemsPerPage)

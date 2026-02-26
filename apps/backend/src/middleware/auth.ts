@@ -86,6 +86,10 @@ export const tempAuthMiddleware = createMiddleware<{ Variables: UserVariables }>
     return c.json({ error: "Invalid user token" }, 401)
   }
 
+  if (await isUserSessionRevoked(token)) {
+    return c.json({ error: "Session revoked" }, 401)
+  }
+
   c.set("user", {
     id: payload.sub,
     email: payload.email,

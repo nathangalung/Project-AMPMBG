@@ -183,10 +183,13 @@ function AkunAdminPage() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
   const currentAdmins = allAdmins.slice(indexOfFirstItem, indexOfLastItem)
 
-  // Reset page on filter
-  useEffect(() => {
+  const [prevSearch, setPrevSearch] = useState(searchTerm)
+  const [prevRole, setPrevRole] = useState(filterRole)
+  if (searchTerm !== prevSearch || filterRole !== prevRole) {
+    setPrevSearch(searchTerm)
+    setPrevRole(filterRole)
     setCurrentPage(1)
-  }, [searchTerm, filterRole])
+  }
 
   // Smart pagination logic
   const paginationItems = useMemo(() => {

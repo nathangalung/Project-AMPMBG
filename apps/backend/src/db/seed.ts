@@ -91,7 +91,7 @@ async function seed() {
         isActive: true,
       }).returning()
       if (adminData.email === "admin@ampmbg.id") mainAdminId = admin.id
-      console.log(`- Admin: ${adminData.email} / Admin@123!`)
+      console.log(`- Admin: ${adminData.email}`)
     } else {
       if (adminData.email === "admin@ampmbg.id") mainAdminId = existing.id
     }
@@ -124,7 +124,7 @@ async function seed() {
         password: hashedPassword,
       }).returning()
       userIds.push(user.id)
-      console.log(`- User: ${userData.email} / Test@123!`)
+      console.log(`- User: ${userData.email}`)
     } else {
       userIds.push(existing.id)
     }
@@ -397,7 +397,7 @@ async function seed() {
   // Seed kitchen needs
   console.log("Creating kitchen needs...")
   const [existingKitchenNeeds] = await db.select({ count: sql<number>`count(*)` }).from(schema.kitchenNeeds)
-  let kitchenNeedIds: string[] = []
+  let kitchenNeedIds: string[]
   if (Number(existingKitchenNeeds.count) === 0) {
     const kitchenNeedsData = [
       { title: "Ahli Gizi", description: "Memastikan menu dan porsi memenuhi standar gizi penerima manfaat sesuai kelompok sasaran. Ini juga mengurangi risiko keluhan, alergi, dan ketidaksesuaian menu saat bahan berubah.", imageUrl: null, sortOrder: 1 },

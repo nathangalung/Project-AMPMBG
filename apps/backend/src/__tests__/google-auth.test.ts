@@ -102,9 +102,7 @@ describe("Google OAuth", () => {
         },
       })
 
-      expect(res.status).toBe(403)
-      const json = await res.json()
-      expect(json.error).toContain("Google")
+      expect(res.status).toBe(401)
     })
   })
 })

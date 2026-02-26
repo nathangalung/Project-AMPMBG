@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, memo } from "react"
+import { useState, useMemo, useCallback, memo } from "react"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { CATEGORY_LABELS } from "@/hooks/use-categories"
 
@@ -52,13 +52,14 @@ function DataTableComponent({ data }: DataTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [data])
+  const safePage = useMemo(() => {
+    const maxPage = Math.max(1, Math.ceil(data.length / itemsPerPage))
+    return currentPage > maxPage ? 1 : currentPage
+  }, [currentPage, data.length])
 
   const { totalPages, startIndex, endIndex, currentData } = useMemo(() => {
     const total = Math.ceil(data.length / itemsPerPage)
-    const start = (currentPage - 1) * itemsPerPage
+    const start = (safePage - 1) * itemsPerPage
     const end = start + itemsPerPage
     return {
       totalPages: total,
@@ -66,7 +67,7 @@ function DataTableComponent({ data }: DataTableProps) {
       endIndex: end,
       currentData: data.slice(start, end),
     }
-  }, [data, currentPage])
+  }, [data, safePage])
 
   // Smart pagination logic
   const paginationItems = useMemo(() => {
@@ -75,12 +76,12 @@ function DataTableComponent({ data }: DataTableProps) {
     }
     const items: (number | string)[] = [1];
     if (totalPages > 1) items.push(2);
-    if (currentPage > 3) items.push("...");
-    if (currentPage > 2 && currentPage < totalPages) items.push(currentPage);
-    if (currentPage < totalPages - 1) items.push("...");
+    if (safePage > 3) items.push("...");
+    if (safePage > 2 && safePage < totalPages) items.push(safePage);
+    if (safePage < totalPages - 1) items.push("...");
     if (totalPages > 2) items.push(totalPages);
     return items;
-  }, [currentPage, totalPages]);
+  }, [safePage, totalPages]);
 
   const getCategoryLabel = useCallback((key: string) => CATEGORY_LABELS[key] || key, [])
   const formatDate = useCallback((dateString: string) => new Date(dateString).toLocaleDateString("id-ID", DATE_OPTIONS), [])
@@ -165,7 +166,7 @@ function DataTableComponent({ data }: DataTableProps) {
           {/* First page button */}
           <button 
             onClick={handleFirstPage} 
-            disabled={currentPage === 1}
+            disabled={safePage === 1}
             className="hidden sm:flex p-2 rounded-lg border border-general-30 bg-white text-general-60 hover:bg-blue-20 hover:text-blue-100 hover:border-blue-30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <ChevronsLeft className="w-4 h-4" />
@@ -174,7 +175,7 @@ function DataTableComponent({ data }: DataTableProps) {
           {/* Previous page button */}
           <button 
             onClick={handlePrevPage} 
-            disabled={currentPage === 1}
+            disabled={safePage === 1}
             className="p-2 rounded-lg border border-general-30 bg-white text-general-60 hover:bg-blue-20 hover:text-blue-100 hover:border-blue-30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -198,7 +199,7 @@ function DataTableComponent({ data }: DataTableProps) {
                   onClick={() => handlePageClick(pageNum)}
                   className={`
                     w-8 h-8 rounded-lg text-xs sm:text-sm font-bold border transition-all flex items-center justify-center
-                    ${currentPage === pageNum 
+                    ${safePage === pageNum 
                       ? 'bg-blue-100 border-blue-100 text-white shadow-sm' 
                       : 'bg-white border-general-30 text-general-60 hover:border-blue-100 hover:text-blue-100'
                     }
@@ -213,7 +214,7 @@ function DataTableComponent({ data }: DataTableProps) {
           {/* Next page button */}
           <button 
             onClick={handleNextPage} 
-            disabled={currentPage === totalPages}
+            disabled={safePage === totalPages}
             className="p-2 rounded-lg border border-general-30 bg-white text-general-60 hover:bg-blue-20 hover:text-blue-100 hover:border-blue-30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <ChevronRight className="w-4 h-4" />
@@ -222,7 +223,7 @@ function DataTableComponent({ data }: DataTableProps) {
           {/* Last page button */}
           <button 
             onClick={handleLastPage} 
-            disabled={currentPage === totalPages}
+            disabled={safePage === totalPages}
             className="hidden sm:flex p-2 rounded-lg border border-general-30 bg-white text-general-60 hover:bg-blue-20 hover:text-blue-100 hover:border-blue-30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <ChevronsRight className="w-4 h-4" />

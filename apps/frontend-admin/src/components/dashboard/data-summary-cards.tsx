@@ -69,8 +69,7 @@ function DataSummaryCardsComponent() {
     return { row1Data: row1, row2Data: row2 }
   }, [stats])
 
-  // Reusable card renderer
-  const renderCard = (item: any, index: number) => (
+  const renderCard = (item: { icon: React.ElementType; value: string; label: string; desc?: string; color: string }, index: number) => (
     <div 
       key={index} 
       className="bg-general-20 rounded-lg p-5 shadow-sm border border-general-30 hover:border-blue-30 transition-colors h-full flex items-center"

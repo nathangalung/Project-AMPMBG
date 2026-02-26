@@ -176,7 +176,7 @@ function scoreNarrative(description: string): number {
   const text = description.toLowerCase()
 
   const factualIndicators = [
-    /\d{1,2}[:\-\/]\d{1,2}/, // Time pattern
+    /\d{1,2}[:\-/]\d{1,2}/, // Time pattern
     /tanggal|hari|jam|pukul/, // Date/time words
     /nama|lokasi|tempat|sekolah/, // Specific place references
     /siswa|murid|anak|guru|kepala/, // Person references

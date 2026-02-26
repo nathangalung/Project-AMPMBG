@@ -116,7 +116,7 @@ function DataSummaryCardsComponent() {
     return { row1Data: row1, row2Data: row2 }
   }, [stats])
 
-  const renderCard = (item: any, index: number) => (
+  const renderCard = (item: { icon: React.ElementType; value: string | number; label: string; desc?: string; iconBg: string; iconColor: string; borderColor: string }, index: number) => (
     <div
       key={index}
       className={`group relative overflow-hidden rounded-2xl bg-white p-5 transition-all duration-300 border border-general-30 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] ${item.borderColor}`}

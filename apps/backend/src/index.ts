@@ -35,6 +35,16 @@ app.use(
   })
 )
 
+// Body size limit (1MB for JSON)
+app.use("*", async (c, next) => {
+  const contentLength = parseInt(c.req.header("content-length") || "0")
+  const contentType = c.req.header("content-type") || ""
+  if (!contentType.includes("multipart/form-data") && contentLength > 1 * 1024 * 1024) {
+    return c.json({ error: "Request too large" }, 413)
+  }
+  await next()
+})
+
 // Security headers
 app.use("*", async (c, next) => {
   await next()
@@ -43,6 +53,7 @@ app.use("*", async (c, next) => {
   c.header("Referrer-Policy", "strict-origin-when-cross-origin")
   c.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
   c.header("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+  c.header("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
 })
 
 // Serve local uploads in development

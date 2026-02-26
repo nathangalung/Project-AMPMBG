@@ -283,13 +283,13 @@ function LaporanDetail() {
     queryFn: () => adminService.getReport(id),
   })
 
-  useEffect(() => {
-    if (reportData?.data) {
-      setNewStatus(reportData.data.status as ReportStatus)
-      setNewRisk(reportData.data.credibilityLevel || "")
-      setNotes(reportData.data.adminNotes || "")
-    }
-  }, [reportData])
+  const [prevReportId, setPrevReportId] = useState<string | null>(null)
+  if (reportData?.data && reportData.data.id !== prevReportId) {
+    setPrevReportId(reportData.data.id)
+    setNewStatus(reportData.data.status as ReportStatus)
+    setNewRisk(reportData.data.credibilityLevel || "")
+    setNotes(reportData.data.adminNotes || "")
+  }
 
   const { data: scoringData } = useQuery({
     queryKey: ["admin", "report", id, "scoring"],
@@ -355,10 +355,10 @@ function LaporanDetail() {
     )
   }
 
-  // Combine related party names
+  const reportRecord = report as unknown as Record<string, unknown>
   const relatedParties = [
-    (report as any).schoolName || report.location, 
-    (report as any).kitchenName                   
+    (reportRecord.schoolName as string) || report.location,
+    reportRecord.kitchenName as string
   ].filter(Boolean).join(", ") || "-"
 
   return (
@@ -501,7 +501,7 @@ function LaporanDetail() {
                             <label className="block text-xs font-semibold text-general-60 mb-3">Bukti Lampiran</label>
                             {report.files && report.files.length > 0 ? (
                               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                {report.files.map((file: any) => (
+                                {report.files.map((file) => (
                                   <div
                                     key={file.id}
                                     className="group relative aspect-square bg-general-30 rounded-xl overflow-hidden border border-general-30 cursor-pointer shadow-sm hover:shadow-md transition-all"
@@ -630,7 +630,7 @@ function LaporanDetail() {
                         Log Aktivitas
                     </h4>
                     <div className="relative pl-2 border-l-2 border-general-30 space-y-6 my-2">
-                        {history.map((h: any) => (
+                        {history.map((h) => (
                         <div key={h.id} className="relative pl-4">
                             <div className="absolute -left-[13px] top-1.5 w-2.5 h-2.5 rounded-full bg-general-40 border-2 border-general-20" />
                             <p className="text-xs text-general-50 mb-0.5">{formatDateTime(h.createdAt)}</p>

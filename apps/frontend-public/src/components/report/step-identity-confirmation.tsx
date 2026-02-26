@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react"
+import { memo, useCallback, useMemo } from "react"
 import { CheckSquare, Square, UserCircle2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import type { ReportFormData } from "./report-form"
@@ -20,7 +20,7 @@ function StepIdentityConfirmationComponent({ formData, updateFormData }: StepIde
   })
 
   const relations = relationsData || []
-  const categories = categoriesData || []
+  const categories = useMemo(() => categoriesData || [], [categoriesData])
   const getCategoryLabel = useCallback((val: string) => categories.find((cat) => cat.value === val)?.label || val, [categories])
 
   const commonInputClass = "w-full px-4 py-3 bg-white border rounded-xl text-general-100 focus:outline-none focus:ring-2 focus:ring-blue-100/50 focus:border-blue-100 transition-all duration-200"

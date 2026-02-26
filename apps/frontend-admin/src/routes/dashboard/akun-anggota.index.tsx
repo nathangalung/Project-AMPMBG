@@ -222,10 +222,15 @@ function AkunAnggotaPage() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
   const currentMembers = allMembers.slice(indexOfFirstItem, indexOfLastItem)
 
-  // Reset page on filter
-  useEffect(() => {
+  const [prevSearch, setPrevSearch] = useState(searchTerm)
+  const [prevRole, setPrevRole] = useState(filterRole)
+  const [prevStatus, setPrevStatus] = useState(filterStatus)
+  if (searchTerm !== prevSearch || filterRole !== prevRole || filterStatus !== prevStatus) {
+    setPrevSearch(searchTerm)
+    setPrevRole(filterRole)
+    setPrevStatus(filterStatus)
     setCurrentPage(1)
-  }, [searchTerm, filterRole, filterStatus])
+  }
 
   // Smart pagination logic
   const paginationItems = useMemo(() => {

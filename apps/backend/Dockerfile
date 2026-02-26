@@ -10,6 +10,7 @@ RUN bun install --frozen-lockfile --production
 FROM base AS release
 COPY --from=install --chown=bun:bun /app/node_modules ./node_modules
 COPY --chown=bun:bun src ./src
+COPY --chown=bun:bun drizzle ./drizzle
 COPY --chown=bun:bun package.json drizzle.config.ts ./
 
 USER bun

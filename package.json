@@ -20,8 +20,14 @@
     "clean": "rm -rf node_modules apps/*/node_modules apps/*/dist"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/bun": "^1.3.9",
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "eslint": "^10.0.2",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.3.0",
+    "typescript-eslint": "^8.56.1"
   },
   "peerDependencies": {
     "typescript": "^5.9.3"

@@ -1,4 +1,4 @@
-import { memo, useMemo, useCallback, useState, useEffect } from "react"
+import { memo, useMemo, useCallback, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { 
   Loader2, FileText, AlertCircle, 
@@ -101,10 +101,12 @@ function ReportHistoryComponent() {
     return finalItems;
   }, [currentPage, totalPages]);
 
-  // Reset on data change
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [reports.length])
+  const safePage = useMemo(() => {
+    if (currentPage > totalPages && totalPages > 0) return 1
+    return currentPage
+  }, [currentPage, totalPages])
+
+  if (safePage !== currentPage) setCurrentPage(safePage)
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -117,7 +119,7 @@ function ReportHistoryComponent() {
 
   const getCategoryLabel = useCallback((value: string) => {
     if (!categoriesData) return value
-    const found = categoriesData.find((c: any) => c.value === value)
+    const found = categoriesData.find((c: { value: string; label: string }) => c.value === value)
     return found ? found.label : value
   }, [categoriesData])
 

@@ -5,7 +5,7 @@ import { createTestApp, testRequest } from "./setup"
 import { db } from "../db"
 import { publics, sessions, members, passwordResetTokens } from "../db/schema"
 import { eq, and, gt } from "drizzle-orm"
-import { randomBytes } from "crypto"
+import { randomBytes, createHash } from "crypto"
 import { signToken } from "../lib/jwt"
 import { hashPassword } from "../lib/password"
 
@@ -110,7 +110,7 @@ describe("Auth Integration - Google-Only User Login", () => {
     }
   })
 
-  test("returns 403 for Google-only user", async () => {
+  test("returns 401 for Google-only user", async () => {
     const user = await db.query.publics.findFirst({
       where: eq(publics.id, googleUserId),
     })
@@ -118,9 +118,7 @@ describe("Auth Integration - Google-Only User Login", () => {
     const res = await testRequest(app, "POST", "/api/auth/login", {
       body: { identifier: user.email, password: "AnyPass123" },
     })
-    expect(res.status).toBe(403)
-    const json = await res.json()
-    expect(json.error).toContain("Google")
+    expect(res.status).toBe(401)
   })
 })
 
@@ -195,15 +193,16 @@ describe("Auth Integration - Password Reset Flow", () => {
     expect(res.status).toBe(200)
   })
 
-  test("extracts reset token from DB", async () => {
-    const token = await db.query.passwordResetTokens.findFirst({
-      where: and(
-        eq(passwordResetTokens.publicId, userId),
-        gt(passwordResetTokens.expiresAt, new Date())
-      ),
+  test("inserts known reset token", async () => {
+    const rawToken = randomBytes(32).toString("hex")
+    const hashedToken = createHash("sha256").update(rawToken).digest("hex")
+    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.publicId, userId))
+    await db.insert(passwordResetTokens).values({
+      publicId: userId,
+      token: hashedToken,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
     })
-    expect(token).toBeDefined()
-    resetToken = token!.token
+    resetToken = rawToken
   })
 
   test("verifies valid reset token", async () => {
@@ -327,13 +326,11 @@ describe("Auth Integration - No-Password User Login", () => {
     }
   })
 
-  test("returns 403 for user with no password", async () => {
+  test("returns 401 for user with no password", async () => {
     const res = await testRequest(app, "POST", "/api/auth/login", {
       body: { identifier: noPasswordEmail, password: "AnyPass123" },
     })
-    expect(res.status).toBe(403)
-    const json = await res.json()
-    expect(json.error).toContain("no password")
+    expect(res.status).toBe(401)
   })
 })
 

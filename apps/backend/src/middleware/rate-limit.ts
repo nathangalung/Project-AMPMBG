@@ -15,10 +15,15 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000)
 
-// Extract client IP
-function getClientIp(header: string | undefined): string {
-  if (!header) return "unknown"
-  const first = header.split(",")[0].trim()
+// Extract client IP (prefer Cloudflare header)
+function getClientIp(c: { header: (name: string) => string | undefined }): string {
+  const cfIp = c.header("cf-connecting-ip")
+  if (cfIp) return cfIp
+  const realIp = c.header("x-real-ip")
+  if (realIp) return realIp
+  const forwarded = c.header("x-forwarded-for")
+  if (!forwarded) return "unknown"
+  const first = forwarded.split(",")[0].trim()
   return /^[\d.:a-fA-F]+$/.test(first) ? first : "unknown"
 }
 
@@ -29,7 +34,7 @@ export function rateLimiter(maxRequests: number, windowMs: number) {
       return
     }
 
-    const ip = getClientIp(c.req.header("x-forwarded-for"))
+    const ip = getClientIp(c.req)
     const path = c.req.path
     const key = `${ip}:${path}`
     const now = Date.now()

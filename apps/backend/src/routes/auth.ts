@@ -20,8 +20,7 @@ const auth = new Hono<{ Variables: UserVariables & AdminVariables }>()
 const generateToken = () => randomBytes(32).toString("hex")
 const SESSION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
 
-// Create user session
-async function createUserSession(c: any, publicId: string, token: string) {
+async function createUserSession(c: { req: { header: (name: string) => string | undefined } }, publicId: string, token: string) {
   try {
     await db.insert(schema.sessions).values({
       publicId,
@@ -35,8 +34,7 @@ async function createUserSession(c: any, publicId: string, token: string) {
   }
 }
 
-// Create admin session
-async function createAdminSession(c: any, adminId: string, token: string) {
+async function createAdminSession(c: { req: { header: (name: string) => string | undefined } }, adminId: string, token: string) {
   try {
     await db.insert(schema.adminSessions).values({
       adminId,
@@ -173,11 +171,17 @@ auth.post("/admin/login", rateLimiter(10, 15 * 60 * 1000), zValidator("json", ad
     where: eq(schema.admins.email, email.toLowerCase()),
   })
 
-  if (!admin) return c.json({ error: "Invalid email or password" }, 401)
+  if (!admin) {
+    console.warn(`[Auth] Failed admin login: ${email}`)
+    return c.json({ error: "Invalid email or password" }, 401)
+  }
   if (!admin.isActive) return c.json({ error: "Account has been deactivated" }, 403)
 
   const isValid = await verifyPassword(password, admin.password)
-  if (!isValid) return c.json({ error: "Invalid email or password" }, 401)
+  if (!isValid) {
+    console.warn(`[Auth] Failed admin login: ${email}`)
+    return c.json({ error: "Invalid email or password" }, 401)
+  }
 
   await db.update(schema.admins)
     .set({ lastLoginAt: new Date() })
@@ -297,10 +301,7 @@ auth.post("/login", rateLimiter(10, 15 * 60 * 1000), zValidator("json", userLogi
   if (!foundPublic) return c.json({ error: "Invalid credentials" }, 401)
 
   if (!foundPublic.password) {
-    if (foundPublic.googleId) {
-      return c.json({ error: "This account uses Google sign-in. Please login with Google or create a password." }, 403)
-    }
-    return c.json({ error: "This account has no password" }, 403)
+    return c.json({ error: "Invalid credentials" }, 401)
   }
 
   const isValid = await verifyPassword(password, foundPublic.password)

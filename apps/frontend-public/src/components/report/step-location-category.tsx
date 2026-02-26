@@ -37,10 +37,10 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
     queryKey: ["districts", formData.city], queryFn: async () => formData.city ? (await locationsService.getDistricts(formData.city)).data : [], enabled: !!formData.city, staleTime: 1800000,
   })
 
-  const categories = categoriesData || []
-  const provinces = provincesData || []
-  const availableCities = citiesData || []
-  const availableDistricts = districtsData || []
+  const categories = useMemo(() => categoriesData || [], [categoriesData])
+  const provinces = useMemo(() => provincesData || [], [provincesData])
+  const availableCities = useMemo(() => citiesData || [], [citiesData])
+  const availableDistricts = useMemo(() => districtsData || [], [districtsData])
 
   const MAX_TITLE_WORDS = 10
   const MIN_TITLE_CHARS = 10

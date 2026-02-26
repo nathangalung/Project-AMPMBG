@@ -101,13 +101,13 @@ function LaporanPage() {
       const result = await adminService.getReports({
         page: currentPage,
         limit: itemsPerPage,
-        category: activeFilters.category as any || undefined,
+        category: activeFilters.category || undefined,
         provinceId: activeFilters.provinceId || undefined,
         cityId: activeFilters.cityId || undefined,
         districtId: activeFilters.districtId || undefined,
         startDate: activeFilters.startDate || undefined,
         endDate: activeFilters.endDate || undefined,
-        status: (activeFilters.status as any) || undefined,
+        status: activeFilters.status || undefined,
         credibilityLevel: activeFilters.riskLevel || undefined
       })
       return result
@@ -117,7 +117,11 @@ function LaporanPage() {
   const reports = reportsData?.data || []
   const pagination = reportsData?.pagination
 
-  useEffect(() => { setCurrentPage(1) }, [activeFilters])
+  const [prevFilters, setPrevFilters] = useState(activeFilters)
+  if (prevFilters !== activeFilters) {
+    setPrevFilters(activeFilters)
+    setCurrentPage(1)
+  }
 
   const totalPages = pagination?.totalPages || 1
   const indexOfFirstItem = ((pagination?.page || 1) - 1) * itemsPerPage
@@ -198,7 +202,7 @@ function LaporanPage() {
               </thead>
               <tbody>
                 {reports.length > 0 ? (
-                  reports.map((item: any, idx) => {
+                  reports.map((item, idx) => {
                     const statusStyle = getStatusStyle(item.status)
                     const riskData = item.credibilityLevel || item.credibility_level;
                     const riskLabel = riskData ? (CREDIBILITY_LABELS[riskData] || riskData) : null;
@@ -467,9 +471,9 @@ const DataFiltersComponent = ({ onFilter }: { onFilter: (f: FilterValues) => voi
   const today = new Date().toISOString().split("T")[0]
   const minDate = "2024-01-01"
 
-  const getSafeArray = (data: any) => {
+  const getSafeArray = (data: unknown) => {
     if (Array.isArray(data)) return data
-    if (data && Array.isArray(data.data)) return data.data
+    if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as Record<string, unknown>).data)) return (data as Record<string, unknown>).data as unknown[]
     return []
   }
 

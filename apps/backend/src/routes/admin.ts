@@ -4,6 +4,7 @@ import { z } from "zod"
 import { eq, desc, sql, like, and, or, gte, lte, inArray } from "drizzle-orm"
 import { db, schema } from "../db"
 import { adminMiddleware } from "../middleware/auth"
+import { rateLimiter } from "../middleware/rate-limit"
 import { hashPassword } from "../lib/password"
 import type { AuthAdmin } from "../types"
 
@@ -262,7 +263,7 @@ admin.get("/reports", zValidator("query", adminReportsQuerySchema), async (c) =>
 })
 
 // Export reports
-admin.get("/reports/export", zValidator("query", z.object({
+admin.get("/reports/export", rateLimiter(5, 60 * 60 * 1000), zValidator("query", z.object({
   format: z.enum(["csv", "json"]).default("json"),
   status: z.enum(["pending", "analyzing", "needs_evidence", "invalid", "in_progress", "resolved"]).optional(),
   startDate: z.string().optional(),

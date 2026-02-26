@@ -236,9 +236,7 @@ describe("Auth Flow - Login Restrictions", () => {
     const res = await testRequest(app, "POST", "/api/auth/login", {
       body: { identifier: googleOnlyEmail, password: "Test1234" },
     })
-    expect(res.status).toBe(403)
-    const json = await res.json()
-    expect(json.error).toContain("Google")
+    expect(res.status).toBe(401)
   })
 })
 

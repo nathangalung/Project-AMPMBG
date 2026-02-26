@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, useEffect } from "react"
+import { useState, useCallback, useMemo, memo } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2, User, Save, Edit3 } from "lucide-react"
 import { profileService } from "@/services/profile"
@@ -33,24 +33,20 @@ function ProfileFormComponent() {
   const hasPassword = profileData?.user?.hasPassword
   const isGoogleLinked = profileData?.user?.isGoogleLinked
 
-  useEffect(() => {
-    if (profileData?.user) {
-      let cleanPhone = profileData.user.phone || "";
-      if (cleanPhone.startsWith("+62")) {
-        cleanPhone = cleanPhone.substring(3);
-      } else if (cleanPhone.startsWith("62")) {
-        cleanPhone = cleanPhone.substring(2);
-      } else if (cleanPhone.startsWith("0")) {
-        cleanPhone = cleanPhone.substring(1);
-      }
-
-      setFormData({
-        name: profileData.user.name || "",
-        email: profileData.user.email || "",
-        phone: cleanPhone,
-      })
-    }
+  const derivedFormData = useMemo(() => {
+    if (!profileData?.user) return null
+    let cleanPhone = profileData.user.phone || ""
+    if (cleanPhone.startsWith("+62")) cleanPhone = cleanPhone.substring(3)
+    else if (cleanPhone.startsWith("62")) cleanPhone = cleanPhone.substring(2)
+    else if (cleanPhone.startsWith("0")) cleanPhone = cleanPhone.substring(1)
+    return { name: profileData.user.name || "", email: profileData.user.email || "", phone: cleanPhone }
   }, [profileData])
+
+  const [prevDerived, setPrevDerived] = useState(derivedFormData)
+  if (derivedFormData && derivedFormData !== prevDerived) {
+    setPrevDerived(derivedFormData)
+    setFormData(derivedFormData)
+  }
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {

@@ -48,6 +48,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      DATABASE_URL: postgresql://ampmbg:testpass@localhost:5432/ampmbg_test
+      JWT_SECRET: ci-test-secret
+      NODE_ENV: test
+
     steps:
       - uses: actions/checkout@v4
 
@@ -57,12 +62,16 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
+      - name: Push database schema
+        working-directory: apps/backend
+        run: bunx drizzle-kit push --force
+
+      - name: Seed database
+        working-directory: apps/backend
+        run: bun run src/db/seed.ts
+
       - name: Run backend tests
         working-directory: apps/backend
-        env:
-          DATABASE_URL: postgresql://ampmbg:testpass@localhost:5432/ampmbg_test
-          JWT_SECRET: ci-test-secret
-          NODE_ENV: test
         run: bun test
 
   build-frontend:
@@ -81,4 +90,4 @@ jobs:
       - run: bun install --frozen-lockfile
 
       - name: Build ${{ matrix.app }}
-        run: bun --cwd apps/${{ matrix.app }} run build
+        run: bun run --cwd apps/${{ matrix.app }} build

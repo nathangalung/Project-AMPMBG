@@ -1,6 +1,6 @@
 import type React from "react"
 import { Link, useNavigate, useLocation } from "@tanstack/react-router"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   LayoutDashboard,
   FileText,
@@ -22,28 +22,33 @@ interface DashboardAnggotaLayoutProps {
 export function DashboardAnggotaLayout({ children }: DashboardAnggotaLayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [currentUser, setCurrentUser] = useState<{name: string, role: string} | null>(null)
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-
-  // Auth guard
-  useEffect(() => {
+  const [currentUser] = useState<{name: string, role: string} | null>(() => {
     const userStr = localStorage.getItem("admin_currentUser")
     if (userStr) {
       const admin = JSON.parse(userStr)
       if (admin.id && admin.email) {
-        setCurrentUser({ name: admin.name, role: admin.adminRole || "Admin" })
-      } else {
-        navigate({ to: "/" })
+        return { name: admin.name, role: admin.adminRole || "Admin" }
       }
-    } else {
-      navigate({ to: "/auth/login" })
     }
-  }, [navigate])
+    return null
+  })
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [prevPathname, setPrevPathname] = useState(location.pathname)
 
-  useEffect(() => {
+  if (!currentUser) {
+    const userStr = localStorage.getItem("admin_currentUser")
+    if (!userStr) {
+      navigate({ to: "/auth/login" })
+    } else {
+      navigate({ to: "/" })
+    }
+  }
+
+  if (location.pathname !== prevPathname) {
+    setPrevPathname(location.pathname)
     setIsMobileMenuOpen(false)
-  }, [location.pathname])
+  }
 
   const confirmLogout = () => {
     localStorage.removeItem("admin_currentUser")

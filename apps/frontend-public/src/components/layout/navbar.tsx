@@ -19,18 +19,19 @@ function NavbarComponent() {
   const navigate = useNavigate()
   
   // User state
-  const [currentUser, setCurrentUser] = useState<{ name: string } | null>(null)
+  const [currentUser, setCurrentUser] = useState<{ name: string } | null>(() => {
+    const userStr = localStorage.getItem("public_currentUser")
+    return userStr ? JSON.parse(userStr) : null
+  })
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
-  // Check login status
+  // Monitor login changes
   const checkUser = useCallback(() => {
     const userStr = localStorage.getItem("public_currentUser")
     setCurrentUser(userStr ? JSON.parse(userStr) : null)
   }, [])
 
-  // Monitor login changes
   useEffect(() => {
-    checkUser()
     window.addEventListener("user-login", checkUser)
     return () => window.removeEventListener("user-login", checkUser)
   }, [checkUser])

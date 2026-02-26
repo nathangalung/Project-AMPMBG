@@ -4,6 +4,7 @@ import { z } from "zod"
 import { eq, desc, and, like, sql, gte, lte, or } from "drizzle-orm"
 import { db, schema } from "../db"
 import { authMiddleware, adminMiddleware, reporterMiddleware } from "../middleware/auth"
+import { rateLimiter } from "../middleware/rate-limit"
 import { uploadFile, validateFile, deleteFile } from "../lib/storage"
 import { calculateReportScore, recalculateEvidenceScore, updateTotalScore } from "../lib/scoring"
 import type { AuthUser, AuthAdmin } from "../types"
@@ -420,7 +421,7 @@ authUserReports.get("/my/reports", authMiddleware, zValidator("query", z.object(
 })
 
 // Owner file upload
-authUserReports.post("/:id/files", authMiddleware, async (c) => {
+authUserReports.post("/:id/files", rateLimiter(10, 60 * 60 * 1000), authMiddleware, async (c) => {
   const id = c.req.param("id")
   const user = c.get("user")
   const report = await db.query.reports.findFirst({

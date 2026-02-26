@@ -4,12 +4,8 @@ import { z } from "zod"
 import { eq, desc, sql, and, asc } from "drizzle-orm"
 import { db, schema } from "../db"
 import { authMiddleware, adminMiddleware } from "../middleware/auth"
+import { rateLimiter } from "../middleware/rate-limit"
 import { uploadFile, validateFile } from "../lib/storage"
-import type { AuthUser, AuthAdmin } from "../types"
-
-type UserVariables = { user: AuthUser }
-type AdminVariables = { admin: AuthAdmin }
-
 const kitchenNeeds = new Hono()
 
 // Public: active needs
@@ -105,7 +101,7 @@ kitchenNeeds.get("/admin/all", adminMiddleware, async (c) => {
 })
 
 // Admin: Upload image
-kitchenNeeds.post("/admin/upload", adminMiddleware, async (c) => {
+kitchenNeeds.post("/admin/upload", rateLimiter(10, 60 * 60 * 1000), adminMiddleware, async (c) => {
   const formData = await c.req.formData()
   const file = formData.get("file") as File | null
 

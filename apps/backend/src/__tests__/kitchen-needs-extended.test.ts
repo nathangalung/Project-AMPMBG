@@ -11,6 +11,12 @@ import { hashPassword } from "../lib/password"
 
 const app = createTestApp(new Hono().route("/kitchen-needs", kitchenNeeds))
 
+// Valid file magic bytes
+const JPEG_HEADER = new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0])
+const PNG_HEADER = new Uint8Array([0x89, 0x50, 0x4E, 0x47])
+const GIF_HEADER = new Uint8Array([0x47, 0x49, 0x46, 0x38])
+const WEBP_HEADER = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50])
+
 describe("Kitchen Needs - Admin Upload", () => {
   let adminToken: string
 
@@ -58,7 +64,7 @@ describe("Kitchen Needs - Admin Upload", () => {
     test("accepts valid JPEG file", async () => {
       if (!adminToken) return
       const formData = new FormData()
-      formData.append("file", new File(["test content"], "test.jpg", { type: "image/jpeg" }))
+      formData.append("file", new File([JPEG_HEADER], "test.jpg", { type: "image/jpeg" }))
 
       const res = await testRequest(app, "POST", "/api/kitchen-needs/admin/upload", {
         token: adminToken,
@@ -72,7 +78,7 @@ describe("Kitchen Needs - Admin Upload", () => {
     test("accepts valid PNG file", async () => {
       if (!adminToken) return
       const formData = new FormData()
-      formData.append("file", new File(["test content"], "test.png", { type: "image/png" }))
+      formData.append("file", new File([PNG_HEADER], "test.png", { type: "image/png" }))
 
       const res = await testRequest(app, "POST", "/api/kitchen-needs/admin/upload", {
         token: adminToken,
@@ -84,7 +90,7 @@ describe("Kitchen Needs - Admin Upload", () => {
     test("accepts valid GIF file", async () => {
       if (!adminToken) return
       const formData = new FormData()
-      formData.append("file", new File(["test content"], "test.gif", { type: "image/gif" }))
+      formData.append("file", new File([GIF_HEADER], "test.gif", { type: "image/gif" }))
 
       const res = await testRequest(app, "POST", "/api/kitchen-needs/admin/upload", {
         token: adminToken,
@@ -96,7 +102,7 @@ describe("Kitchen Needs - Admin Upload", () => {
     test("accepts valid WebP file", async () => {
       if (!adminToken) return
       const formData = new FormData()
-      formData.append("file", new File(["test content"], "test.webp", { type: "image/webp" }))
+      formData.append("file", new File([WEBP_HEADER], "test.webp", { type: "image/webp" }))
 
       const res = await testRequest(app, "POST", "/api/kitchen-needs/admin/upload", {
         token: adminToken,

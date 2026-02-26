@@ -1,4 +1,4 @@
-import { memo, useCallback, useState, useMemo, useEffect } from "react"
+import { memo, useCallback, useState, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { 
   Loader2, Utensils, 
@@ -89,10 +89,12 @@ function KitchenNeedsHistoryComponent() {
     return finalItems;
   }, [currentPage, totalPages]);
 
-  // Reset on data change
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [requests.length])
+  const safePage = useMemo(() => {
+    if (currentPage > totalPages && totalPages > 0) return 1
+    return currentPage
+  }, [currentPage, totalPages])
+
+  if (safePage !== currentPage) setCurrentPage(safePage)
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {

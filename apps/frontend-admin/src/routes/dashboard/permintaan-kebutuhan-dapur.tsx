@@ -44,7 +44,7 @@ const getStatusStyle = (status: string) => {
     gray: "bg-general-30 text-general-70 border-general-40",
   }
 
-  let variant = "gray"
+  let variant: string
   switch (status) {
     case "pending": variant = "orange"; break;
     case "processed": variant = "blue"; break;
@@ -176,10 +176,13 @@ function PermintaanKebutuhanDapurPage() {
     return allRequests.slice(start, start + itemsPerPage)
   }, [currentPage, allRequests])
 
-  // Reset page on filter
-  useEffect(() => {
+  const [prevSearch, setPrevSearch] = useState(searchTerm)
+  const [prevFilterStatus, setPrevFilterStatus] = useState(filterStatus)
+  if (searchTerm !== prevSearch || filterStatus !== prevFilterStatus) {
+    setPrevSearch(searchTerm)
+    setPrevFilterStatus(filterStatus)
     setCurrentPage(1)
-  }, [searchTerm, filterStatus])
+  }
 
   // Smart pagination logic
   const paginationItems = useMemo(() => {

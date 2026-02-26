@@ -20,8 +20,17 @@ const bucket = process.env.S3_BUCKET || "amp-mbg"
 const publicUrl = process.env.S3_PUBLIC_URL || ""
 const localUploadDir = process.env.LOCAL_UPLOAD_DIR || "./uploads"
 
+// Derive extension from MIME type
+const MIME_TO_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/gif": "gif",
+  "image/webp": "webp",
+  "application/pdf": "pdf",
+}
+
 export async function uploadFile(file: File, folder: string = "reports"): Promise<{ url: string; key: string }> {
-  const ext = file.name.split(".").pop() || "bin"
+  const ext = MIME_TO_EXT[file.type] || "bin"
   const key = `${folder}/${randomUUID()}.${ext}`
   const buffer = await file.arrayBuffer()
 
@@ -40,6 +49,7 @@ export async function uploadFile(file: File, folder: string = "reports"): Promis
       Key: key,
       Body: Buffer.from(buffer),
       ContentType: file.type,
+      ContentDisposition: "attachment",
     })
   )
 

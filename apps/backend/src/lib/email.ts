@@ -48,6 +48,11 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   }
 }
 
+// Escape HTML special chars
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+}
+
 // Password reset email template
 export function getPasswordResetEmailHtml(name: string, resetUrl: string): string {
   return `
@@ -93,7 +98,7 @@ export function getPasswordResetEmailHtml(name: string, resetUrl: string): strin
           <!-- Body -->
           <tr>
             <td class="email-body" style="padding: 40px; background-color: #ffffff;">
-              <p class="text-dark" style="margin: 0 0 20px; color: #374151; font-size: 16px;">Halo <strong>${name}</strong>,</p>
+              <p class="text-dark" style="margin: 0 0 20px; color: #374151; font-size: 16px;">Halo <strong>${escapeHtml(name)}</strong>,</p>
               <p class="text-mid" style="margin: 0 0 20px; color: #6b7280; font-size: 14px; line-height: 1.6;">
                 Kami menerima permintaan untuk mengatur ulang kata sandi akun AMP MBG Anda.
                 Klik tombol di bawah ini untuk membuat kata sandi baru:
