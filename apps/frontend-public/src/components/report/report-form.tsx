@@ -28,6 +28,7 @@ export interface ReportFormData {
   location: string
   latitude?: number
   longitude?: number
+  addressDetail: string
   description: string
   files: File[]
   relation: string
@@ -45,6 +46,7 @@ const INITIAL_FORM_DATA: ReportFormData = {
   city: "",
   district: "",
   location: "",
+  addressDetail: "",
   description: "",
   files: [],
   relation: "",
@@ -68,7 +70,10 @@ function ReportFormComponent() {
         location: formData.location,
         provinceId: formData.province,
         cityId: formData.city,
-        districtId: formData.district || undefined,
+        districtId: formData.district,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        addressDetail: formData.addressDetail || undefined,
         incidentDate,
         relation: formData.relation as ReporterRelation,
         relationDetail: formData.relationDetail || undefined,
@@ -114,6 +119,7 @@ function ReportFormComponent() {
         formData.time &&
         formData.province &&
         formData.city &&
+        formData.district &&
         formData.location
       )
     }

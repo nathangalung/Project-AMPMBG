@@ -51,7 +51,10 @@ export interface CreateReportRequest {
   location: string
   provinceId: string
   cityId: string
-  districtId?: string
+  districtId: string
+  latitude?: number
+  longitude?: number
+  addressDetail?: string
   incidentDate: string
   relation: ReporterRelation
   relationDetail?: string

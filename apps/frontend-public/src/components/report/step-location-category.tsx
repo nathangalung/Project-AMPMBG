@@ -89,12 +89,6 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
   const commonInputClass ="w-full h-[50px] px-4 py-3 bg-white border rounded-xl text-general-100 placeholder:text-general-40 focus:outline-none focus:ring-2 focus:ring-blue-100/50 focus:border-blue-100 transition-all duration-200 disabled:bg-general-20 disabled:cursor-not-allowed"
   const labelClass = "block text-sm font-bold text-general-80 mb-2"
 
-  const locationNames = useMemo(() => ({
-    province: provinces.find((p) => p.id === formData.province)?.name || "",
-    city: availableCities.find((c) => c.id === formData.city)?.name || "",
-    district: availableDistricts.find((d) => d.id === formData.district)?.name || "",
-  }), [provinces, availableCities, availableDistricts, formData.province, formData.city, formData.district])
-
   return (
     <div className="space-y-6">
       {/* Title */}
@@ -219,7 +213,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
                 />
             </div>
             <div className="relative md:col-span-2 z-10">
-                <label className={labelClass}>Kecamatan <span className="text-general-50 text-xs font-normal">(Opsional)</span></label>
+                <label className={labelClass}>Kecamatan <span className="text-red-100">*</span></label>
                 <CustomSelect
                     value={formData.district}
                     onChange={(val) => updateFormData({ district: val, latitude: undefined, longitude: undefined })}
@@ -236,11 +230,7 @@ function StepLocationCategoryComponent({ formData, updateFormData }: StepLocatio
           <p className="text-xs text-general-50 mb-2">Cari lokasi di peta untuk mengisi provinsi, kota, dan kecamatan secara otomatis.</p>
           <Suspense fallback={<div className="h-[400px] bg-general-20 rounded-xl flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-100" /></div>}>
               <LocationMapPreview
-                  provinceName={locationNames.province}
-                  cityName={locationNames.city}
-                  districtName={locationNames.district}
-                  specificLocation={formData.location}
-                  onCoordinatesChange={(lat, lng) => updateFormData({ latitude: lat, longitude: lng })}
+                  onCoordinatesChange={(lat, lng, address) => updateFormData({ latitude: lat, longitude: lng, addressDetail: address || "" })}
                   onAddressResolved={async (addr: ResolvedAddress) => {
                     const result = await locationsService.lookupByName(
                       addr.state, addr.city || addr.county, addr.suburb || addr.village

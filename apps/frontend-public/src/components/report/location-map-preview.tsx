@@ -1,4 +1,4 @@
-import { memo, useEffect, useState, useCallback, useRef } from "react"
+import { memo, useEffect, useState, useCallback } from "react"
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet"
 import { Icon, type LatLngExpression } from "leaflet"
 import { MapPin, Loader2, Search, AlertCircle } from "lucide-react"
@@ -12,10 +12,6 @@ export interface ResolvedAddress {
 }
 
 interface LocationMapPreviewProps {
-  provinceName: string
-  cityName: string
-  districtName: string
-  specificLocation: string
   onCoordinatesChange?: (lat: number, lng: number, address?: string) => void
   onAddressResolved?: (address: ResolvedAddress) => void
 }
@@ -69,10 +65,6 @@ function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number,
 }
 
 function LocationMapPreviewComponent({
-  provinceName,
-  cityName,
-  districtName,
-  specificLocation,
   onCoordinatesChange,
   onAddressResolved,
 }: LocationMapPreviewProps) {
@@ -84,7 +76,6 @@ function LocationMapPreviewComponent({
   const [postalCode, setPostalCode] = useState<string | null>(null)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [manualQuery, setManualQuery] = useState("")
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const searchLocation = useCallback(async (query: string) => {
     if (!query || query.length < 3) return
@@ -176,27 +167,6 @@ function LocationMapPreviewComponent({
     setSearchError(null)
     reverseGeocode(lat, lng)
   }, [reverseGeocode])
-
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
-    }
-
-    const parts = [specificLocation, districtName, cityName, provinceName].filter(Boolean)
-    if (parts.length < 1) return
-
-    const query = parts.join(", ") + ", Indonesia"
-
-    searchTimeoutRef.current = setTimeout(() => {
-      searchLocation(query)
-    }, 800)
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current)
-      }
-    }
-  }, [provinceName, cityName, districtName, specificLocation, searchLocation])
 
   return (
     <div className="space-y-3">

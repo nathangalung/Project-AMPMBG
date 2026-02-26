@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo } from "react"
+import { useState, useMemo, useCallback, useRef, memo } from "react"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { CATEGORY_LABELS } from "@/hooks/use-categories"
 
@@ -50,6 +50,7 @@ const getStatusStyle = (status: string) => {
 
 function DataTableComponent({ data }: DataTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
+  const tableRef = useRef<HTMLDivElement>(null)
   const itemsPerPage = 5
 
   const safePage = useMemo(() => {
@@ -86,18 +87,21 @@ function DataTableComponent({ data }: DataTableProps) {
   const getCategoryLabel = useCallback((key: string) => CATEGORY_LABELS[key] || key, [])
   const formatDate = useCallback((dateString: string) => new Date(dateString).toLocaleDateString("id-ID", DATE_OPTIONS), [])
 
-  const handleFirstPage = useCallback(() => setCurrentPage(1), [])
-  const handleLastPage = useCallback(() => setCurrentPage(totalPages), [totalPages])
-  const handlePrevPage = useCallback(() => setCurrentPage((p) => Math.max(1, p - 1)), [])
-  const handleNextPage = useCallback(() => setCurrentPage((p) => Math.min(totalPages, p + 1)), [totalPages])
-  const handlePageClick = useCallback((page: number) => setCurrentPage(page), [])
+  const scrollToTable = useCallback(() => {
+    tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [])
+  const handleFirstPage = useCallback(() => { setCurrentPage(1); scrollToTable() }, [scrollToTable])
+  const handleLastPage = useCallback(() => { setCurrentPage(totalPages); scrollToTable() }, [totalPages, scrollToTable])
+  const handlePrevPage = useCallback(() => { setCurrentPage((p) => Math.max(1, p - 1)); scrollToTable() }, [scrollToTable])
+  const handleNextPage = useCallback(() => { setCurrentPage((p) => Math.min(totalPages, p + 1)); scrollToTable() }, [totalPages, scrollToTable])
+  const handlePageClick = useCallback((page: number) => { setCurrentPage(page); scrollToTable() }, [scrollToTable])
 
   if (data.length === 0) {
     return null
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-blue-30/30 overflow-hidden flex flex-col">
+    <div ref={tableRef} className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-blue-30/30 overflow-hidden flex flex-col">
       
       {/* Header */}
       <div className="p-6 md:p-8 border-b border-general-30">
