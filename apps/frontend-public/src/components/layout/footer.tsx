@@ -88,11 +88,11 @@ function FooterComponent() {
               <span>081316423424</span>
             </a>
             <a
-              href="mailto:admin@lapormbg.com"
+              href="mailto:cs@lapormbg.com"
               className="flex items-center gap-2 text-blue-20 hover:text-general-20 transition-colors body-sm"
             >
               <Mail className="w-4 h-4" />
-              <span>admin@lapormbg.com</span>
+              <span>cs@lapormbg.com</span>
             </a>
           </div>
         </div>

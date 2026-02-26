@@ -159,6 +159,7 @@ reports.get("/summary", async (c) => {
   const [aggregates, topCategoryResult, userCount, adminCount, memberStats] = await Promise.all([
     db.select({
       total: sql<number>`count(*)`,
+      verified: sql<number>`count(*) filter (where ${schema.reports.status} in ('analyzing', 'invalid', 'in_progress', 'resolved'))`,
       uniqueCities: sql<number>`count(distinct ${schema.reports.cityId})`,
       highRisk: sql<number>`count(*) filter (where ${schema.reports.credibilityLevel} = 'high')`,
       mediumRisk: sql<number>`count(*) filter (where ${schema.reports.credibilityLevel} = 'medium')`,
@@ -179,6 +180,7 @@ reports.get("/summary", async (c) => {
 
   return c.json({
     total: Number(aggregates[0]?.total || 0),
+    verified: Number(aggregates[0]?.verified || 0),
     uniqueCities: Number(aggregates[0]?.uniqueCities || 0),
     highRisk: Number(aggregates[0]?.highRisk || 0),
     mediumRisk: Number(aggregates[0]?.mediumRisk || 0),
