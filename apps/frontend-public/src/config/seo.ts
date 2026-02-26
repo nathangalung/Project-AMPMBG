@@ -16,26 +16,27 @@ function breadcrumb(name: string, path: string) {
 
 export const SEO = {
   home: {
-    title: "Kawal Program Makan Bergizi Gratis",
+    title: "Lapor MBG - Kawal Program Makan Bergizi Gratis | AMP MBG",
     description:
-      "Platform independen untuk mengawal dan melaporkan pelaksanaan Program Makan Bergizi Gratis di Indonesia. Transparan, akuntabel, dan partisipatif.",
+      "Lapor MBG - Platform independen oleh AMP MBG untuk melaporkan dan mengawal pelaksanaan Program Makan Bergizi Gratis di seluruh Indonesia. Transparan, akuntabel, dan partisipatif.",
     path: "/",
     jsonLd: [
       breadcrumb("Beranda", "/"),
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        name: "AMP MBG",
+        name: "Lapor MBG - AMP MBG",
+        alternateName: ["AMP MBG", "Lapor MBG"],
         url: BASE_URL,
-        description: "Platform independen untuk mengawal Program Makan Bergizi Gratis di Indonesia.",
+        description: "Lapor MBG - Platform independen oleh AMP MBG untuk melaporkan dan mengawal Program Makan Bergizi Gratis di Indonesia.",
         inLanguage: "id",
       },
     ],
   },
   tentangKami: {
-    title: "Tentang Kami",
+    title: "Tentang AMP MBG - Asosiasi Pengawal Program Makan Bergizi Gratis",
     description:
-      "Kenali AMP MBG, asosiasi masyarakat yang mengawal transparansi Program Makan Bergizi Gratis di Indonesia.",
+      "Kenali AMP MBG, asosiasi masyarakat yang mengawal transparansi dan akuntabilitas Program Makan Bergizi Gratis di Indonesia melalui platform Lapor MBG.",
     path: "/tentang-kami/",
     jsonLd: [
       breadcrumb("Tentang Kami", "/tentang-kami/"),
@@ -43,71 +44,71 @@ export const SEO = {
         "@context": "https://schema.org",
         "@type": "AboutPage",
         name: "Tentang AMP MBG",
-        description: "Kenali AMP MBG, asosiasi masyarakat yang mengawal transparansi Program Makan Bergizi Gratis di Indonesia.",
+        description: "Kenali AMP MBG, asosiasi masyarakat yang mengawal transparansi Program Makan Bergizi Gratis di Indonesia melalui Lapor MBG.",
         mainEntity: { "@type": "Organization", name: "AMP MBG", url: BASE_URL },
       },
     ],
   },
   caraKerja: {
-    title: "Cara Kerja Pelaporan",
+    title: "Cara Lapor MBG - Langkah Pelaporan Program Makan Bergizi Gratis",
     description:
-      "Pelajari 4 langkah mudah untuk melaporkan temuan Program Makan Bergizi Gratis secara aman dan terverifikasi.",
+      "Pelajari 4 langkah mudah untuk melaporkan temuan Program Makan Bergizi Gratis melalui Lapor MBG secara aman dan terverifikasi.",
     path: "/cara-kerja/",
     jsonLd: [
       breadcrumb("Cara Kerja", "/cara-kerja/"),
       {
         "@context": "https://schema.org",
         "@type": "HowTo",
-        name: "Cara Melaporkan Temuan Program MBG",
-        description: "4 langkah mudah untuk melaporkan temuan Program Makan Bergizi Gratis.",
+        name: "Cara Lapor MBG - Melaporkan Temuan Program Makan Bergizi Gratis",
+        description: "4 langkah mudah untuk melaporkan temuan Program Makan Bergizi Gratis melalui Lapor MBG.",
         step: [
           { "@type": "HowToStep", position: 1, name: "Dokumentasi", text: "Ambil foto atau video sebagai bukti temuan di lapangan." },
-          { "@type": "HowToStep", position: 2, name: "Laporkan", text: "Isi formulir laporan melalui website dengan lengkap." },
-          { "@type": "HowToStep", position: 3, name: "Verifikasi", text: "Tim kami akan memverifikasi keakuratan data yang dilaporkan." },
+          { "@type": "HowToStep", position: 2, name: "Laporkan", text: "Isi formulir Lapor MBG melalui website dengan lengkap." },
+          { "@type": "HowToStep", position: 3, name: "Verifikasi", text: "Tim AMP MBG akan memverifikasi keakuratan data yang dilaporkan." },
           { "@type": "HowToStep", position: 4, name: "Tindak Lanjut", text: "Laporan diteruskan ke pihak berwenang untuk ditindaklanjuti." },
         ],
       },
     ],
   },
   dataLaporan: {
-    title: "Data & Statistik Laporan",
+    title: "Data Laporan MBG - Statistik Program Makan Bergizi Gratis | AMP MBG",
     description:
-      "Pantau data dan statistik laporan masyarakat terkait Program Makan Bergizi Gratis secara transparan dan real-time.",
+      "Pantau data dan statistik laporan masyarakat terkait Program Makan Bergizi Gratis secara transparan dan real-time di Lapor MBG.",
     path: "/data-laporan/",
     jsonLd: [
       breadcrumb("Data Laporan", "/data-laporan/"),
       {
         "@context": "https://schema.org",
         "@type": "WebPage",
-        name: "Data & Statistik Laporan MBG",
-        description: "Pantau data dan statistik laporan masyarakat terkait Program Makan Bergizi Gratis secara transparan dan real-time.",
+        name: "Data Laporan MBG - Statistik Program Makan Bergizi Gratis",
+        description: "Pantau data dan statistik laporan masyarakat terkait Program Makan Bergizi Gratis secara transparan di Lapor MBG.",
         mainEntity: {
           "@type": "Dataset",
           name: "Laporan Masyarakat Program MBG",
-          description: "Kumpulan data laporan masyarakat mengenai pelaksanaan Program Makan Bergizi Gratis.",
+          description: "Kumpulan data laporan masyarakat mengenai pelaksanaan Program Makan Bergizi Gratis melalui AMP MBG.",
         },
       },
     ],
   },
   lapor: {
-    title: "Formulir Pelaporan MBG",
+    title: "Lapor MBG - Formulir Pelaporan Program Makan Bergizi Gratis",
     description:
-      "Laporkan temuan ketidaksesuaian pelaksanaan Program Makan Bergizi Gratis untuk ditindaklanjuti.",
+      "Lapor MBG sekarang. Laporkan temuan ketidaksesuaian pelaksanaan Program Makan Bergizi Gratis untuk ditindaklanjuti oleh AMP MBG.",
     path: "/lapor/",
-    jsonLd: [breadcrumb("Formulir Pelaporan", "/lapor/")],
+    jsonLd: [breadcrumb("Lapor MBG", "/lapor/")],
   },
   daftarAnggota: {
-    title: "Daftar Anggota",
+    title: "Daftar Anggota AMP MBG - Bergabung Kawal Program Makan Bergizi Gratis",
     description:
-      "Daftarkan organisasi Anda sebagai anggota resmi AMP MBG untuk berkontribusi dalam pengawasan Program Makan Bergizi Gratis.",
+      "Daftarkan organisasi Anda sebagai anggota resmi AMP MBG untuk berkontribusi dalam pengawasan Program Makan Bergizi Gratis melalui Lapor MBG.",
     path: "/daftar-anggota/",
     jsonLd: [breadcrumb("Daftar Anggota", "/daftar-anggota/")],
   },
   kebutuhanDapur: {
-    title: "Pusat Kebutuhan Dapur",
+    title: "Kebutuhan Dapur MBG - Solusi SPPG Program Makan Bergizi Gratis | AMP MBG",
     description:
-      "Temukan solusi profesional untuk menunjang operasional SPPG dan dapur Program Makan Bergizi Gratis.",
+      "Temukan solusi profesional untuk menunjang operasional SPPG dan dapur Program Makan Bergizi Gratis melalui AMP MBG.",
     path: "/kebutuhan-dapur/",
-    jsonLd: [breadcrumb("Kebutuhan Dapur", "/kebutuhan-dapur/")],
+    jsonLd: [breadcrumb("Kebutuhan Dapur MBG", "/kebutuhan-dapur/")],
   },
 }
