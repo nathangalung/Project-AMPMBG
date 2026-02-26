@@ -3,6 +3,7 @@ import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState, useEffect } from "react"
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck, XCircle } from "lucide-react"
 import { authService } from "@/services/auth"
+import { api } from "@/lib/api"
 import { useSEO } from "@/hooks/use-seo"
 
 export const Route = createFileRoute('/auth/reset-password')({
@@ -44,8 +45,7 @@ function ResetPasswordPage() {
 
   const verifyToken = async (tokenValue: string) => {
     try {
-      const response = await fetch(`/api/auth/verify-reset-token/${tokenValue}`)
-      const data = await response.json()
+      const data = await api.get<{ valid: boolean }>(`/auth/verify-reset-token/${tokenValue}`)
       setIsTokenValid(data.valid === true)
     } catch {
       setIsTokenValid(false)
