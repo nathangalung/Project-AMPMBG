@@ -15,6 +15,7 @@ import {
 import { useState, useEffect, useCallback, memo, useRef, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { adminService } from "@/services/admin"
+import type { ReportCategory, ReportStatus } from "@/services/reports"
 import { locationsService } from "@/services/locations"
 import { categoriesService } from "@/services/categories"
 
@@ -101,13 +102,13 @@ function LaporanPage() {
       const result = await adminService.getReports({
         page: currentPage,
         limit: itemsPerPage,
-        category: activeFilters.category || undefined,
+        category: (activeFilters.category || undefined) as ReportCategory | undefined,
         provinceId: activeFilters.provinceId || undefined,
         cityId: activeFilters.cityId || undefined,
         districtId: activeFilters.districtId || undefined,
         startDate: activeFilters.startDate || undefined,
         endDate: activeFilters.endDate || undefined,
-        status: activeFilters.status || undefined,
+        status: (activeFilters.status || undefined) as ReportStatus | undefined,
         credibilityLevel: activeFilters.riskLevel || undefined
       })
       return result
@@ -204,7 +205,7 @@ function LaporanPage() {
                 {reports.length > 0 ? (
                   reports.map((item, idx) => {
                     const statusStyle = getStatusStyle(item.status)
-                    const riskData = item.credibilityLevel || item.credibility_level;
+                    const riskData = item.credibilityLevel;
                     const riskLabel = riskData ? (CREDIBILITY_LABELS[riskData] || riskData) : null;
                     const riskClassName = getRiskStyle(riskData);
 
