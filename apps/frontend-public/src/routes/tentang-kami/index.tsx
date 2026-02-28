@@ -54,7 +54,7 @@ function TentangKamiPage() {
     if (user) {
       navigate({ to: "/lapor" })
     } else {
-      navigate({ to: "/auth/login" })
+      navigate({ to: "/auth/login", search: { pesan: "login_required" } })
     }
   }
 

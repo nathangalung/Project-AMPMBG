@@ -3,6 +3,7 @@ import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState } from "react"
 import { ArrowLeft, CheckCircle2, Mail, Loader2 } from "lucide-react"
 import { authService } from "@/services/auth"
+import { translateError } from "@/lib/api"
 import { useSEO } from "@/hooks/use-seo"
 
 export const Route = createFileRoute('/auth/forgot-password')({
@@ -30,7 +31,7 @@ function ForgotPasswordPage() {
       await authService.forgotPassword(email)
       setIsSubmitted(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengirim email")
+      setError(err instanceof Error ? translateError(err.message) : "Gagal mengirim email")
     } finally {
       setIsLoading(false)
     }

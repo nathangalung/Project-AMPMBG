@@ -3,7 +3,7 @@ import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState, useEffect } from "react"
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck, XCircle } from "lucide-react"
 import { authService } from "@/services/auth"
-import { api } from "@/lib/api"
+import { api, translateError } from "@/lib/api"
 import { useSEO } from "@/hooks/use-seo"
 
 export const Route = createFileRoute('/auth/reset-password')({
@@ -72,7 +72,7 @@ function ResetPasswordPage() {
         navigate({ to: "/auth/login" })
       }, 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengatur ulang kata sandi")
+      setError(err instanceof Error ? translateError(err.message) : "Gagal mengatur ulang kata sandi")
     } finally {
       setIsLoading(false)
     }

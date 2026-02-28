@@ -4,7 +4,7 @@ import { Footer } from "@/components/layout/footer"
 import { useState, useEffect } from "react"
 import { ChevronDown, CheckCircle2, Loader2, ArrowLeft, Building2 } from "lucide-react"
 import { authService } from "@/services/auth"
-import { api } from "@/lib/api"
+import { api, translateError } from "@/lib/api"
 import { useSEO } from "@/hooks/use-seo"
 import { SEO } from "@/config/seo"
 
@@ -45,7 +45,7 @@ function DaftarAnggotaPage() {
   useEffect(() => {
     const user = authService.getCurrentUser()
     if (!user) {
-      navigate({ to: "/auth/login" })
+      navigate({ to: "/auth/login", search: { pesan: "login_required" } })
     } else {
       setIsAuthenticated(true)
     }
@@ -89,7 +89,7 @@ function DaftarAnggotaPage() {
       await api.post("/auth/apply-member", formData)
       setShowSuccess(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Pendaftaran gagal")
+      setError(err instanceof Error ? translateError(err.message) : "Pendaftaran gagal")
     } finally {
       setIsLoading(false)
     }

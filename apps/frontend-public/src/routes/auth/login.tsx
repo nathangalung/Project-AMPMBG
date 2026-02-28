@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState, useEffect, useCallback } from "react"
-import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react"
+import { Eye, EyeOff, Loader2, ArrowLeft, Info } from "lucide-react"
 import { authService } from "@/services/auth"
+import { translateError } from "@/lib/api"
 import { useSEO } from "@/hooks/use-seo"
 
 declare global {
@@ -28,9 +29,16 @@ export const Route = createFileRoute("/auth/login")({
   component: LoginPage,
 })
 
+const LOGIN_MESSAGES: Record<string, string> = {
+  login_required: "Anda harus masuk terlebih dahulu untuk mengakses halaman tersebut.",
+  session_expired: "Sesi Anda telah berakhir, silakan masuk kembali.",
+}
+
 function LoginPage() {
   useSEO({ title: "Masuk", description: "Masuk ke akun AMP MBG", path: "/auth/login", noindex: true })
   const navigate = useNavigate()
+  const pesan = new URLSearchParams(window.location.search).get("pesan") || ""
+  const infoMessage = LOGIN_MESSAGES[pesan] || ""
   const [showPassword, setShowPassword] = useState(false)
   const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
@@ -56,7 +64,7 @@ function LoginPage() {
         navigate({ to: "/" })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login Google gagal")
+      setError(err instanceof Error ? translateError(err.message) : "Login Google gagal")
     } finally {
       setIsGoogleLoading(false)
     }
@@ -92,7 +100,7 @@ function LoginPage() {
       await authService.completeGooglePhone(phoneNumber)
       navigate({ to: "/" })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menyimpan nomor telepon")
+      setError(err instanceof Error ? translateError(err.message) : "Gagal menyimpan nomor telepon")
     } finally {
       setIsLoading(false)
     }
@@ -117,7 +125,7 @@ function LoginPage() {
       await authService.login({ identifier, password })
       navigate({ to: "/" })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login gagal")
+      setError(err instanceof Error ? translateError(err.message) : "Login gagal")
     } finally {
       setIsLoading(false)
     }
@@ -135,6 +143,13 @@ function LoginPage() {
       </div>
 
       <form onSubmit={handleLogin} className="space-y-6">
+        {infoMessage && (
+          <div className="bg-blue-20/50 border border-blue-100/20 text-blue-100 px-4 py-3 rounded-xl body-sm flex items-center gap-2 animate-in fade-in">
+            <Info className="w-4 h-4 shrink-0" />
+            {infoMessage}
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-20/50 border border-red-100/20 text-red-100 px-4 py-3 rounded-xl body-sm flex items-center animate-in fade-in">
             {error}

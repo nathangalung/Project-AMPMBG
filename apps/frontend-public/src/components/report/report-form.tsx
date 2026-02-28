@@ -6,6 +6,7 @@ import { StepIdentityConfirmation } from "./step-identity-confirmation"
 import { reportsService, type CreateReportRequest, type ReportCategory, type ReporterRelation } from "@/services/reports"
 import { queryClient } from "@/lib/query-client"
 import { cn } from "@/lib/utils"
+import { translateError } from "@/lib/api"
 import { CheckCircle2, ArrowLeft, ArrowRight, Send, Loader2 } from "lucide-react"
 
 const STEPS = [
@@ -106,7 +107,7 @@ function ReportFormComponent() {
       } else if (typeof err.message === 'string') {
         message = err.message
       }
-      setSubmitError(message)
+      setSubmitError(translateError(message))
     },
   })
 

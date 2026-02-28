@@ -52,7 +52,7 @@ function KebutuhanDapurPage() {
 
   const handleCardClick = (need: KitchenNeedItem) => {
     if (!isAuthenticated) {
-      navigate({ to: "/auth/login" }) 
+      navigate({ to: "/auth/login", search: { pesan: "login_required" } })
       return
     }
     setSelectedNeed(need)

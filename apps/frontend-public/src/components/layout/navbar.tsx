@@ -41,7 +41,7 @@ function NavbarComponent() {
     if (isProtected && !currentUser) {
       e.preventDefault() 
       setMobileMenuOpen(false) 
-      navigate({ to: "/auth/login" }) 
+      navigate({ to: "/auth/login", search: { pesan: "login_required" } })
     } else {
       setMobileMenuOpen(false) 
     }

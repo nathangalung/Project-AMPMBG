@@ -22,7 +22,7 @@ function FooterComponent() {
       const user = localStorage.getItem("public_currentUser")
       if (!user) {
         e.preventDefault()
-        navigate({ to: "/auth/login" })
+        navigate({ to: "/auth/login", search: { pesan: "login_required" } })
       }
     }
   }, [navigate])

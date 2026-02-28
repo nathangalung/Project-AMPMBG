@@ -1,4 +1,4 @@
-import { api } from "@/lib/api"
+import { api, translateError } from "@/lib/api"
 
 export type ReportCategory = "poisoning" | "kitchen" | "quality" | "policy" | "implementation" | "social"
 export type ReportStatus = "pending" | "analyzing" | "needs_evidence" | "invalid" | "in_progress" | "resolved"
@@ -162,7 +162,7 @@ export const reportsService = {
     })
 
     const data = await response.json()
-    if (!response.ok) throw new Error(data.error || "Gagal mengunggah file")
+    if (!response.ok) throw new Error(translateError(data.error || "Gagal mengunggah file"))
     return data
   },
 }

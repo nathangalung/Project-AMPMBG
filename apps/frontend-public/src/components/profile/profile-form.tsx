@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, memo } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2, User, Save, Edit3 } from "lucide-react"
 import { profileService } from "@/services/profile"
+import { translateError } from "@/lib/api"
 
 function ProfileFormComponent() {
   const queryClient = useQueryClient()
@@ -175,7 +176,7 @@ function ProfileFormComponent() {
         {updateProfileMutation.isError && (
           <div className="mb-6 p-4 bg-red-20 border border-red-100 rounded-xl flex items-start gap-3">
             <div className="w-1.5 h-1.5 rounded-full bg-red-100 mt-2 shrink-0" />
-            <p className="text-red-100 body-sm font-medium">{(updateProfileMutation.error as Error)?.message || "Gagal memperbarui profil"}</p>
+            <p className="text-red-100 body-sm font-medium">{translateError((updateProfileMutation.error as Error)?.message || "Gagal memperbarui profil")}</p>
           </div>
         )}
 
@@ -265,7 +266,7 @@ function ProfileFormComponent() {
 
               {(changePasswordMutation.isError || createPasswordMutation.isError) && (
                 <div className="mb-4 p-3 bg-red-20 border border-red-100 rounded-lg text-red-100 text-xs font-medium">
-                  {((changePasswordMutation.error || createPasswordMutation.error) as Error)?.message || "Gagal menyimpan kata sandi"}
+                  {translateError(((changePasswordMutation.error || createPasswordMutation.error) as Error)?.message || "Gagal menyimpan kata sandi")}
                 </div>
               )}
 

@@ -3,6 +3,7 @@ import { AuthLayout } from "@/components/auth/auth-layout"
 import { useState, useEffect, useCallback } from "react"
 import { Eye, EyeOff, CheckCircle2, Loader2, ArrowLeft, ShieldCheck } from "lucide-react"
 import { authService } from "@/services/auth"
+import { translateError } from "@/lib/api"
 import { useSEO } from "@/hooks/use-seo"
 
 declare global {
@@ -87,7 +88,7 @@ function RegisterPage() {
         navigate({ to: "/" })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Pendaftaran Google gagal")
+      setError(err instanceof Error ? translateError(err.message) : "Pendaftaran Google gagal")
     } finally {
       setIsGoogleLoading(false)
     }
@@ -123,7 +124,7 @@ function RegisterPage() {
       await authService.completeGooglePhone(phoneNumber)
       navigate({ to: "/" })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menyimpan nomor telepon")
+      setError(err instanceof Error ? translateError(err.message) : "Gagal menyimpan nomor telepon")
     } finally {
       setIsLoading(false)
     }
@@ -149,7 +150,7 @@ function RegisterPage() {
         navigate({ to: "/auth/login" })
       }, 2000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registrasi gagal")
+      setError(err instanceof Error ? translateError(err.message) : "Registrasi gagal")
     } finally {
       setIsLoading(false)
     }
